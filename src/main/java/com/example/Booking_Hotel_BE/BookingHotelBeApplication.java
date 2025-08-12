@@ -1,13 +1,13 @@
-package com.example.Booking_BE;
+package com.example.Booking_Hotel_BE;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BookingBeApplication {
+public class BookingHotelBeApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BookingBeApplication.class, args);
+		SpringApplication.run(BookingHotelBeApplication.class, args);
 	}
 
 }
