@@ -64,7 +64,6 @@ public class UserService
         TypeUser typeUser = typeUserRepository.findById(PredefinedTypeUser.TYPE_USER_DEFAULT)
                 .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
         user.setTypeUser(typeUser);
-
         userRepository.save(user);
     }
 }
