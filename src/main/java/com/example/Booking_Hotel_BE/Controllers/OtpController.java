@@ -1,5 +1,6 @@
 package com.example.Booking_Hotel_BE.Controllers;
 
+import com.example.Booking_Hotel_BE.Dto.Request.CreateOtpRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.OtpRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.RegisterRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.ApiResponse;
@@ -25,10 +26,10 @@ public class OtpController
     OtpService otpService;
 
     // Endpoint tạo OTP từ mail
-    @PostMapping("/verifyEmail/{email}")
-    public ApiResponse<Void> verifyEmail(@PathVariable String email)
+    @PostMapping("/verifyEmail")
+    public ApiResponse<Void> verifyEmail(@RequestBody CreateOtpRequest request)
     {
-        otpService.verifyEmail(email);
+        otpService.verifyEmail(request.getEmail());
         return ApiResponse.<Void>builder()
                 .message("Đã gửi mã OTP về email của bạn.")
                 .build();

@@ -46,7 +46,7 @@ public class Users {
 
     private LocalDate dob;
 
-    @Column(name = "address",columnDefinition = "TEXT")
+    @Column(name = "address_user",columnDefinition = "TEXT")
     private String address;
 
     @Column(unique = true)
