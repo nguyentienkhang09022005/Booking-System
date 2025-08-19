@@ -31,7 +31,6 @@ public class AuthenController
     public ApiResponse<AuthenResponse> authenticate(@RequestBody AuthenRequest request) {
         var result = authenService.authenticated(request);
         return ApiResponse.<AuthenResponse>builder()
-
                 .data(result)
                 .build();
     }
