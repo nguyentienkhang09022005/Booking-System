@@ -54,7 +54,7 @@ public class UserService
             throw new ApiException(ErrorCode.OTP_NOT_FOUND);
 
         Users user = userMapper.toUser(request);
-        String enCodePassword = passwordEncoder.encode(user.getPasswordUser());
+        String enCodePassword = passwordEncoder.encode(request.getPassword());
         user.setPasswordUser(enCodePassword);
 
         Roles role = roleRepository.findById(PredefinedRole.USER_ROLE)

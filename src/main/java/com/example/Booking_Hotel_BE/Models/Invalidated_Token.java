@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -21,7 +22,7 @@ public class Invalidated_Token {
 
     @Id
     @Column(name = "id_token", length = 20)
-    private String idToken;
+    private UUID idToken;
 
     @Column(name = "expiry_time")
     private Date expiryTime;

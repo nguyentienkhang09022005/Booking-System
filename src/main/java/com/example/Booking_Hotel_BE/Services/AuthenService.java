@@ -76,7 +76,7 @@ public class AuthenService
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
 
         var user = userRepository
-                .findByEmail(request.getUsername())
+                .findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordUser());
@@ -104,7 +104,7 @@ public class AuthenService
             Date expirationTime = signToken.getJWTClaimsSet().getExpirationTime();
 
             Invalidated_Token invalidatedToken = Invalidated_Token.builder()
-                    .idToken(jit)
+                    .idToken(UUID.fromString(jit))
                     .expiryTime(expirationTime)
                     .build();
 
