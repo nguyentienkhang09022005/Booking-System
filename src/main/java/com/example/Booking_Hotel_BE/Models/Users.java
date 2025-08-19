@@ -5,6 +5,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -17,7 +18,7 @@ public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_user", nullable = false, updatable = false)
-    private String idUser;
+    private UUID idUser;
 
     @ManyToOne
     @JoinColumn(name = "role_name",
