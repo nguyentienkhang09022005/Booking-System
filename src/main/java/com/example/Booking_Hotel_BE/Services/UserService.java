@@ -13,6 +13,7 @@ import com.example.Booking_Hotel_BE.Repositories.OtpRepository;
 import com.example.Booking_Hotel_BE.Repositories.RoleRepository;
 import com.example.Booking_Hotel_BE.Repositories.TypeUserRepository;
 import com.example.Booking_Hotel_BE.Repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -65,6 +67,35 @@ public class UserService
                 .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
         user.setTypeUser(typeUser);
         userRepository.save(user);
+    }
+
+    // Hàm lưu người dùng đăng nhập bằng Google xuống csdl
+    @Transactional
+    public Users processOAuth2User(String email, String firstName, String lastName, String urlAvatar)
+    {
+        Optional<Users> user = userRepository.findByEmail(email);
+
+        if (user.isPresent())
+            return user.get();
+
+        Users newUser = new Users();
+        newUser.setEmail(email);
+        newUser.setFirstName(firstName);
+        newUser.setLastName(lastName);
+
+        Roles role = roleRepository.findById(PredefinedRole.USER_ROLE)
+                .orElseThrow(() -> new ApiException(ErrorCode.ROLE_NOT_FOUND));
+        newUser.setRole(role);
+
+        Users savedUser = userRepository.save(newUser);
+
+//        // Lưu ảnh đại diện
+//        Image image = new Image();
+//        image.setIdUser(newUser);
+//        image.setUrl(urlAvatar);
+//        imageRepository.save(image);
+
+        return savedUser;
     }
 }
 
