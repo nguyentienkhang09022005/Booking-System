@@ -56,7 +56,8 @@ public class AuthenService
 
 
     // Hàm xác thực Token
-    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
+    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException
+    {
         var token = request.getToken();
 
         boolean isValid = true;

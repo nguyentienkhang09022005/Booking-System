@@ -1,9 +1,11 @@
 package com.example.Booking_Hotel_BE.Controllers;
 
 import com.example.Booking_Hotel_BE.Dto.Request.AuthenRequest;
+import com.example.Booking_Hotel_BE.Dto.Request.IntrospectRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.LogoutRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.ApiResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
+import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Services.AuthenService;
 import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
@@ -40,6 +42,17 @@ public class AuthenController
     public ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
         authenService.Logout(request);
         return ApiResponse.<Void>builder()
+                .build();
+    }
+
+    // Endpoint đăng nhập với TOKEN
+    @PostMapping("/introspect")
+    public ApiResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request) throws ParseException,
+                                                                                                        JOSEException
+    {
+        var result = authenService.introspect(request);
+        return ApiResponse.<IntrospectResponse>builder()
+                .data(result)
                 .build();
     }
 
