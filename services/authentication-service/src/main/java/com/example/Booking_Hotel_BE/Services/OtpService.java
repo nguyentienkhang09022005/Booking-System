@@ -56,7 +56,6 @@ public class OtpService
     // Hàm xác thực email để tạo OTP
     public void verifyEmail(String email)
     {
-
         int otp = otpGenerator();
         MainBody mainBody = MainBody.builder()
                 .to(email)
