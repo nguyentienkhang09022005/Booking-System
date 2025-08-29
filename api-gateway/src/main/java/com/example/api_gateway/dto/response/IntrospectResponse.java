@@ -1,4 +1,4 @@
-package com.example.api_gateway.dto.request;
+package com.example.api_gateway.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,7 +8,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class IntrospectRequest
+public class IntrospectResponse
 {
-    String token;
+    Boolean valid;
 }
