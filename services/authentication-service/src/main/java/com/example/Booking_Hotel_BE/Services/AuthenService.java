@@ -40,6 +40,7 @@ import java.util.UUID;
 public class AuthenService
 {
     UserRepository userRepository;
+    RefreshTokenService refreshTokenService;
     InvalidatedTokenRepository invalidatedTokenRepository;
 
     @NonFinal
@@ -86,6 +87,12 @@ public class AuthenService
 
         var token = generateAccessToken(user);
         var refreshToken = generateRefreshToken(user);
+
+        refreshTokenService.saveRefreshToken(
+                user.getIdUser().toString(),
+                refreshToken,
+                REFRESHABLE_DURATION
+        );
 
         return AuthenResponse.builder()
                 .idUser(user.getIdUser().toString())
