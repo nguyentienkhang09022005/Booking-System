@@ -99,7 +99,7 @@ public class AuthenService
     // Hàm Logout Token
     public void Logout (LogoutRequest request) throws ParseException, JOSEException {
         try {
-            var signToken = verifyToken(request.getToken(), true);
+            var signToken = verifyToken(request.getToken(), false);
             String jit = signToken.getJWTClaimsSet().getJWTID();
 
             Date expirationTime = signToken.getJWTClaimsSet().getExpirationTime();
