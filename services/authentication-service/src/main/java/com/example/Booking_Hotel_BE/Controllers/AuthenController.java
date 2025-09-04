@@ -9,6 +9,8 @@ import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Services.AuthenService;
 import com.nimbusds.jose.JOSEException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,8 +33,8 @@ public class AuthenController
 
     // Endpoint đăng nhập tạo TOKEN
     @PostMapping("/login")
-    public ApiResponse<AuthenResponse> authenticate(@RequestBody AuthenRequest request) {
-        var result = authenService.authenticated(request);
+    public ApiResponse<AuthenResponse> authenticate(@RequestBody AuthenRequest request, HttpServletResponse response) {
+        var result = authenService.authenticated(request, response);
         return ApiResponse.<AuthenResponse>builder()
                 .data(result)
                 .build();
@@ -59,9 +61,9 @@ public class AuthenController
 
     // Endpoint refresh TOKEN
     @PostMapping("/refresh")
-    public ApiResponse<AuthenResponse> logout(@RequestBody RefreshTokenRequest request) throws ParseException, JOSEException
+    public ApiResponse<AuthenResponse> logout(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException
     {
-        var result = authenService.refreshToken(request);
+        var result = authenService.refreshToken(request, response);
         return ApiResponse.<AuthenResponse>builder()
                 .data(result)
                 .build();

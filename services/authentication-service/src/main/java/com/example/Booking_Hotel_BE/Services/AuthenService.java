@@ -3,7 +3,6 @@ package com.example.Booking_Hotel_BE.Services;
 import com.example.Booking_Hotel_BE.Dto.Request.AuthenRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.IntrospectRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.LogoutRequest;
-import com.example.Booking_Hotel_BE.Dto.Request.RefreshTokenRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
@@ -17,6 +16,9 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -74,7 +77,7 @@ public class AuthenService
     }
 
     // Hàm xác thực đăng nhập
-    public AuthenResponse authenticated(AuthenRequest request)
+    public AuthenResponse authenticated(AuthenRequest request, HttpServletResponse response)
     {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
 
@@ -94,43 +97,66 @@ public class AuthenService
                 refreshToken,
                 REFRESHABLE_DURATION
         );
+        // Tạo Cookie lưu refreshToken
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(false);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
+
+        // Gắn Cookie vào response
+        response.addCookie(refreshTokenCookie);
 
         return AuthenResponse.builder()
                 .token(token)
-                .refreshToken(refreshToken)
                 .build();
     }
 
     // Hàm Refresh Token
-    public AuthenResponse refreshToken(RefreshTokenRequest request) throws ParseException, JOSEException
+    public AuthenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException
     {
-        // Lấy refresh token trong Redis
-        String storedRefreshToken = refreshTokenService.getRefreshToken(request.getRefreshToken());
+        // Lấy refreshToken từ cookie
+        String refreshToken = Arrays.stream(request.getCookies())
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHENTICATED));
 
-        if (storedRefreshToken == null || !storedRefreshToken.equals(request.getRefreshToken()))
-        {
-            throw new ApiException(ErrorCode.UNAUTHENTICATED);
-        }
-
-        var signToken = verifyToken(request.getRefreshToken());
+        var signToken = verifyToken(refreshToken);
 
         var idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
         UUID idUser = UUID.fromString(idUserStr);
 
+
         var user = userRepository.findById(idUser).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
-        var token = generateAccessToken(user);
-        var refreshToken = generateRefreshToken(user);
+        // Lấy refresh token trong Redis
+        String storedRefreshToken = refreshTokenService.getRefreshToken(idUserStr);
+
+        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+            throw new ApiException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        var newAccessToken = generateAccessToken(user);
+        var newRefreshToken = generateRefreshToken(user);
 
         refreshTokenService.saveRefreshToken(
                 user.getIdUser().toString(),
-                refreshToken,
+                newRefreshToken,
                 REFRESHABLE_DURATION
         );
 
+        // Tạo Cookie lưu refreshToken
+        Cookie newRefreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
+        newRefreshTokenCookie.setHttpOnly(true);
+        newRefreshTokenCookie.setSecure(false);
+        newRefreshTokenCookie.setPath("/");
+        newRefreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
+        response.addCookie(newRefreshTokenCookie);
+
         return AuthenResponse.builder()
-                .token(token)
+                .token(newAccessToken)
                 .build();
     }
 
