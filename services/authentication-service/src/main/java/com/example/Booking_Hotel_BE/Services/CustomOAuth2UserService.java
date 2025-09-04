@@ -56,7 +56,6 @@ public class CustomOAuth2UserService extends OidcUserService
         String refreshToken = authenService.generateRefreshToken(user);
 
         AuthenResponse authResponse = AuthenResponse.builder()
-                .idUser(user.getIdUser().toString())
                 .token(token)
                 .refreshToken(refreshToken)
                 .build();

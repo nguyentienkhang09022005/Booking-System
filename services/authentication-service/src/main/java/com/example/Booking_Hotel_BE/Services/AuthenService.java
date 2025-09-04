@@ -3,6 +3,7 @@ package com.example.Booking_Hotel_BE.Services;
 import com.example.Booking_Hotel_BE.Dto.Request.AuthenRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.IntrospectRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.LogoutRequest;
+import com.example.Booking_Hotel_BE.Dto.Request.RefreshTokenRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
@@ -63,7 +64,7 @@ public class AuthenService
 
         boolean isValid = true;
         try {
-            verifyToken(token, false);
+            verifyToken(token);
         }catch (ApiException e){
             isValid = false;
         }
@@ -95,18 +96,40 @@ public class AuthenService
         );
 
         return AuthenResponse.builder()
-                .idUser(user.getIdUser().toString())
                 .token(token)
                 .refreshToken(refreshToken)
                 .build();
     }
 
     // Hàm Refresh Token
+    public AuthenResponse refreshToken(RefreshTokenRequest request) throws ParseException, JOSEException
+    {
+        var signToken = verifyToken(request.getRefreshToken());
+
+        var idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
+        UUID idUser = UUID.fromString(idUserStr);
+
+        var user = userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+        var token = generateAccessToken(user);
+        var refreshToken = generateRefreshToken(user);
+
+        refreshTokenService.saveRefreshToken(
+                user.getIdUser().toString(),
+                refreshToken,
+                REFRESHABLE_DURATION
+        );
+
+        return AuthenResponse.builder()
+                .token(token)
+                .build();
+    }
 
     // Hàm Logout Token
     public void Logout (LogoutRequest request) throws ParseException, JOSEException {
         try {
-            var signToken = verifyToken(request.getToken(), false);
+            var signToken = verifyToken(request.getToken());
             String jit = signToken.getJWTClaimsSet().getJWTID();
 
             Date expirationTime = signToken.getJWTClaimsSet().getExpirationTime();
@@ -134,6 +157,7 @@ public class AuthenService
                         Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
+                .claim("idUser", user.getIdUser())
                 .build();
 
 
@@ -161,6 +185,7 @@ public class AuthenService
                         Instant.now().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
+                .claim("idUser", user.getIdUser())
                 .build();
 
 
@@ -188,20 +213,13 @@ public class AuthenService
     }
 
     // Hàm Verify Token
-    private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException
+    private SignedJWT verifyToken(String token) throws JOSEException, ParseException
     {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
         SignedJWT signedJWT = SignedJWT.parse(token);
 
-        Date expiryTime = (isRefresh)
-                ? new Date(signedJWT
-                .getJWTClaimsSet()
-                .getIssueTime()
-                .toInstant()
-                .plus(REFRESHABLE_DURATION, ChronoUnit.MINUTES)
-                .toEpochMilli())
-                : signedJWT.getJWTClaimsSet().getExpirationTime();
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime(); // Lấy thời hạn của token
 
         var verified = signedJWT.verify(verifier);
 

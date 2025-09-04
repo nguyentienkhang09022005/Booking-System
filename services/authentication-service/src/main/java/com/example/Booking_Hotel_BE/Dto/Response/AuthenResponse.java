@@ -1,5 +1,6 @@
 package com.example.Booking_Hotel_BE.Dto.Response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -8,9 +9,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthenResponse
 {
-    String idUser;
     String token;
     String refreshToken;
 }

@@ -3,6 +3,7 @@ package com.example.Booking_Hotel_BE.Controllers;
 import com.example.Booking_Hotel_BE.Dto.Request.AuthenRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.IntrospectRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.LogoutRequest;
+import com.example.Booking_Hotel_BE.Dto.Request.RefreshTokenRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.ApiResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
@@ -52,6 +53,16 @@ public class AuthenController
     {
         var result = authenService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder()
+                .data(result)
+                .build();
+    }
+
+    // Endpoint refresh TOKEN
+    @PostMapping("/refresh")
+    public ApiResponse<AuthenResponse> logout(@RequestBody RefreshTokenRequest request) throws ParseException, JOSEException
+    {
+        var result = authenService.refreshToken(request);
+        return ApiResponse.<AuthenResponse>builder()
                 .data(result)
                 .build();
     }
