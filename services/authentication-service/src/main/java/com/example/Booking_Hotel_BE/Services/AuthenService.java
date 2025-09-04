@@ -104,6 +104,14 @@ public class AuthenService
     // Hàm Refresh Token
     public AuthenResponse refreshToken(RefreshTokenRequest request) throws ParseException, JOSEException
     {
+        // Lấy refresh token trong Redis
+        String storedRefreshToken = refreshTokenService.getRefreshToken(request.getRefreshToken());
+
+        if (storedRefreshToken == null || !storedRefreshToken.equals(request.getRefreshToken()))
+        {
+            throw new ApiException(ErrorCode.UNAUTHENTICATED);
+        }
+
         var signToken = verifyToken(request.getRefreshToken());
 
         var idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
@@ -129,7 +137,12 @@ public class AuthenService
     // Hàm Logout Token
     public void Logout (LogoutRequest request) throws ParseException, JOSEException {
         try {
+            SignedJWT signedJWT = SignedJWT.parse(request.getToken());
+
+            var idUser = signedJWT.getJWTClaimsSet().getStringClaim("idUser"); // Lấy idUser của Token
             var signToken = verifyToken(request.getToken());
+            refreshTokenService.deleteRefreshToken(idUser); // Xóa refresh Token trong redis
+
             String jit = signToken.getJWTClaimsSet().getJWTID();
 
             Date expirationTime = signToken.getJWTClaimsSet().getExpirationTime();
