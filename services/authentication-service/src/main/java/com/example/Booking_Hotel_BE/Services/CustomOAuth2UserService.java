@@ -21,7 +21,7 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomOAuth2UserService extends OidcUserService
 {
-    UserService userService;
+    RegisterService registerService;
     AuthenService authenService;
 
     @Override
@@ -46,7 +46,7 @@ public class CustomOAuth2UserService extends OidcUserService
                 lastName = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length));
             }
         }
-        Users user = userService.processOAuth2User(email, firstName, lastName, urlAvatar);
+        Users user = registerService.processOAuth2User(email, firstName, lastName, urlAvatar);
 
         if (user.getIdUser() == null) {
             throw new OAuth2AuthenticationException("Lưu user thất bại");

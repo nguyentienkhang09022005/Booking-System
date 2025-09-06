@@ -21,14 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class UserService
+public class RegisterService
 {
     UserRepository userRepository;
     RoleRepository roleRepository;
@@ -36,12 +35,6 @@ public class UserService
     OtpRepository otpRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
-
-    // Hàm lấy danh sách người dùng
-    public List<Users> findAll()
-    {
-        return userRepository.findAll();
-    }
 
     // Hàm đăng ký lưu người dùng xuống cơ sở dữ liệu
     public void register(RegisterRequest request)

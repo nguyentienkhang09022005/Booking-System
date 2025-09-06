@@ -3,7 +3,7 @@ package com.example.Booking_Hotel_BE.Config;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Services.AuthenService;
 import com.example.Booking_Hotel_BE.Services.CustomOAuth2UserService;
-import com.example.Booking_Hotel_BE.Services.UserService;
+import com.example.Booking_Hotel_BE.Services.RegisterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,28 +25,28 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig
 {
     private final CustomJwtDecoder customJwtDecoder;
-    private final UserService userService;
+    private final RegisterService registerService;
     private final AuthenService authenService;
 
     public SecurityConfig(CustomJwtDecoder customJwtDecoder,
-                          @Lazy UserService userService,
+                          @Lazy RegisterService registerService,
                           @Lazy AuthenService authenService)
     {
         this.customJwtDecoder = customJwtDecoder;
-        this.userService = userService;
+        this.registerService = registerService;
         this.authenService = authenService;
     }
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/authen/**",
-            "/users/register",
-            "/otp/**",
+            "/api/register",
+            "/api/otp/**",
             "/api/google/login"
     };
 
     @Bean
     public CustomOAuth2UserService customOAuth2UserService() {
-        return new CustomOAuth2UserService(userService, authenService); // setter injection sẽ inject UserService & AuthenService
+        return new CustomOAuth2UserService(registerService, authenService);
     }
 
     @Bean
