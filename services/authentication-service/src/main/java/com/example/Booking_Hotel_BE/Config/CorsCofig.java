@@ -9,8 +9,8 @@ public class CorsCofig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("*") // Cho phép tất cả các cổng của FE
-                .allowedMethods("*")  // Cấu hình các phương thức HTTP cho phép
+                .allowedOrigins("http://127.0.0.1:5500")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")  // Cấu hình các phương thức HTTP cho phép
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
