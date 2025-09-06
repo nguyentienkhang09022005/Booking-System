@@ -9,7 +9,7 @@ public class CorsCofig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://127.0.0.1:5500")
+                .allowedOrigins("http://localhost:5173")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")  // Cấu hình các phương thức HTTP cho phép
                 .allowedHeaders("*")
                 .allowCredentials(true);
