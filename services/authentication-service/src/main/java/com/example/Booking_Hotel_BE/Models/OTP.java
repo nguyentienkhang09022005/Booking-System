@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 @Data
@@ -24,8 +23,7 @@ public class OTP {
     @ManyToOne
     @JoinColumn(name = "id_user",
             referencedColumnName = "id_user",
-            foreignKey = @ForeignKey(name = "FK_OTP_USER"),
-            nullable = true
+            foreignKey = @ForeignKey(name = "FK_OTP_USER")
     )
     private Users user;
 
