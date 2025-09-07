@@ -16,11 +16,23 @@ public class GlobalExceptionHandler
     ResponseEntity<ApiResponse> handlingAccessDeniedException(AccessDeniedException exception)
     {
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-        return ResponseEntity.status(errorCode.getHttpStatus()).body(
+        return ResponseEntity.
+                status(errorCode.getHttpStatus()).body(
                 ApiResponse.builder()
                         .code(errorCode.getCode())
                         .message(errorCode.getMessage())
                         .build()
         );
+    }
+    // Xử lý lỗi custom (ApiException)
+    @ExceptionHandler(value = ApiException.class)
+    ResponseEntity<ApiResponse<?>> handlingApiException(ApiException exception) {
+        ErrorCode errorCode = exception.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 }

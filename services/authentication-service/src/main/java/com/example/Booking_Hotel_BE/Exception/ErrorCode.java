@@ -7,24 +7,23 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode
 {
     // Lỗi xác thực người dùng
-    UNAUTHENTICATED("UNAUTHENTICATED", "Unautheticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED("UNAUTHORIZED", "Unauthorized", HttpStatus.FORBIDDEN),
-    PASSWORD_MISMATCH("PASSWORD_MISMATCH", "Password Mismatch", HttpStatus.BAD_REQUEST),
+    UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED("UNAUTHORIZED", "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    PASSWORD_MISMATCH("PASSWORD_MISMATCH", "Mật khẩu không khớp", HttpStatus.BAD_REQUEST),
 
     // Lỗi người dùng
-    USER_NOT_FOUND("USER_NOT_FOUND", "User Not Found", HttpStatus.NOT_FOUND),
-    USER_EXISTS("USER_EXISTS", "User Exists", HttpStatus.CONFLICT),
+    USER_NOT_FOUND("USER_NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
+    USER_EXISTS("USER_EXISTS", "Người dùng đã tồn tại", HttpStatus.CONFLICT),
 
     // Lỗi Role
-    ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Role Not Found", HttpStatus.NOT_FOUND),
+    ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Không tìm thấy vai trò", HttpStatus.NOT_FOUND),
 
     // Lỗi Type User
-    TYPE_USER_NOT_FOUND("TYPE_USER_NOT_FOUND", "Type User Not Found", HttpStatus.NOT_FOUND),
+    TYPE_USER_NOT_FOUND("TYPE_USER_NOT_FOUND", "Không tìm thấy loại người dùng", HttpStatus.NOT_FOUND),
 
     // Lỗi OTP
-    OTP_NOT_FOUND("OTP_NOT_FOUND", "OTP Not Found", HttpStatus.NOT_FOUND),
-    OTP_NOT_EXIST_FOR_EMAIL("OTP_NOT_EXIST_FOR_EMAIL", "OTP not exist for email", HttpStatus.INTERNAL_SERVER_ERROR);
-
+    OTP_NOT_FOUND("OTP_NOT_FOUND", "Không tìm thấy OTP", HttpStatus.NOT_FOUND),
+    OTP_NOT_EXIST_FOR_EMAIL("OTP_NOT_EXIST_FOR_EMAIL", "Không tồn tại OTP cho email này", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;
     private final String message;
