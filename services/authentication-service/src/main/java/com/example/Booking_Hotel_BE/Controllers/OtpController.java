@@ -21,22 +21,40 @@ public class OtpController
 {
     OtpService otpService;
 
-    // Endpoint tạo OTP từ mail
-    @PostMapping("/verifyEmail")
-    public ApiResponse<Void> verifyEmail(@RequestBody CreateOtpRequest request)
+    // Endpoint tạo OTP cho quên mật khẩu
+    @PostMapping("/forgot_password")
+    public ApiResponse<Void> sendForgotPasswordOtp(@RequestBody CreateOtpRequest request)
     {
-        otpService.verifyEmail(request.getEmail());
+        otpService.sendForgotPasswordOtp(request.getEmail());
         return ApiResponse.<Void>builder()
                 .message("Đã gửi mã OTP về email của bạn.")
                 .build();
     }
 
-    // Endpoint xác thực OTP
-    @PostMapping("/verifyOtp")
-    public ApiResponse<ResponseEntity<String>> verifyOtp(@RequestBody OtpRequest request)
+    @PostMapping("/register")
+    public ApiResponse<Void> sendRegisterOtp(@RequestBody CreateOtpRequest request)
+    {
+        otpService.sendRegisterOtp(request.getEmail());
+        return ApiResponse.<Void>builder()
+                .message("Đã gửi mã OTP về email của bạn.")
+                .build();
+    }
+
+    // Endpoint xác thực OTP cho quên mật khẩu
+    @PostMapping("/verifyOtpForgotPassword")
+    public ApiResponse<ResponseEntity<String>> verifyForgotPasswordOtp(@RequestBody OtpRequest request)
     {
         return ApiResponse.<ResponseEntity<String>>builder()
-                .data(otpService.verifyOtp(request))
+                .data(otpService.verifyForgotPasswordOtp(request))
+                .build();
+    }
+
+    // Endpoint xác thực OTP cho đăng ký
+    @PostMapping("/verifyOtpRegister")
+    public ApiResponse<ResponseEntity<String>> verifyRegisterOtp(@RequestBody OtpRequest request)
+    {
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .data(otpService.verifyRegisterOtp(request))
                 .build();
     }
 

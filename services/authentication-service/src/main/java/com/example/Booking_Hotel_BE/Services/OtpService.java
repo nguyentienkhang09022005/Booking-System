@@ -39,8 +39,8 @@ public class OtpService
         return random.nextInt(100000,1000000);
     }
 
-    // Hàm xác thực OTP
-    public ResponseEntity<String> verifyOtp(OtpRequest request)
+    // Hàm xác thực OTP cho quên mật khẩu
+    public ResponseEntity<String> verifyForgotPasswordOtp(OtpRequest request)
     {
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -57,8 +57,21 @@ public class OtpService
         return ResponseEntity.ok("OTP verified!");
     }
 
-    // Hàm xác thực email để tạo OTP
-    public void verifyEmail(String email)
+    // Hàm xác thực OTP cho đăng ký
+    public ResponseEntity<String> verifyRegisterOtp(OtpRequest request) {
+        OTP checkOtp = otpRepository.findByOtp(request.getOtp())
+                .orElseThrow(() -> new ApiException(ErrorCode.OTP_NOT_FOUND));
+
+        if (checkOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            otpRepository.delete(checkOtp);
+            return new ResponseEntity<>("OTP expired!", HttpStatus.EXPECTATION_FAILED);
+        }
+
+        return ResponseEntity.ok("OTP verified!");
+    }
+
+    // Hàm tạo OTP cho quên mật khẩu
+    public void sendForgotPasswordOtp(String email)
     {
         var user = userRepository.findByEmail(email).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -80,8 +93,29 @@ public class OtpService
         otpRepository.save(saveOtp);
     }
 
+    public void sendRegisterOtp(String email)
+    {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new ApiException(ErrorCode.EMAIL_NOT_FOUND);
+        }
+        int otp = otpGenerator();
+        MainBody mainBody = MainBody.builder()
+                .to(email)
+                .subject("OTP for forgot password request")
+                .text("Mã OTP của bạn là: " + otp)
+                .build();
+
+        OTP saveOtp = OTP.builder()
+                .otp(otp)
+                .expiryTime(LocalDateTime.now().plusMinutes(10))// OTP có hiệu lực trong 2 phút
+                .build();
+
+        emailService.sendOtpEmail(mainBody);
+        otpRepository.save(saveOtp);
+    }
+
     // Hàm thay đổi mật khẩu
-    public ResponseEntity<String> changePassword (ChangePasswordRequest request)
+    public ResponseEntity<String> changePassword(ChangePasswordRequest request)
     {
         Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
