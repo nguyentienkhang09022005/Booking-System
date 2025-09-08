@@ -98,7 +98,7 @@ public class OtpService
         int otp = otpGenerator();
         MainBody mainBody = MainBody.builder()
                 .to(email)
-                .subject("OTP for forgot password request")
+                .subject("OTP for register request")
                 .text("Mã OTP của bạn là: " + otp)
                 .build();
 
