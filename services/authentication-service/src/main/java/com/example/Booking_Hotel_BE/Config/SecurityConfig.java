@@ -1,10 +1,15 @@
 package com.example.Booking_Hotel_BE.Config;
 
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
+import com.example.Booking_Hotel_BE.Mappers.UserMapper;
 import com.example.Booking_Hotel_BE.Services.AuthenService;
 import com.example.Booking_Hotel_BE.Services.CustomOAuth2UserService;
+import com.example.Booking_Hotel_BE.Services.RefreshTokenService;
 import com.example.Booking_Hotel_BE.Services.RegisterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -27,14 +32,26 @@ public class SecurityConfig
     private final CustomJwtDecoder customJwtDecoder;
     private final RegisterService registerService;
     private final AuthenService authenService;
+    private final RefreshTokenService refreshTokenService;
+    private final UserMapper userMapper;
+
+
+    @NonFinal
+    @Value("${jwt.refreshable-duration}")
+    protected Long REFRESHABLE_DURATION;
 
     public SecurityConfig(CustomJwtDecoder customJwtDecoder,
                           @Lazy RegisterService registerService,
-                          @Lazy AuthenService authenService)
+                          @Lazy AuthenService authenService,
+                          @Lazy RefreshTokenService refreshTokenService,
+                          @Lazy UserMapper userMapper)
     {
         this.customJwtDecoder = customJwtDecoder;
         this.registerService = registerService;
         this.authenService = authenService;
+        this.refreshTokenService = refreshTokenService;
+        this.userMapper = userMapper;
+
     }
 
     private static final String[] PUBLIC_ENDPOINTS = {
@@ -46,7 +63,7 @@ public class SecurityConfig
 
     @Bean
     public CustomOAuth2UserService customOAuth2UserService() {
-        return new CustomOAuth2UserService(registerService, authenService);
+        return new CustomOAuth2UserService(registerService, authenService, refreshTokenService, userMapper);
     }
 
     @Bean
@@ -76,9 +93,23 @@ public class SecurityConfig
                         .successHandler((request, response, authentication) -> {
                             CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
                             AuthenResponse authResponse = oauthUser.getAuthResponse();
+
+                            // Tạo Cookie lưu refreshToken
+                            Cookie refreshTokenCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
+                            refreshTokenCookie.setHttpOnly(true);
+                            refreshTokenCookie.setSecure(false);
+                            refreshTokenCookie.setPath("/");
+                            refreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
+                            response.addCookie(refreshTokenCookie);
+
+                            AuthenResponse safeResponse = AuthenResponse.builder()
+                                    .token(authResponse.getToken())
+                                    .infUser(authResponse.getInfUser())
+                                    .build();
+
                             response.setContentType("application/json");
                             response.setCharacterEncoding("UTF-8");
-                            new ObjectMapper().writeValue(response.getWriter(), authResponse);
+                            new ObjectMapper().writeValue(response.getWriter(), safeResponse);
                         })
                 )
                 .csrf(AbstractHttpConfigurer::disable);
