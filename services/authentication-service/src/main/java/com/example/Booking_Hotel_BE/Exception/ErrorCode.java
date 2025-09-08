@@ -14,7 +14,7 @@ public enum ErrorCode
     // Lỗi người dùng
     USER_NOT_FOUND("USER_NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
     USER_EXISTS("USER_EXISTS", "Người dùng đã tồn tại", HttpStatus.CONFLICT),
-    EMAIL_NOT_FOUND("USER_NOT_EMAIL", "Không tìm thấy email người dùng", HttpStatus.NOT_FOUND),
+    EMAIL_NOT_FOUND("EMAIL_NOT_FOUND", "Không tìm thấy email người dùng", HttpStatus.NOT_FOUND),
 
     // Lỗi Role
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Không tìm thấy vai trò", HttpStatus.NOT_FOUND),

@@ -95,9 +95,6 @@ public class OtpService
 
     public void sendRegisterOtp(String email)
     {
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new ApiException(ErrorCode.EMAIL_NOT_FOUND);
-        }
         int otp = otpGenerator();
         MainBody mainBody = MainBody.builder()
                 .to(email)
