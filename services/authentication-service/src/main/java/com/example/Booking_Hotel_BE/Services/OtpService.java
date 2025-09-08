@@ -52,9 +52,9 @@ public class OtpService
         if (checkOtp.getExpiryTime().isBefore(LocalDateTime.now()))
         {
             otpRepository.deleteById(checkOtp.getOtp());
-            return new ResponseEntity<>("OTP not exist for email", HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>("OTP không tồn tại cho email", HttpStatus.EXPECTATION_FAILED);
         }
-        return ResponseEntity.ok("OTP verified!");
+        return ResponseEntity.ok("OTP đã được xác thực!");
     }
 
     // Hàm xác thực OTP cho đăng ký
@@ -64,10 +64,10 @@ public class OtpService
 
         if (checkOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
             otpRepository.delete(checkOtp);
-            return new ResponseEntity<>("OTP expired!", HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>("OTP đã hết hạn!", HttpStatus.EXPECTATION_FAILED);
         }
 
-        return ResponseEntity.ok("OTP verified!");
+        return ResponseEntity.ok("OTP đã được xác thực!");
     }
 
     // Hàm tạo OTP cho quên mật khẩu
@@ -117,19 +117,27 @@ public class OtpService
     // Hàm thay đổi mật khẩu
     public ResponseEntity<String> changePassword(ChangePasswordRequest request)
     {
+        // Verify OTP
+        ResponseEntity<String> verifyResult = verifyForgotPasswordOtp(
+                new OtpRequest(request.getOtp(), request.getEmail())
+        );
+        if (!verifyResult.getStatusCode().is2xxSuccessful()) {
+            return verifyResult;
+        }
+
         Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
         if (!request.getNewPassword().equals(request.getConfirmPassword()))
         {
-            return new ResponseEntity<>("Enter the password again", HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>("Hãy nhập lại mật khẩu của bạn cho khớp", HttpStatus.EXPECTATION_FAILED);
         }
 
         String newPassword = passwordEncoder.encode(request.getNewPassword());
         user.setPasswordUser(newPassword);
         userRepository.save(user);
-        return ResponseEntity.ok("Password changed!");
+        return ResponseEntity.ok("Thay đổi mật khẩu thành công!");
     }
 }
 

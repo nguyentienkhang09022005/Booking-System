@@ -2,7 +2,6 @@ package com.example.Booking_Hotel_BE.Controllers;
 
 import com.example.Booking_Hotel_BE.Dto.Request.ChangePasswordRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.CreateOtpRequest;
-import com.example.Booking_Hotel_BE.Dto.Request.OtpRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.ApiResponse;
 import com.example.Booking_Hotel_BE.Services.OtpService;
 import lombok.AccessLevel;
@@ -37,24 +36,6 @@ public class OtpController
         otpService.sendRegisterOtp(request.getEmail());
         return ApiResponse.<Void>builder()
                 .message("Đã gửi mã OTP về email của bạn.")
-                .build();
-    }
-
-    // Endpoint xác thực OTP cho quên mật khẩu
-    @PostMapping("/verifyOtpForgotPassword")
-    public ApiResponse<ResponseEntity<String>> verifyForgotPasswordOtp(@RequestBody OtpRequest request)
-    {
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .data(otpService.verifyForgotPasswordOtp(request))
-                .build();
-    }
-
-    // Endpoint xác thực OTP cho đăng ký
-    @PostMapping("/verifyOtpRegister")
-    public ApiResponse<ResponseEntity<String>> verifyRegisterOtp(@RequestBody OtpRequest request)
-    {
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .data(otpService.verifyRegisterOtp(request))
                 .build();
     }
 

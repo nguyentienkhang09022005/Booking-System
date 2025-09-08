@@ -2,6 +2,7 @@ package com.example.Booking_Hotel_BE.Services;
 
 import com.example.Booking_Hotel_BE.Constant.PredefinedRole;
 import com.example.Booking_Hotel_BE.Constant.PredefinedTypeUser;
+import com.example.Booking_Hotel_BE.Dto.Request.OtpRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.RegisterRequest;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
 import com.example.Booking_Hotel_BE.Exception.ErrorCode;
@@ -18,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,9 +37,10 @@ public class RegisterService
     OtpRepository otpRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    OtpService otpService;
 
     // Hàm đăng ký lưu người dùng xuống cơ sở dữ liệu
-    public void register(RegisterRequest request)
+    public ResponseEntity<String> register(RegisterRequest request)
     {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw  new ApiException(ErrorCode.PASSWORD_MISMATCH);
@@ -47,6 +50,14 @@ public class RegisterService
 
         if (!otpRepository.existsById(request.getOtp()))
             throw new ApiException(ErrorCode.OTP_NOT_FOUND);
+
+        // Verify OTP
+        ResponseEntity<String> verifyResult = otpService.verifyRegisterOtp(
+                new OtpRequest(request.getOtp(), request.getEmail())
+        );
+        if (!verifyResult.getStatusCode().is2xxSuccessful()) {
+            return verifyResult;
+        }
 
         Users user = userMapper.toUser(request);
         String enCodePassword = passwordEncoder.encode(request.getPassword());
@@ -60,6 +71,7 @@ public class RegisterService
                 .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
         user.setTypeUser(typeUser);
         userRepository.save(user);
+        return ResponseEntity.ok("Đăng ký thành công!");
     }
 
     // Hàm lưu người dùng đăng nhập bằng Google xuống csdl

@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -20,10 +21,10 @@ public class RegisterController
 
     // Endpoint đăng ký
     @PostMapping
-    public ApiResponse<Void> Register(@RequestBody RegisterRequest request)
+    public ApiResponse<ResponseEntity<String>> Register(@RequestBody RegisterRequest request)
     {
         registerService.register(request);
-        return ApiResponse.<Void>builder()
+        return ApiResponse.<ResponseEntity<String>>builder()
                 .message("Successful registration")
                 .build();
     }

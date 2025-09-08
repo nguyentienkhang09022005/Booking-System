@@ -13,4 +13,5 @@ public class ChangePasswordRequest
     String email;
     String newPassword;
     String confirmPassword;
+    Integer otp;
 }
