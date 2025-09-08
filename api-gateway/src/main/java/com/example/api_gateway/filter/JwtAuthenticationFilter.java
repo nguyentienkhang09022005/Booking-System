@@ -24,7 +24,8 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter {
 
-    private final WebClient.Builder webClientBuilder; // dùng reactive WebClient để call AuthenService
+    final WebClient.Builder webClientBuilder; // dùng reactive WebClient để call AuthenService
+
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
