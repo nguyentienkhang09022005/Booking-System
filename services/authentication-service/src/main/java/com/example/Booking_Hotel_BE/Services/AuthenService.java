@@ -7,6 +7,7 @@ import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
 import com.example.Booking_Hotel_BE.Exception.ErrorCode;
+import com.example.Booking_Hotel_BE.Mappers.UserMapper;
 import com.example.Booking_Hotel_BE.Models.Invalidated_Token;
 import com.example.Booking_Hotel_BE.Models.Users;
 import com.example.Booking_Hotel_BE.Repositories.InvalidatedTokenRepository;
@@ -46,6 +47,7 @@ public class AuthenService
     UserRepository userRepository;
     RefreshTokenService refreshTokenService;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    UserMapper userMapper;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -84,6 +86,8 @@ public class AuthenService
         var user = userRepository
                 .findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordUser()))
+            throw new ApiException(ErrorCode.PASSWORD_MISMATCH);
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordUser());
 
@@ -109,6 +113,7 @@ public class AuthenService
 
         return AuthenResponse.builder()
                 .token(token)
+                .infUser(userMapper.toUserResponse(user))
                 .build();
     }
 

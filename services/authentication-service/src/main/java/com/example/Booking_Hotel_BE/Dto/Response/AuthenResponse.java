@@ -14,4 +14,5 @@ public class AuthenResponse
 {
     String token;
     String refreshToken;
+    UserResponse infUser;
 }
