@@ -58,7 +58,7 @@ public class SecurityConfig
             "/api/authen/**",
             "/api/register",
             "/api/otp/**",
-            "/api/google/login"
+            "/oauth2/authorization/google"
     };
 
     @Bean
