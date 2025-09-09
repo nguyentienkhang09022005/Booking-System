@@ -159,6 +159,7 @@ public class AuthenService
 
         return AuthenResponse.builder()
                 .token(newAccessToken)
+                .infUser(userMapper.toUserResponse(user))
                 .build();
     }
 
