@@ -101,19 +101,11 @@ public class AuthenService
                 refreshToken,
                 REFRESHABLE_DURATION
         );
-        // Tạo Cookie lưu refreshToken
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
-
+        // Set refreshToken cookie
         String cookieHeader = String.format(
-                "%s=%s; Max-Age=%d; Path=%s; HttpOnly; Secure; SameSite=None",
-                refreshTokenCookie.getName(),
-                refreshTokenCookie.getValue(),
-                refreshTokenCookie.getMaxAge(),
-                refreshTokenCookie.getPath()
+                "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+                refreshToken,
+                REFRESHABLE_DURATION
         );
         response.addHeader("Set-Cookie", cookieHeader);
 
@@ -158,13 +150,13 @@ public class AuthenService
                 REFRESHABLE_DURATION
         );
 
-        // Tạo Cookie lưu refreshToken
-        Cookie newRefreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
-        newRefreshTokenCookie.setHttpOnly(true);
-        newRefreshTokenCookie.setSecure(false);
-        newRefreshTokenCookie.setPath("/");
-        newRefreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
-        response.addCookie(newRefreshTokenCookie);
+        // Set lại cookie refreshToken mới
+        String cookieHeader = String.format(
+                "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+                newRefreshToken,
+                REFRESHABLE_DURATION
+        );
+        response.addHeader("Set-Cookie", cookieHeader);
 
         return AuthenResponse.builder()
                 .token(newAccessToken)
