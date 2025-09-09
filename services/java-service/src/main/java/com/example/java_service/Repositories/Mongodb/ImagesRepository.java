@@ -1,13 +1,13 @@
 package com.example.java_service.Repositories;
 
-import com.example.java_service.Models.Users;
+import com.example.java_service.Models.Images;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
 @Repository
-public interface UserRepository extends JpaRepository<Users, UUID>
+public interface ImagesRepository extends JpaRepository<Images, String>
 {
 
 }

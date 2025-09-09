@@ -104,12 +104,18 @@ public class AuthenService
         // Tạo Cookie lưu refreshToken
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(false);
+        refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
 
-        // Gắn Cookie vào response
-        response.addCookie(refreshTokenCookie);
+        String cookieHeader = String.format(
+                "%s=%s; Max-Age=%d; Path=%s; HttpOnly; Secure; SameSite=None",
+                refreshTokenCookie.getName(),
+                refreshTokenCookie.getValue(),
+                refreshTokenCookie.getMaxAge(),
+                refreshTokenCookie.getPath()
+        );
+        response.addHeader("Set-Cookie", cookieHeader);
 
         return AuthenResponse.builder()
                 .token(token)
