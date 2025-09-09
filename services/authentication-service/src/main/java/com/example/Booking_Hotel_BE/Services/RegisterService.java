@@ -113,6 +113,7 @@ public class RegisterService
         newUser.setEmail(email);
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
+        newUser.setTypeUser(getDefaultTypeUser());
 
         Roles role = roleRepository.findById(PredefinedRole.USER_ROLE)
                 .orElseThrow(() -> new ApiException(ErrorCode.ROLE_NOT_FOUND));
