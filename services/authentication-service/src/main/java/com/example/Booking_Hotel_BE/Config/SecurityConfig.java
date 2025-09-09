@@ -7,7 +7,6 @@ import com.example.Booking_Hotel_BE.Services.CustomOAuth2UserService;
 import com.example.Booking_Hotel_BE.Services.RefreshTokenService;
 import com.example.Booking_Hotel_BE.Services.RegisterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.Cookie;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -95,12 +94,12 @@ public class SecurityConfig
                             AuthenResponse authResponse = oauthUser.getAuthResponse();
 
                             // Tạo Cookie lưu refreshToken
-                            Cookie refreshTokenCookie = new Cookie("refreshToken", authResponse.getRefreshToken());
-                            refreshTokenCookie.setHttpOnly(true);
-                            refreshTokenCookie.setSecure(false);
-                            refreshTokenCookie.setPath("/");
-                            refreshTokenCookie.setMaxAge(Math.toIntExact(REFRESHABLE_DURATION));
-                            response.addCookie(refreshTokenCookie);
+                            String cookieHeader = String.format(
+                                    "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+                                    authResponse.getRefreshToken(),
+                                    REFRESHABLE_DURATION
+                            );
+                            response.addHeader("Set-Cookie", cookieHeader);
 
                             AuthenResponse safeResponse = AuthenResponse.builder()
                                     .token(authResponse.getToken())
