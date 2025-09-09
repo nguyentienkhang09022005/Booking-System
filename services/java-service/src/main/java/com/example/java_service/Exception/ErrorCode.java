@@ -6,8 +6,15 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode
 {
-    UNAUTHENTICATED("UNAUTHENTICATED", "Unautheticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED("UNAUTHORIZED", "Unauthorized", HttpStatus.FORBIDDEN);
+    // Lỗi xác thực người dùng
+    UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED("UNAUTHORIZED", "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+
+    // Lỗi người dùng
+    USER_NOT_FOUND("USER_NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
+
+    // Lỗi lưu hình ảnh
+    UPLOAD_FAILED("UPLOAD_FAILED", "tải ảnh thất bại", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;
     private final String message;

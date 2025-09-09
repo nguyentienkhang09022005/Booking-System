@@ -2,13 +2,23 @@ package com.example.java_service.Dto.Request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class IntrospectRequest
+public class HotelCreationRequest
 {
-    String token;
+    UUID idUser;
+    String hotelName;
+    String street;
+    String ward;
+    String city;
+    String description;
+    List<MultipartFile> listImageHotel;
 }

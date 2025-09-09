@@ -5,7 +5,7 @@ import com.example.java_service.Dto.Request.IntrospectRequest;
 import com.example.java_service.Dto.Response.IntrospectResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
-import com.example.java_service.Repositories.InvalidatedTokenRepository;
+import com.example.java_service.Repositories.Jpa.InvalidatedTokenRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;

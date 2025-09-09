@@ -1,5 +1,8 @@
 package com.example.java_service.Exception;
 
+import lombok.Getter;
+
+@Getter
 public class ApiException extends RuntimeException
 {
     private ErrorCode errorCode;

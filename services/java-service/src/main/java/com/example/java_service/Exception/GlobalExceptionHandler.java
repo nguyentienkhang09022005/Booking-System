@@ -10,17 +10,28 @@ import java.nio.file.AccessDeniedException;
 
 @ControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler
-{
+public class GlobalExceptionHandler {
     @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<ApiResponse> handlingAccessDeniedException(AccessDeniedException exception)
-    {
+    ResponseEntity<ApiResponse> handlingAccessDeniedException(AccessDeniedException exception) {
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-        return ResponseEntity.status(errorCode.getHttpStatus()).body(
-                ApiResponse.builder()
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.builder()
                         .code(errorCode.getCode())
                         .message(errorCode.getMessage())
                         .build()
         );
+    }
+
+    @ExceptionHandler(value = ApiException.class)
+    ResponseEntity<ApiResponse<?>> handlingException(ApiException exception)
+    {
+        ErrorCode errorCode = exception.getErrorCode();
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 }
