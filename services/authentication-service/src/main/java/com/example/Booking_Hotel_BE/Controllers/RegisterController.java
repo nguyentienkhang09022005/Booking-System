@@ -23,9 +23,9 @@ public class RegisterController
     @PostMapping
     public ApiResponse<ResponseEntity<String>> Register(@RequestBody RegisterRequest request)
     {
-        registerService.register(request);
+        var response = registerService.register(request);
         return ApiResponse.<ResponseEntity<String>>builder()
-                .message("Successful registration")
+                .message(response.getBody())
                 .build();
     }
 }

@@ -2,27 +2,29 @@ package com.example.Booking_Hotel_BE.Services;
 
 import com.example.Booking_Hotel_BE.Constant.PredefinedRole;
 import com.example.Booking_Hotel_BE.Constant.PredefinedTypeUser;
+import com.example.Booking_Hotel_BE.Constant.TypeImageConstant;
 import com.example.Booking_Hotel_BE.Dto.Request.OtpRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.RegisterRequest;
+import com.example.Booking_Hotel_BE.Dto.Response.ApiResponse;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
 import com.example.Booking_Hotel_BE.Exception.ErrorCode;
 import com.example.Booking_Hotel_BE.Mappers.UserMapper;
+import com.example.Booking_Hotel_BE.Models.Images;
 import com.example.Booking_Hotel_BE.Models.Roles;
 import com.example.Booking_Hotel_BE.Models.TypeUser;
 import com.example.Booking_Hotel_BE.Models.Users;
-import com.example.Booking_Hotel_BE.Repositories.OtpRepository;
-import com.example.Booking_Hotel_BE.Repositories.RoleRepository;
-import com.example.Booking_Hotel_BE.Repositories.TypeUserRepository;
-import com.example.Booking_Hotel_BE.Repositories.UserRepository;
+import com.example.Booking_Hotel_BE.Repositories.*;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -34,45 +36,71 @@ public class RegisterService
     UserRepository userRepository;
     RoleRepository roleRepository;
     TypeUserRepository typeUserRepository;
+    ImageRepository imageRepository;
     OtpRepository otpRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     OtpService otpService;
 
     // Hàm đăng ký lưu người dùng xuống cơ sở dữ liệu
-    public ResponseEntity<String> register(RegisterRequest request)
-    {
-        if (!request.getPassword().equals(request.getConfirmPassword()))
-            throw  new ApiException(ErrorCode.PASSWORD_MISMATCH);
+    public ResponseEntity<String> register(RegisterRequest request) {
+        Optional<Users> userOpt = userRepository.findByEmail(request.getEmail());
 
-        if (userRepository.existsByEmail(request.getEmail()))
-            throw new ApiException(ErrorCode.USER_EXISTS);
+        // Nếu user đã tồn tại
+        if (userOpt.isPresent()) {
+            Users user = userOpt.get();
 
-        if (!otpRepository.existsById(request.getOtp()))
+            if (user.getPasswordUser() != null) {
+                throw new ApiException(ErrorCode.USER_EXISTS);
+            }
+
+            // Nếu login google rồi thì chỉ bổ sung password
+            validatePasswordAndOtp(request);
+
+            user.setPasswordUser(passwordEncoder.encode(request.getPassword()));
+            userRepository.save(user);
+            return ResponseEntity.ok("Bổ sung mật khẩu cho tài khoản Google thành công!");
+        }
+
+        // Chưa có user thì tạo mới
+        validatePasswordAndOtp(request);
+
+        Users newUser = userMapper.toUser(request);
+        newUser.setPasswordUser(passwordEncoder.encode(request.getPassword()));
+        newUser.setRole(getDefaultRole());
+        newUser.setTypeUser(getDefaultTypeUser());
+
+        userRepository.save(newUser);
+        return ResponseEntity.ok("Đăng ký thành công!");
+    }
+
+    private void validatePasswordAndOtp(RegisterRequest request) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new ApiException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        if (!otpRepository.existsById(request.getOtp())) {
             throw new ApiException(ErrorCode.OTP_NOT_FOUND);
+        }
 
-        // Verify OTP
         ResponseEntity<String> verifyResult = otpService.verifyRegisterOtp(
                 new OtpRequest(request.getOtp(), request.getEmail())
         );
         if (!verifyResult.getStatusCode().is2xxSuccessful()) {
-            return verifyResult;
+            throw new ApiException(ErrorCode.OTP_INVALID);
         }
-
-        Users user = userMapper.toUser(request);
-        String enCodePassword = passwordEncoder.encode(request.getPassword());
-        user.setPasswordUser(enCodePassword);
-
-        Roles role = roleRepository.findById(PredefinedRole.USER_ROLE)
-                .orElseThrow(() -> new ApiException(ErrorCode.ROLE_NOT_FOUND));
-        user.setRole(role);
-
-        TypeUser typeUser = typeUserRepository.findById(PredefinedTypeUser.TYPE_USER_DEFAULT)
-                .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
-        user.setTypeUser(typeUser);
-        userRepository.save(user);
-        return ResponseEntity.ok("Đăng ký thành công!");
     }
+
+    private Roles getDefaultRole() {
+        return roleRepository.findById(PredefinedRole.USER_ROLE)
+                .orElseThrow(() -> new ApiException(ErrorCode.ROLE_NOT_FOUND));
+    }
+
+    private TypeUser getDefaultTypeUser() {
+        return typeUserRepository.findById(PredefinedTypeUser.TYPE_USER_DEFAULT)
+                .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
+    }
+
 
     // Hàm lưu người dùng đăng nhập bằng Google xuống csdl
     @Transactional
@@ -94,12 +122,13 @@ public class RegisterService
 
         Users savedUser = userRepository.save(newUser);
 
-//        // Lưu ảnh đại diện
-//        Image image = new Image();
-//        image.setIdUser(newUser);
-//        image.setUrl(urlAvatar);
-//        imageRepository.save(image);
-
+        // Lưu ảnh đại diện
+        Images image = new Images();
+        image.setRefId(newUser.getIdUser().toString());
+        image.setUrl(urlAvatar);
+        image.setType(TypeImageConstant.USER_TYPE);
+        image.setUploadedAt(LocalDateTime.now());
+        imageRepository.save(image);
         return savedUser;
     }
 }

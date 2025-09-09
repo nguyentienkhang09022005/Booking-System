@@ -51,9 +51,9 @@ public class CustomOAuth2UserService extends OidcUserService
         String lastName = "";
         if (name != null && !name.isEmpty()) {
             String[] parts = name.trim().split("\\s+");
-            lastName = parts[0];
+            firstName = parts[0];
             if (parts.length > 1) {
-                firstName = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+                lastName = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length));
             }
         }
         Users user = registerService.processOAuth2User(email, firstName, lastName, urlAvatar);

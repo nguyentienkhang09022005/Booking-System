@@ -2,7 +2,6 @@ package com.example.Booking_Hotel_BE.Dto.Response;
 
 import com.example.Booking_Hotel_BE.Models.Roles;
 import com.example.Booking_Hotel_BE.Models.TypeUser;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

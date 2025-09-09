@@ -26,7 +26,8 @@ public enum ErrorCode
 
     // Lỗi OTP
     OTP_NOT_FOUND("OTP_NOT_FOUND", "Không tìm thấy OTP", HttpStatus.NOT_FOUND),
-    OTP_NOT_EXIST_FOR_EMAIL("OTP_NOT_EXIST_FOR_EMAIL", "Không tồn tại OTP cho email này", HttpStatus.INTERNAL_SERVER_ERROR);
+    OTP_NOT_EXIST_FOR_EMAIL("OTP_NOT_EXIST_FOR_EMAIL", "Không tồn tại OTP cho email này", HttpStatus.INTERNAL_SERVER_ERROR),
+    OTP_INVALID("OTP_INVALID", "OTP đã hết hạn", HttpStatus.BAD_REQUEST),;
 
     private final String code;
     private final String message;
