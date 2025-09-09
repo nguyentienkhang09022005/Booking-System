@@ -2,7 +2,6 @@ package com.example.Booking_Hotel_BE.Services;
 
 import com.example.Booking_Hotel_BE.Dto.Request.AuthenRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.IntrospectRequest;
-import com.example.Booking_Hotel_BE.Dto.Request.LogoutRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
@@ -164,12 +163,18 @@ public class AuthenService
     }
 
     // Hàm Logout Token
-    public void Logout (LogoutRequest request) throws ParseException, JOSEException {
+    public void Logout (HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException {
         try {
-            SignedJWT signedJWT = SignedJWT.parse(request.getToken());
+            // Lấy refreshToken từ cookie
+            String refreshToken = Arrays.stream(request.getCookies())
+                    .filter(c -> "refreshToken".equals(c.getName()))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHENTICATED));
 
-            var idUser = signedJWT.getJWTClaimsSet().getStringClaim("idUser"); // Lấy idUser của Token
-            var signToken = verifyToken(request.getToken());
+            var signToken = verifyToken(refreshToken);
+
+            var idUser = signToken.getJWTClaimsSet().getStringClaim("idUser"); // Lấy idUser của Token
             refreshTokenService.deleteRefreshToken(idUser); // Xóa refresh Token trong redis
 
             String jit = signToken.getJWTClaimsSet().getJWTID();
@@ -182,6 +187,9 @@ public class AuthenService
                     .build();
 
             invalidatedTokenRepository.save(invalidatedToken);
+
+            // Xóa cookie chứa refreshToken
+            response.addHeader("Set-Cookie", "refreshToken=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=None");
         }catch (ApiException e){
             log.error("Cannot verify token", e);
         }

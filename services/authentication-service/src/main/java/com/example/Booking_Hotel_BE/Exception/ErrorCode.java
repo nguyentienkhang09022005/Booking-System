@@ -1,8 +1,10 @@
 package com.example.Booking_Hotel_BE.Exception;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
+@Slf4j
 @Getter
 public enum ErrorCode
 {

@@ -2,8 +2,6 @@ package com.example.Booking_Hotel_BE.Controllers;
 
 import com.example.Booking_Hotel_BE.Dto.Request.AuthenRequest;
 import com.example.Booking_Hotel_BE.Dto.Request.IntrospectRequest;
-import com.example.Booking_Hotel_BE.Dto.Request.LogoutRequest;
-import com.example.Booking_Hotel_BE.Dto.Request.RefreshTokenRequest;
 import com.example.Booking_Hotel_BE.Dto.Response.ApiResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
 import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
@@ -42,8 +40,8 @@ public class AuthenController
 
     // Endpoint đăng xuất TOKEN
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
-        authenService.Logout(request);
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException {
+        authenService.Logout(request, response);
         return ApiResponse.<Void>builder()
                 .build();
     }
@@ -61,7 +59,7 @@ public class AuthenController
 
     // Endpoint refresh TOKEN
     @PostMapping("/refresh")
-    public ApiResponse<AuthenResponse> logout(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException
+    public ApiResponse<AuthenResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException
     {
         var result = authenService.refreshToken(request, response);
         return ApiResponse.<AuthenResponse>builder()
