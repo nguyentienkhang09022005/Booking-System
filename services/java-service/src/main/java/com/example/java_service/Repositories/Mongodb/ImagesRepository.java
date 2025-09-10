@@ -4,8 +4,10 @@ import com.example.java_service.Models.Images;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ImagesRepository extends MongoRepository<Images, String>
 {
-
+    List<Images> findByRefIdOrderByUploadedAtAsc(String idHotel);
 }
