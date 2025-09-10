@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,13 +26,13 @@ public class HotelController
 
     // Endpoint tạo OTP cho quên mật khẩu
     @PostMapping(value = "/creation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<HotelCreationResponse> creationHotel(@RequestPart("request") HotelCreationRequest request,
-                                                            @RequestPart(value = "files", required = false) List<MultipartFile> files)
+    public ApiResponse<ResponseEntity<String>> creationHotel(@RequestPart("request") HotelCreationRequest request,
+                                                     @RequestPart(value = "files", required = false) List<MultipartFile> files)
     {
         request.setListImageHotel(files);
-        return ApiResponse.<HotelCreationResponse>builder()
-                .message("Tạo khách sạn thành công!")
-                .data(hotelService.saveHotel(request))
+        var response = hotelService.saveHotel(request);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
                 .build();
     }
 }

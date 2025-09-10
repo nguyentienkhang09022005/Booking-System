@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,7 +44,7 @@ public class HotelService
     // Thêm khách sạn mới
 
     @Transactional
-    public HotelCreationResponse saveHotel(HotelCreationRequest request)
+    public ResponseEntity<String> saveHotel(HotelCreationRequest request)
     {
         Users user = userRepository.findById(request.getIdUser()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -79,10 +80,7 @@ public class HotelService
                 imagesRepository.saveAll(imagesListToSave);
             }
         }
-        HotelCreationResponse hotelCreationResponse = hotelMapper.toHotelCreationResponse(hotel);
-        hotelCreationResponse.setUsers(user);
-        hotelCreationResponse.setImageHotelUrl(imageHotelUrls);
-        return hotelCreationResponse;
+        return ResponseEntity.ok("Tạo khách sạn thành công!");
     }
 
     // Sửa thông tin khách sạn
