@@ -1,6 +1,5 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Constant.TypeImageConstant;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Impl.ImageUploadData;
@@ -66,7 +65,6 @@ public class HotelImageService
             List<Images> imagesList = urls.stream().map(url -> {
                 Images image = new Images();
                 image.setUrl(url);
-                image.setType(TypeImageConstant.HOTEL_TYPE);
                 image.setRefId(hotel.getIdHotel().toString());
                 image.setUploadedAt(LocalDateTime.now());
                 return image;

@@ -20,5 +20,5 @@ public class HotelCreationRequest
     String ward;
     String city;
     String description;
-    List<MultipartFile> listImageHotel;
+    List<String> listImageHotel;
 }

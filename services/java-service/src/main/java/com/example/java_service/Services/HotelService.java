@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,8 +85,15 @@ public class HotelService
         hotel.setUsers(user);
         Hotel savedHotel = hotelRepository.save(hotel);
 
+        // Lưu ảnh từ URL đã upload
         if (request.getListImageHotel() != null && !request.getListImageHotel().isEmpty()) {
-            hotelImageService.uploadImageHotelAsync(request.getListImageHotel(), savedHotel);
+            List<Images> images = request.getListImageHotel().stream().map(url -> {
+                Images image = new Images();
+                image.setUrl(url);
+                image.setRefId(savedHotel.getIdHotel().toString());
+                return image;
+            }).toList();
+            imagesRepository.saveAll(images);
         }
         return ResponseEntity.ok("Tạo khách sạn thành công!");
     }

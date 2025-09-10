@@ -28,18 +28,17 @@ public class HotelController
 {
     HotelService hotelService;
 
-    // Endpoint tạo OTP cho quên mật khẩu
-    @PostMapping(value = "/creation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<ResponseEntity<String>> creationHotel(@RequestPart("request") HotelCreationRequest request,
-                                                     @RequestPart(value = "files", required = false) List<MultipartFile> files)
+    // Endpoint tạo khách sạn mới
+    @PostMapping("/creation")
+    public ApiResponse<ResponseEntity<String>> creationHotel(@RequestBody HotelCreationRequest request)
     {
-        request.setListImageHotel(files);
         var response = hotelService.saveHotel(request);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();
     }
 
+    // Endpoint lấy danh sách khách sạn
     @GetMapping( "/getlist")
     public ApiResponse<List<GetListHotelResponse>> listHotel(@RequestBody GetListHotelRequest request)
     {
