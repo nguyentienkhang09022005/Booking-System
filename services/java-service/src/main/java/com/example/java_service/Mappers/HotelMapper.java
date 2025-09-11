@@ -1,11 +1,11 @@
 package com.example.java_service.Mappers;
 
 import com.example.java_service.Dto.Request.HotelCreationRequest;
+import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Dto.Response.HotelCreationResponse;
 import com.example.java_service.Models.Hotel;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface HotelMapper
@@ -19,4 +19,7 @@ public interface HotelMapper
     @Mapping(target = "imageHotelUrl", ignore = true)
     @Mapping(target = "favorite", ignore = true)
     GetListHotelResponse toGetListHotelResponse(Hotel hotel);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateHotelFromRequest(HotelUpdateRequest request, @MappingTarget Hotel hotel);
 }

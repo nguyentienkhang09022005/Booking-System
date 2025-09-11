@@ -1,7 +1,7 @@
 package com.example.java_service.Controllers;
 
-import com.example.java_service.Dto.Request.GetListHotelRequest;
 import com.example.java_service.Dto.Request.HotelCreationRequest;
+import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Services.HotelService;
@@ -40,7 +40,28 @@ public class HotelController
     {
         return ApiResponse.<List<GetListHotelResponse>>builder()
                 .message("Lấy danh sách khách sạn thành công!")
-                .data(hotelService.getListHotel(new GetListHotelRequest(idUser)))
+                .data(hotelService.getListHotel(idUser))
+                .build();
+    }
+
+    // Endpoint xóa khách sạn
+    @DeleteMapping( "/delele")
+    public ApiResponse<ResponseEntity<String>> deleteHotel(@RequestParam UUID idHotel)
+    {
+        var response = hotelService.deleteHotel(idHotel);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+
+    // Endpoint cập nhật khách sạn
+    @PatchMapping( "/update")
+    public ApiResponse<ResponseEntity<String>> updateHotel(@RequestParam UUID idHotel,
+                                                           @RequestBody HotelUpdateRequest request)
+    {
+        var response = hotelService.updateHotel(idHotel, request);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
                 .build();
     }
 }

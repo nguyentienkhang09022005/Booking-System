@@ -1,7 +1,7 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Dto.Request.GetListHotelRequest;
 import com.example.java_service.Dto.Request.HotelCreationRequest;
+import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,12 +37,11 @@ public class HotelService
     FavoriteRepository favoriteRepository;
     ImagesRepository imagesRepository;
     HotelMapper hotelMapper;
-    HotelImageService hotelImageService;
 
     // Lấy danh sách khách sạn
-    public List<GetListHotelResponse> getListHotel(GetListHotelRequest request)
+    public List<GetListHotelResponse> getListHotel(UUID idUser)
     {
-        Users user = userRepository.findById(request.getIdUser()).orElseThrow(
+        Users user = userRepository.findById(idUser).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
         List<Hotel> hotels = hotelRepository.findAll(); // lấy danh sách hotel
@@ -98,5 +98,35 @@ public class HotelService
     }
 
     // Sửa thông tin khách sạn
+    public ResponseEntity<String> updateHotel(UUID idHotel, HotelUpdateRequest request)
+    {
+        Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
+                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+        hotelMapper.updateHotelFromRequest(request, hotel);
+        Hotel updateHotel = hotelRepository.save(hotel);
+
+        // Nếu có upload ảnh mới
+        if (request.getListImageHotel() != null && !request.getListImageHotel().isEmpty()) {
+            List<Images> images = request.getListImageHotel().stream().map(url -> {
+                Images image = new Images();
+                image.setUrl(url);
+                image.setRefId(updateHotel.getIdHotel().toString());
+                return image;
+            }).toList();
+            imagesRepository.saveAll(images);
+        }
+        return ResponseEntity.ok("Cập nhật khách sạn thành công!");
+    }
+
     // Xóa khách sạn
+    public ResponseEntity<String> deleteHotel(UUID idHotel)
+    {
+        Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
+                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+        imagesRepository.deleteByRefId(idHotel.toString());
+        hotelRepository.delete(hotel);
+        return ResponseEntity.ok("Xóa khách sạn thành công!");
+    }
 }
