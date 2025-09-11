@@ -52,13 +52,20 @@ public class SecurityConfig
         this.userMapper = userMapper;
 
     }
+    // Tách riêng các endpoint của Swagger để dễ quản lý
+    private static final String[] SWAGGER_ENDPOINTS = {
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/swagger-ui.html"
+    };
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/health",
             "/api/authen/**",
             "/api/register",
             "/api/otp/**",
-            "/oauth2/authorization/google"
+            "/oauth2/authorization/google",
     };
 
     @Bean
@@ -76,6 +83,7 @@ public class SecurityConfig
                 // Cấu hình các Endpoint
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(SWAGGER_ENDPOINTS).permitAll() // Đảm bảo Swagger được cho phép
                         .anyRequest().authenticated()
                 )
                 // Cấu hình đăng nhập tạo TOKEN
