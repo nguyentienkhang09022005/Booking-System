@@ -16,6 +16,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig
 {
+
+    private static final String[] SWAGGER_ENDPOINTS = {
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/swagger-ui.html"
+    };
+
     private static final String[] PUBLIC_ENDPOINTS = {
             "/users/**",
             "/health"
@@ -31,6 +39,7 @@ public class SecurityConfig
                 // Cấu hình các Endpoint
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(SWAGGER_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
                 // Cấu hình đăng nhập tạo TOKEN
