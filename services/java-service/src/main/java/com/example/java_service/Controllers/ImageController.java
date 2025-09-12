@@ -51,4 +51,15 @@ public class ImageController
                 .message(response.getBody())
                 .build();
     }
+
+    // Endpoint sửa ảnh Hotel, Room,...
+    @PutMapping(value = "/updateImages", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ResponseEntity<List<String>>> updateImages(@RequestPart(value = "files", required = false) List<MultipartFile> images,
+                                                                  @RequestParam String refId)
+    {
+        return ApiResponse.<ResponseEntity<List<String>>>builder()
+                .message("Cập nhật hình ảnh thành công!")
+                .data(imageService.updateImages(images, refId))
+                .build();
+    }
 }

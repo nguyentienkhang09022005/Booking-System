@@ -28,6 +28,8 @@ public enum ErrorCode
     // Lỗi lưu hình ảnh
     IMAGE_ID_LIST_EMPTY("IMAGE_ID_LIST_EMPTY", "Danh sách id hình ảnh không được để trống!", HttpStatus.BAD_REQUEST),
     UPLOAD_FAILED("UPLOAD_FAILED", "tải ảnh thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
+    IMAGE_FILE_REQUIRED("IMAGE_FILE_REQUIRED", "Vui lòng nhập hình ảnh!", HttpStatus.BAD_REQUEST),
+    INVALID_IMAGE_REFID("INVALID_IMAGE_REFID", "Thiếu id đối tượng sở hữu hình ảnh", HttpStatus.BAD_REQUEST),
 
     // Lỗi khách sạn
     HOTEL_NOT_FOUND("HOTEL_NOT_FOUND", "Không tìm thấy khách sạn!", HttpStatus.NOT_FOUND),;
