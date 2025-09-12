@@ -40,4 +40,15 @@ public class ImageController
                 .message(response.getBody())
                 .build();
     }
+
+    // Endpoint sửa ảnh đại diện
+    @PutMapping(value = "/updateAvatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ResponseEntity<String>> updateAvatar(@RequestPart(value = "files", required = false) MultipartFile avatar,
+                                                            @RequestParam String refId)
+    {
+        var response = imageService.updateAvatar(avatar, refId);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
 }

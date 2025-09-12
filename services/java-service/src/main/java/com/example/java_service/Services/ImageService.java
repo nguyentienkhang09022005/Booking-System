@@ -3,6 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Impl.UploadImageFile;
+import com.example.java_service.Models.Images;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,18 @@ public class ImageService
         }).toList();
     }
 
-    // Hàm sửa ảnh
+    // Hàm sửa ảnh đại diện
+    public ResponseEntity<String> updateAvatar(MultipartFile file, String refId)
+    {
+        imagesRepository.deleteByRefId(refId);
+        try {
+            return ResponseEntity.ok(uploadImageFile.uploadImage(file));
+        } catch (Exception e) {
+            throw new ApiException(ErrorCode.UPLOAD_FAILED);
+        }
+    }
+
+    // Hàm sửa ảnh với entity có nhiều ảnh
 
     // Hàm xóa ảnh
     public ResponseEntity<String> deleteImage(List<String> idImages)

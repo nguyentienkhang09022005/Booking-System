@@ -3,6 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Constant.PredefinedRole;
 import com.example.java_service.Constant.PredefinedTypeUser;
 import com.example.java_service.Dto.Request.UserCreationRequest;
+import com.example.java_service.Dto.Request.UserUpdateRequest;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.UserMapper;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -69,6 +71,11 @@ public class UserService
                 throw new ApiException(ErrorCode.PHONE_EXISTS);
             }
         }
+        // Bắt buộc nhập sđt
+        if (request.getPhone() == null) {
+            throw new ApiException(ErrorCode.PHONE_REQUIRED);
+        }
+
         // Kiểm tra kích thước số điện thoại
         if (request.getPhone().length() < MIN_LENGTH_OF_PHONE || request.getPhone().length() > MAX_LENGTH_OF_PHONE) {
             throw new ApiException(ErrorCode.INVALID_PHONE_LENGTH);
@@ -86,14 +93,66 @@ public class UserService
         Users savedUser = userRepository.save(newUser);
         // Lưu ảnh từ URL đã upload
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            Images image = new Images();
-            image.setUrl(request.getAvatar());
-            image.setRefId(savedUser.getIdUser().toString());
-            imagesRepository.save(image);
+            Images avatar = new Images();
+            avatar.setUrl(request.getAvatar());
+            avatar.setRefId(savedUser.getIdUser().toString());
+            imagesRepository.save(avatar);
         }
         return ResponseEntity.ok().body("Tạo người dùng thành công");
     }
 
-        // Hàm sửa thông tin người dùng
-        // Hàm xóa người dùng
+    // Hàm sửa thông tin người dùng
+    public ResponseEntity<String> updateUser(UserUpdateRequest request, UUID idUser)
+    {
+        Users user = userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+        if (request.getPhone() == null) {
+            throw new ApiException(ErrorCode.PHONE_REQUIRED);
+        }
+
+        if (request.getPhone().length() < MIN_LENGTH_OF_PHONE || request.getPhone().length() > MAX_LENGTH_OF_PHONE) {
+            throw new ApiException(ErrorCode.INVALID_PHONE_LENGTH);
+        }
+
+        if (!request.getPhone().matches("\\d+")) {
+            throw new ApiException(ErrorCode.INVALID_PHONE_FORMAT);
+        }
+
+        if (request.getEmail() != null) {
+            userRepository.findByEmail(request.getEmail()).ifPresent(existing -> {
+                if (!existing.getIdUser().equals(idUser)) {
+                    throw new ApiException(ErrorCode.EMAIL_EXISTS);
+                }
+            });
+        }
+        userRepository.findByPhone(request.getPhone()).ifPresent(existing -> {
+            if (!existing.getIdUser().equals(idUser)) {
+                throw new ApiException(ErrorCode.PHONE_EXISTS);
+            }
+        });
+
+        userMapper.updateUserFromRequest(request, user);
+        Users updateUser = userRepository.save(user);
+
+        // Nếu có upload ảnh mới
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+                Images avatar = new Images();
+                avatar.setUrl(request.getAvatar());
+                avatar.setRefId(updateUser.getIdUser().toString());
+            imagesRepository.save(avatar);
+        }
+        return ResponseEntity.ok("Cập nhật thông tin người dùng thành công!");
+    }
+
+    // Hàm xóa người dùng
+    public ResponseEntity<String> deleteUser(UUID idUser)
+    {
+        Users user = userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
+        );
+        userRepository.delete(user);
+        imagesRepository.deleteByRefId(idUser.toString());
+        return ResponseEntity.ok("Xóa người dùng thành công!");
+    }
 }

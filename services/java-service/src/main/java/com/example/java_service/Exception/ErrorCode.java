@@ -17,6 +17,7 @@ public enum ErrorCode
     PHONE_EXISTS("PHONE_EXISTS", "Số điện thoại dùng đã tồn tại!", HttpStatus.CONFLICT),
     INVALID_PHONE_LENGTH("INVALID_PHONE_LENGTH", "Số điện thoại phải từ 8 đến 12 số! ", HttpStatus.BAD_REQUEST),
     INVALID_PHONE_FORMAT("INVALID_PHONE_FORMAT", "Số điện thoại chỉ chứa số!", HttpStatus.BAD_REQUEST),
+    PHONE_REQUIRED("PHONE_REQUIRED", "Vui lòng nhập số đện thoại", HttpStatus.BAD_REQUEST),
 
     // Lỗi Role
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Không tìm thấy vai trò!", HttpStatus.NOT_FOUND),
