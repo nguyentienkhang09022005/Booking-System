@@ -61,7 +61,7 @@ public class Users
     private String passwordUser;
 
     @Column(name = "total_amount", precision = 10, scale = 2)
-    private BigDecimal totalAmount;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @CreationTimestamp
     @Column(name = "create_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.HotelCreationRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
+import com.example.java_service.Dto.Response.HotelResponse;
 import com.example.java_service.Services.HotelService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +27,11 @@ public class HotelController
 
     // Endpoint tạo khách sạn mới
     @PostMapping("/creation")
-    public ApiResponse<ResponseEntity<String>> creationHotel(@RequestBody HotelCreationRequest request)
+    public ApiResponse<HotelResponse> creationHotel(@RequestBody HotelCreationRequest request)
     {
-        var response = hotelService.saveHotel(request);
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .message(response.getBody())
+        return ApiResponse.<HotelResponse>builder()
+                .message("Tạo khách sạn thành công!")
+                .data(hotelService.saveHotel(request))
                 .build();
     }
 
@@ -56,12 +57,12 @@ public class HotelController
 
     // Endpoint cập nhật khách sạn
     @PatchMapping( "/update")
-    public ApiResponse<ResponseEntity<String>> updateHotel(@RequestParam UUID idHotel,
+    public ApiResponse<HotelResponse> updateHotel(@RequestParam UUID idHotel,
                                                            @RequestBody HotelUpdateRequest request)
     {
-        var response = hotelService.updateHotel(idHotel, request);
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .message(response.getBody())
+        return ApiResponse.<HotelResponse>builder()
+                .message("Thay đổi thông tin khách sạn thành công!")
+                .data(hotelService.updateHotel(idHotel, request))
                 .build();
     }
 }

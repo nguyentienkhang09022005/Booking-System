@@ -3,9 +3,12 @@ package com.example.java_service.Services;
 import com.example.java_service.Dto.Request.HotelCreationRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
+import com.example.java_service.Dto.Response.HotelResponse;
+import com.example.java_service.Dto.Response.OwnerHotelResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.HotelMapper;
+import com.example.java_service.Mappers.UserMapper;
 import com.example.java_service.Models.Favorite;
 import com.example.java_service.Models.Hotel;
 import com.example.java_service.Models.Images;
@@ -37,6 +40,7 @@ public class HotelService
     FavoriteRepository favoriteRepository;
     ImagesRepository imagesRepository;
     HotelMapper hotelMapper;
+    UserMapper userMapper;
 
     // Lấy danh sách khách sạn
     public List<GetListHotelResponse> getListHotel(UUID idUser)
@@ -74,7 +78,7 @@ public class HotelService
     // Lấy thông tin chi tiết của khách sạn qua id
 
     // Thêm khách sạn mới
-    public ResponseEntity<String> saveHotel(HotelCreationRequest request)
+    public HotelResponse saveHotel(HotelCreationRequest request)
     {
         Users user = userRepository.findById(request.getIdUser()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -94,14 +98,21 @@ public class HotelService
             }).toList();
             imagesRepository.saveAll(images);
         }
-        return ResponseEntity.ok("Tạo khách sạn thành công!");
+        OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
+        var hotelResponse = hotelMapper.toHotelCreationResponse(savedHotel);
+        hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
+        return hotelResponse;
     }
 
     // Sửa thông tin khách sạn
-    public ResponseEntity<String> updateHotel(UUID idHotel, HotelUpdateRequest request)
+    public HotelResponse updateHotel(UUID idHotel, HotelUpdateRequest request)
     {
         Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+
+        Users user = userRepository.findById(hotel.getUsers().getIdUser()).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
         hotelMapper.updateHotelFromRequest(request, hotel);
         Hotel updateHotel = hotelRepository.save(hotel);
@@ -116,7 +127,10 @@ public class HotelService
             }).toList();
             imagesRepository.saveAll(images);
         }
-        return ResponseEntity.ok("Cập nhật khách sạn thành công!");
+        OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
+        var hotelResponse = hotelMapper.toHotelCreationResponse(updateHotel);
+        hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
+        return hotelResponse;
     }
 
     // Xóa khách sạn

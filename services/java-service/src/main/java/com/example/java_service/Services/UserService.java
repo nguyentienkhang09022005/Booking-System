@@ -4,6 +4,7 @@ import com.example.java_service.Constant.PredefinedRole;
 import com.example.java_service.Constant.PredefinedTypeUser;
 import com.example.java_service.Dto.Request.UserCreationRequest;
 import com.example.java_service.Dto.Request.UserUpdateRequest;
+import com.example.java_service.Dto.Response.UserResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.UserMapper;
@@ -60,7 +61,7 @@ public class UserService
     // Hàm lấy thông tin chi tiết người dùng
 
     // Hàm thêm thông tin người dùng
-    public ResponseEntity<String> saveUser(UserCreationRequest request) {
+    public UserResponse saveUser(UserCreationRequest request) {
         // Kiểm tra email hoặc phone đã tồn tại
         Optional<Users> existingUser = userRepository.findByEmailOrPhone(request.getEmail(), request.getPhone());
         if (existingUser.isPresent()) {
@@ -98,39 +99,45 @@ public class UserService
             avatar.setRefId(savedUser.getIdUser().toString());
             imagesRepository.save(avatar);
         }
-        return ResponseEntity.ok().body("Tạo người dùng thành công");
+        var userResponse = userMapper.toUserResponse(savedUser);
+        userResponse.setRole(getDefaultRole());
+        userResponse.setTypeUser(getDefaultTypeUser());
+        return userResponse;
     }
 
     // Hàm sửa thông tin người dùng
-    public ResponseEntity<String> updateUser(UserUpdateRequest request, UUID idUser)
+    public UserResponse updateUser(UserUpdateRequest request, UUID idUser)
     {
         Users user = userRepository.findById(idUser).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
-        if (request.getPhone() == null) {
-            throw new ApiException(ErrorCode.PHONE_REQUIRED);
+        if (request.getPhone() != null && !request.getPhone().isEmpty())
+        {
+            if (request.getPhone().length() < MIN_LENGTH_OF_PHONE || request.getPhone().length() > MAX_LENGTH_OF_PHONE) {
+                throw new ApiException(ErrorCode.INVALID_PHONE_LENGTH);
+            }
+
+            if (!request.getPhone().matches("\\d+")) {
+                throw new ApiException(ErrorCode.INVALID_PHONE_FORMAT);
+            }
+
+            userRepository.findByPhone(request.getPhone()).ifPresent(existing -> {
+                if (!existing.getIdUser().equals(idUser)) {
+                    throw new ApiException(ErrorCode.PHONE_EXISTS);
+                }
+            });
+            user.setPhone(request.getPhone());
         }
 
-        if (request.getPhone().length() < MIN_LENGTH_OF_PHONE || request.getPhone().length() > MAX_LENGTH_OF_PHONE) {
-            throw new ApiException(ErrorCode.INVALID_PHONE_LENGTH);
-        }
-
-        if (!request.getPhone().matches("\\d+")) {
-            throw new ApiException(ErrorCode.INVALID_PHONE_FORMAT);
-        }
-
-        if (request.getEmail() != null) {
+        if (request.getEmail() != null && !request.getEmail().isEmpty())
+        {
             userRepository.findByEmail(request.getEmail()).ifPresent(existing -> {
                 if (!existing.getIdUser().equals(idUser)) {
                     throw new ApiException(ErrorCode.EMAIL_EXISTS);
                 }
             });
+            user.setEmail(request.getEmail());
         }
-        userRepository.findByPhone(request.getPhone()).ifPresent(existing -> {
-            if (!existing.getIdUser().equals(idUser)) {
-                throw new ApiException(ErrorCode.PHONE_EXISTS);
-            }
-        });
 
         userMapper.updateUserFromRequest(request, user);
         Users updateUser = userRepository.save(user);
@@ -142,7 +149,10 @@ public class UserService
                 avatar.setRefId(updateUser.getIdUser().toString());
             imagesRepository.save(avatar);
         }
-        return ResponseEntity.ok("Cập nhật thông tin người dùng thành công!");
+        var userResponse = userMapper.toUserResponse(updateUser);
+        userResponse.setRole(getDefaultRole());
+        userResponse.setTypeUser(getDefaultTypeUser());
+        return userResponse;
     }
 
     // Hàm xóa người dùng

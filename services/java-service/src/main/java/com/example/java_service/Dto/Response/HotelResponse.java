@@ -1,10 +1,8 @@
 package com.example.java_service.Dto.Response;
 
-import com.example.java_service.Models.Users;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -12,14 +10,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class HotelCreationResponse
+public class HotelResponse
 {
     UUID idHotel;
-    Users users;
+    OwnerHotelResponse ownerHotelResponse;
     String hotelName;
     String street;
     String ward;
     String city;
     String description;
-    List<String> imageHotelUrl;
 }

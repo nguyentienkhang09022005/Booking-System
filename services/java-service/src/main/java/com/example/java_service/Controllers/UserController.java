@@ -1,9 +1,9 @@
 package com.example.java_service.Controllers;
 
-import com.example.java_service.Dto.Request.HotelCreationRequest;
 import com.example.java_service.Dto.Request.UserCreationRequest;
 import com.example.java_service.Dto.Request.UserUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
+import com.example.java_service.Dto.Response.UserResponse;
 import com.example.java_service.Services.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,28 +25,28 @@ public class UserController
 
     // Endpoint tạo người dùng mới
     @PostMapping("/creation")
-    public ApiResponse<ResponseEntity<String>> createUser(@RequestBody UserCreationRequest request)
+    public ApiResponse<UserResponse> createUser(@RequestBody UserCreationRequest request)
     {
-        var response = userService.saveUser(request);
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .message(response.getBody())
+        return ApiResponse.<UserResponse>builder()
+                .message("Tạo người dùng thành công!")
+                .data(userService.saveUser(request))
                 .build();
     }
 
     // Endpoint thay đổi thông tin người dùng
     @PatchMapping("/update")
-    public ApiResponse<ResponseEntity<String>> updateUser(@RequestBody UserUpdateRequest request,
-                                                          @RequestParam UUID idUser)
+    public ApiResponse<UserResponse> updateUser(@RequestBody UserUpdateRequest request,
+                                                @RequestParam UUID idUser)
     {
-        var response = userService.updateUser(request, idUser);
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .message(response.getBody())
+        return ApiResponse.<UserResponse>builder()
+                .message("Thay đổi thông tin người dùng thành công!")
+                .data(userService.updateUser(request, idUser))
                 .build();
     }
 
     // Endpoint xóa người dùng
     @DeleteMapping("/delete")
-    public ApiResponse<ResponseEntity<String>> deleteUser(@RequestBody UUID idUser)
+    public ApiResponse<ResponseEntity<String>> deleteUser(@RequestParam UUID idUser)
     {
         var response = userService.deleteUser(idUser);
         return ApiResponse.<ResponseEntity<String>>builder()

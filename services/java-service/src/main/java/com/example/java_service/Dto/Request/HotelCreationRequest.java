@@ -2,7 +2,6 @@ package com.example.java_service.Dto.Request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
