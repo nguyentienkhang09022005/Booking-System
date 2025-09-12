@@ -35,7 +35,8 @@ public class UserController
 
     // Endpoint thay đổi thông tin người dùng
     @PatchMapping("/update")
-    public ApiResponse<ResponseEntity<String>> updateUser(@RequestBody UserUpdateRequest request, UUID idUser)
+    public ApiResponse<ResponseEntity<String>> updateUser(@RequestBody UserUpdateRequest request,
+                                                          @RequestParam UUID idUser)
     {
         var response = userService.updateUser(request, idUser);
         return ApiResponse.<ResponseEntity<String>>builder()
