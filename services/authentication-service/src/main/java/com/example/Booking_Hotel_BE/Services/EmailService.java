@@ -20,7 +20,7 @@ public class EmailService
     public void sendOtpEmail(MainBody mainBody) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(mainBody.to());
-        message.setFrom("23520699@gmail.com");
+        message.setFrom("nguyentienkhang09022005@gmail.com");
         message.setSubject(mainBody.subject());
         message.setText(mainBody.text());
         mailSender.send(message);
