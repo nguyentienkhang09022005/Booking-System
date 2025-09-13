@@ -75,6 +75,8 @@ public class HotelService
                 }).toList();
     }
 
+    // Hàm lấy danh sách khách sạn bằng paging 8
+
     // Lấy thông tin chi tiết của khách sạn qua id
 
     // Thêm khách sạn mới

@@ -56,7 +56,7 @@ public class UserService
                 .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
     }
 
-    // Hàm lấy danh sách người dùng
+    // Hàm lấy danh sách người dùng bằng paging 8
 
     // Hàm lấy thông tin chi tiết người dùng
 
