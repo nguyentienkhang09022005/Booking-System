@@ -21,9 +21,11 @@ public enum ErrorCode
 
     // Lỗi Role
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Không tìm thấy vai trò!", HttpStatus.NOT_FOUND),
+    ROLE_EXISTS("ROLE_EXISTS", "Quyền đã tồn tại!", HttpStatus.CONFLICT),
 
     // Lỗi Type User
     TYPE_USER_NOT_FOUND("TYPE_USER_NOT_FOUND", "Không tìm thấy loại người dùng!", HttpStatus.NOT_FOUND),
+    TYPE_USER_EXISTS("TYPE_USER_EXISTS", "Loại người dùng đã tồn tại!", HttpStatus.CONFLICT),
 
     // Lỗi lưu hình ảnh
     IMAGE_ID_LIST_EMPTY("IMAGE_ID_LIST_EMPTY", "Danh sách id hình ảnh không được để trống!", HttpStatus.BAD_REQUEST),

@@ -1,4 +1,4 @@
-package com.example.java_service.Dto.Request;
+package com.example.java_service.Dto.Response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,7 +8,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TypeUserRequest
+public class TypeUserResponse
 {
     String typeUser;
     String description;

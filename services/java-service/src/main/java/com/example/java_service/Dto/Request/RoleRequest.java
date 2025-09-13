@@ -8,8 +8,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TypeUserRequest
+public class RoleRequest
 {
-    String typeUser;
+    String roleName;
     String description;
 }

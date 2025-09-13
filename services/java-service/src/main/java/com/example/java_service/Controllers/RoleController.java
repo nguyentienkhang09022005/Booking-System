@@ -1,10 +1,10 @@
 package com.example.java_service.Controllers;
 
-import com.example.java_service.Dto.Request.TypeUserRequest;
+import com.example.java_service.Dto.Request.RoleRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
-import com.example.java_service.Dto.Response.TypeUserResponse;
-import com.example.java_service.Models.TypeUser;
-import com.example.java_service.Services.TypeUserService;
+import com.example.java_service.Dto.Response.RoleResponse;
+import com.example.java_service.Models.Roles;
+import com.example.java_service.Services.RoleService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,36 +18,36 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/typeuser")
-public class TypeUserController
+@RequestMapping("/roles")
+public class RoleController
 {
-    TypeUserService typeUserService;
+    RoleService roleService;
 
-    // Endpoint lấy danh sách loại người dùng
+    // Endpoint lấy danh sách quyền người dùng
     @GetMapping( "/list")
-    public ApiResponse<List<TypeUser>> getListTypeUser()
+    public ApiResponse<List<Roles>> getListRoles()
     {
-        return ApiResponse.<List<TypeUser>>builder()
-                .message("Lấy danh sách loại người dùng thành công!")
-                .data(typeUserService.getAllTypeUsers())
+        return ApiResponse.<List<Roles>>builder()
+                .message("Lấy danh sách quyền người dùng thành công!")
+                .data(roleService.getAllRoles())
                 .build();
     }
 
-    // Endpoint tạo loại người dùng
+    // Endpoint tạo quyền người dùng
     @PostMapping( "/creation")
-    public ApiResponse<TypeUserResponse> createTypeUser(@RequestBody TypeUserRequest request)
+    public ApiResponse<RoleResponse> createRole(@RequestBody RoleRequest request)
     {
-        return ApiResponse.<TypeUserResponse>builder()
-                .message("Thay đổi thông tin khách sạn thành công!")
-                .data(typeUserService.saveTypeUser(request))
+        return ApiResponse.<RoleResponse>builder()
+                .message("Tạo quyền người dùng thành công!")
+                .data(roleService.saveRole(request))
                 .build();
     }
 
-    // Endpoint xóa loại người dùng
+    // Endpoint xóa quyền người dùng
     @DeleteMapping( "/delete")
-    public ApiResponse<ResponseEntity<String>> deleteTypeUser(@RequestParam String typeUser)
+    public ApiResponse<ResponseEntity<String>> deleteRole(@RequestParam String role)
     {
-        var response = typeUserService.deleteTypeUser(typeUser);
+        var response = roleService.deleteRole(role);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();

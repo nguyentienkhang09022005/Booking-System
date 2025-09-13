@@ -1,11 +1,10 @@
 package com.example.java_service.Controllers;
 
-import com.example.java_service.Dto.Request.HotelCreationRequest;
-import com.example.java_service.Dto.Request.HotelUpdateRequest;
+import com.example.java_service.Dto.Request.TypeUserRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
-import com.example.java_service.Dto.Response.GetListHotelResponse;
-import com.example.java_service.Dto.Response.HotelResponse;
-import com.example.java_service.Services.HotelService;
+import com.example.java_service.Dto.Response.TypeUserResponse;
+import com.example.java_service.Models.TypeUser;
+import com.example.java_service.Services.TypeUserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -14,55 +13,43 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/hotel")
-public class HotelController
+@RequestMapping("/typeuser")
+public class TypeUserController
 {
-    HotelService hotelService;
+    TypeUserService typeUserService;
 
-    // Endpoint tạo khách sạn mới
-    @PostMapping("/creation")
-    public ApiResponse<HotelResponse> creationHotel(@RequestBody HotelCreationRequest request)
+    // Endpoint lấy danh sách loại người dùng
+    @GetMapping( "/list")
+    public ApiResponse<List<TypeUser>> getListTypeUser()
     {
-        return ApiResponse.<HotelResponse>builder()
-                .message("Tạo khách sạn thành công!")
-                .data(hotelService.saveHotel(request))
+        return ApiResponse.<List<TypeUser>>builder()
+                .message("Lấy danh sách loại người dùng thành công!")
+                .data(typeUserService.getAllTypeUsers())
                 .build();
     }
 
-    // Endpoint lấy danh sách khách sạn
-    @GetMapping( "/getlist")
-    public ApiResponse<List<GetListHotelResponse>> listHotel(@RequestParam UUID idUser)
+    // Endpoint tạo loại người dùng
+    @PostMapping( "/creation")
+    public ApiResponse<TypeUserResponse> createTypeUser(@RequestBody TypeUserRequest request)
     {
-        return ApiResponse.<List<GetListHotelResponse>>builder()
-                .message("Lấy danh sách khách sạn thành công!")
-                .data(hotelService.getListHotel(idUser))
+        return ApiResponse.<TypeUserResponse>builder()
+                .message("Tạo loại người dùng thành công!")
+                .data(typeUserService.saveTypeUser(request))
                 .build();
     }
 
-    // Endpoint xóa khách sạn
-    @DeleteMapping( "/delele")
-    public ApiResponse<ResponseEntity<String>> deleteHotel(@RequestParam UUID idHotel)
+    // Endpoint xóa loại người dùng
+    @DeleteMapping( "/delete")
+    public ApiResponse<ResponseEntity<String>> deleteTypeUser(@RequestParam String typeUser)
     {
-        var response = hotelService.deleteHotel(idHotel);
+        var response = typeUserService.deleteTypeUser(typeUser);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
-                .build();
-    }
-
-    // Endpoint cập nhật khách sạn
-    @PatchMapping( "/update")
-    public ApiResponse<HotelResponse> updateHotel(@RequestParam UUID idHotel,
-                                                           @RequestBody HotelUpdateRequest request)
-    {
-        return ApiResponse.<HotelResponse>builder()
-                .message("Thay đổi thông tin khách sạn thành công!")
-                .data(hotelService.updateHotel(idHotel, request))
                 .build();
     }
 }
