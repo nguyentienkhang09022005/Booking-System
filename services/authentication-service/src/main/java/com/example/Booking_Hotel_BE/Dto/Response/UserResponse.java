@@ -2,6 +2,7 @@ package com.example.Booking_Hotel_BE.Dto.Response;
 
 import com.example.Booking_Hotel_BE.Models.Roles;
 import com.example.Booking_Hotel_BE.Models.TypeUser;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -28,5 +29,7 @@ public class UserResponse
     String address;
     String email;
     BigDecimal totalAmount;
-    LocalDateTime createAt;
+//
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+//    LocalDateTime createAt;
 }
