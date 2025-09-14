@@ -10,18 +10,14 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/authen/**"  // cho phép gọi login, register, ...
-    };
-
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable) // tắt CSRF cho gateway
+                // Cấu hình endpoint
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyExchange().authenticated()
+                        .anyExchange().permitAll()
                 )
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .build();
     }
 }
