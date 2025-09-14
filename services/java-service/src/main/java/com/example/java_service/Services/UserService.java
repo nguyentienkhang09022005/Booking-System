@@ -8,10 +8,7 @@ import com.example.java_service.Dto.Response.UserResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.UserMapper;
-import com.example.java_service.Models.Images;
-import com.example.java_service.Models.Roles;
-import com.example.java_service.Models.TypeUser;
-import com.example.java_service.Models.Users;
+import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.RoleRepository;
 import com.example.java_service.Repositories.Jpa.TypeUserRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
@@ -20,12 +17,19 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -57,8 +61,61 @@ public class UserService
     }
 
     // Hàm lấy danh sách người dùng bằng paging 8
+    public Page<UserResponse> getListUsersByPage(Pageable pageable)
+    {
+        Page<Users> usersPage = userRepository.findAll(pageable);
+        List<Users> usersOnPage =usersPage.getContent();
+
+        if (usersOnPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // Lấy ID của tất cả người dùng trong trang hiện tại
+        List<String> usersIdsOnPage = usersOnPage.stream()
+                .map(hotel -> hotel.getIdUser().toString())
+                .toList();
+
+        List<Images> avatars = imagesRepository.findByRefIdIn(usersIdsOnPage);
+
+        // Map userId -> avatarUrl (mỗi user chỉ có 1 ảnh)
+        Map<String, String> avatarMap = avatars.stream()
+                .collect(Collectors.toMap(
+                        Images::getRefId,
+                        Images::getUrl
+                ));
+
+        List<UserResponse> responses = usersOnPage.stream()
+                .map(user -> {
+                    UserResponse response = userMapper.toUserResponse(user);
+                    String hotelIdStr = user.getIdUser().toString();
+
+                    response.setAvatar(avatarMap.get(hotelIdStr));
+                    response.setTypeUser(user.getTypeUser());
+                    response.setRole(user.getRole());
+                    return response;
+                }).toList();
+
+        return new PageImpl<>(responses, pageable, usersPage.getTotalElements());
+    }
 
     // Hàm lấy thông tin chi tiết người dùng
+    public UserResponse getInfUser(UUID idUser)
+    {
+        Users user = userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+
+        String avatarUrl = imagesRepository.findByRefId(user.getIdUser().toString())
+                .stream()
+                .map(Images::getUrl)
+                .findFirst()
+                .orElse(null);
+
+        UserResponse response = userMapper.toUserResponse(user);
+        response.setAvatar(avatarUrl);
+        response.setTypeUser(user.getTypeUser());
+        response.setRole(user.getRole());
+        return response;
+    }
 
     // Hàm thêm thông tin người dùng
     public UserResponse saveUser(UserCreationRequest request) {
@@ -150,8 +207,8 @@ public class UserService
             imagesRepository.save(avatar);
         }
         var userResponse = userMapper.toUserResponse(updateUser);
-        userResponse.setRole(getDefaultRole());
-        userResponse.setTypeUser(getDefaultTypeUser());
+        userResponse.setRole(updateUser.getRole());
+        userResponse.setTypeUser(updateUser.getTypeUser());
         return userResponse;
     }
 

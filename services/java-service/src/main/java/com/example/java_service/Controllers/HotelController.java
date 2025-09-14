@@ -49,21 +49,20 @@ public class HotelController
 //    }
 
     // Endpoint lấy danh sách khách sạn theo paging 8
-    @GetMapping("/getListByPaging")
+    @GetMapping("/getListHotel")
     public ApiResponse<Page<GetListHotelResponse>> getHotels(@RequestParam UUID idUser,
                                                              @RequestParam(defaultValue = "0") int page,
                                                              @RequestParam(defaultValue = "8") int size)
     {
         Pageable pageable = PageRequest.of(page, size);
-        Page<GetListHotelResponse> hotelPage = hotelService.getListHotelByPaging(idUser, pageable);
         return ApiResponse.<Page<GetListHotelResponse>>builder()
                 .message("Lấy danh sách khách sạn thành công!")
-                .data(hotelPage)
+                .data(hotelService.getListHotelByPaging(idUser, pageable))
                 .build();
     }
 
     // Endpoint lấy thông tin chi tiết khách sạn
-    @GetMapping( "/getDetailInfHotel")
+    @GetMapping( "/getInfHotel")
     public ApiResponse<HotelResponse> getDetailHotel(@RequestParam UUID idHotel)
     {
         return ApiResponse.<HotelResponse>builder()

@@ -12,6 +12,8 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserUpdateRequest
 {
+    String role;
+    String typeUser;
     String firstName;
     String lastName;
     String phone;

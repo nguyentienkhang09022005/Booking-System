@@ -31,4 +31,5 @@ public class UserResponse
     String email;
     BigDecimal totalAmount;
     LocalDateTime createAt;
+    String avatar;
 }
