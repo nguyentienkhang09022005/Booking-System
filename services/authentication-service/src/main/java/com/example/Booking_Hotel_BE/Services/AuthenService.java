@@ -65,15 +65,30 @@ public class AuthenService
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException
     {
         var token = request.getToken();
+        UUID idUser = null;
+        String role = null;
 
         boolean isValid = true;
         try {
-            verifyToken(token);
+            // verifyToken trả về SignedJWT
+            SignedJWT signedJWT = verifyToken(token);
+
+            // Lấy claims từ SignedJWT
+            JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+
+            String idUserStr = claims.getStringClaim("idUser");
+            if (idUserStr != null) {
+                idUser = UUID.fromString(idUserStr);
+            }
+
+            role = claims.getStringClaim("scope");
         }catch (ApiException e){
             isValid = false;
         }
         return IntrospectResponse.builder()
                 .valid(isValid)
+                .idUser(idUser)
+                .role(role)
                 .build();
     }
 
