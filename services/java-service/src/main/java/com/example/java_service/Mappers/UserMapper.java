@@ -20,5 +20,7 @@ public interface UserMapper
     OwnerHotelResponse toOwnerHotelResponse(Users user);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "typeUser", ignore = true)
     void updateUserFromRequest(UserUpdateRequest request, @MappingTarget Users users);
 }
