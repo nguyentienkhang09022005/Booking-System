@@ -17,25 +17,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig
 {
 
-    private static final String[] SWAGGER_ENDPOINTS = {
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/swagger-resources/**",
-            "/swagger-ui.html"
-    };
-
-    private static final String[] PUBLIC_ENDPOINTS = {
-            "/health"
-    };
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Vẫn là stateless
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(SWAGGER_ENDPOINTS).permitAll()
                         .anyRequest().permitAll()
                 );
         return httpSecurity.build();

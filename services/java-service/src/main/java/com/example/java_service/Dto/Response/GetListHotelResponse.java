@@ -19,5 +19,5 @@ public class GetListHotelResponse
     String ward;
     String city;
     Boolean favorite;
-    String imageHotelUrl;
+    List<String> imageHotelUrl;
 }

@@ -10,6 +10,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,12 +39,36 @@ public class HotelController
     }
 
     // Endpoint lấy danh sách khách sạn
-    @GetMapping( "/getlist")
-    public ApiResponse<List<GetListHotelResponse>> listHotel(@RequestParam UUID idUser)
+//    @GetMapping( "/getlist")
+//    public ApiResponse<List<GetListHotelResponse>> listHotel(@RequestParam UUID idUser)
+//    {
+//        return ApiResponse.<List<GetListHotelResponse>>builder()
+//                .message("Lấy danh sách khách sạn thành công!")
+//                .data(hotelService.getListHotel(idUser))
+//                .build();
+//    }
+
+    // Endpoint lấy danh sách khách sạn theo paging 8
+    @GetMapping("/getListByPaging")
+    public ApiResponse<Page<GetListHotelResponse>> getHotels(@RequestParam UUID idUser,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "8") int size)
     {
-        return ApiResponse.<List<GetListHotelResponse>>builder()
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GetListHotelResponse> hotelPage = hotelService.getListHotelByPaging(idUser, pageable);
+        return ApiResponse.<Page<GetListHotelResponse>>builder()
                 .message("Lấy danh sách khách sạn thành công!")
-                .data(hotelService.getListHotel(idUser))
+                .data(hotelPage)
+                .build();
+    }
+
+    // Endpoint lấy thông tin chi tiết khách sạn
+    @GetMapping( "/getDetailInfHotel")
+    public ApiResponse<HotelResponse> getDetailHotel(@RequestParam UUID idHotel)
+    {
+        return ApiResponse.<HotelResponse>builder()
+                .message("Lấy thông tin chi tiết khách sạn thành công!")
+                .data(hotelService.getHotelDetail(idHotel))
                 .build();
     }
 

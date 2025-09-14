@@ -1,7 +1,10 @@
 package com.example.java_service.Repositories.Mongodb;
 
+import com.example.java_service.Helpers.ImageProjection;
 import com.example.java_service.Models.Images;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,4 +17,8 @@ public interface ImagesRepository extends MongoRepository<Images, String>
     void deleteAllByRefId(String refIds);
 
     List<Images> findByRefIdOrderByUploadedAtAsc(String idHotel);
+
+    List<Images> findByRefIdIn(List<String> refIds);
+
+    List<Images> findByRefId(String refId);
 }

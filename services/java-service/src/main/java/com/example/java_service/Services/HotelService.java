@@ -21,10 +21,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,41 +47,103 @@ public class HotelService
     UserMapper userMapper;
 
     // Lấy danh sách khách sạn
-    public List<GetListHotelResponse> getListHotel(UUID idUser)
+//    public List<GetListHotelResponse> getListHotel(UUID idUser)
+//    {
+//        Users user = userRepository.findById(idUser).orElseThrow(
+//                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+//
+//        List<Hotel> hotels = hotelRepository.findAll(); // lấy danh sách hotel
+//
+//        Set<String> favoriteHotelId = favoriteRepository.findByIdUser(user.getIdUser().toString()) // Lấy danh sách hotel yêu thích
+//                .stream()
+//                .map(Favorite::getId)
+//                .collect(Collectors.toSet());
+//
+//        return hotels.stream()
+//                .map(hotel -> {
+//                    GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
+//
+//                    // Set favorite
+//                    response.setFavorite(favoriteHotelId.contains(hotel.getIdHotel().toString()));
+//
+//                    // Set image đầu tiên của hotel
+//                    String firstImageUrl = imagesRepository
+//                            .findByRefIdOrderByUploadedAtAsc(hotel.getIdHotel().toString())
+//                            .stream()
+//                            .findFirst()
+//                            .map(Images::getUrl)
+//                            .orElse(null);
+//                    response.setImageHotelUrl(firstImageUrl);
+//
+//                    return response;
+//                }).toList();
+//    }
+
+    // Hàm lấy danh sách khách sạn bằng paging 8
+    public Page<GetListHotelResponse> getListHotelByPaging(UUID idUser, Pageable pageable)
     {
         Users user = userRepository.findById(idUser).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
-        List<Hotel> hotels = hotelRepository.findAll(); // lấy danh sách hotel
+        Page<Hotel> hotelPage = hotelRepository.findAll(pageable); // Lấy danh sách theo trang
+        List<Hotel> hotelsOnPage = hotelPage.getContent();
 
-        Set<String> favoriteHotelId = favoriteRepository.findByIdUser(user.getIdUser().toString()) // Lấy danh sách hotel yêu thích
+        if (hotelsOnPage.isEmpty()) {
+            return Page.empty(pageable); // Trả về trang rỗng nếu không có khách sạn nào
+        }
+
+        Set<String> favoriteHotelIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
                 .stream()
                 .map(Favorite::getId)
                 .collect(Collectors.toSet());
 
-        return hotels.stream()
+        // Lấy ID của tất cả khách sạn trong trang hiện tại
+        List<String> hotelIdsOnPage = hotelsOnPage.stream()
+                .map(hotel -> hotel.getIdHotel().toString())
+                .toList();
+
+        // Lấy tất cả ảnh của các hotel trên trang
+        List<Images> images = imagesRepository.findByRefIdIn(hotelIdsOnPage);
+
+        // Gom nhóm ảnh theo idHotel
+        Map<String, List<String>> hotelImagesMap = images.stream()
+                .collect(Collectors.groupingBy(
+                        Images::getRefId,
+                        Collectors.mapping(Images::getUrl, Collectors.toList())
+                ));
+
+        List<GetListHotelResponse> responses = hotelsOnPage.stream()
                 .map(hotel -> {
                     GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
+                    String hotelIdStr = hotel.getIdHotel().toString();
 
-                    // Set favorite
-                    response.setFavorite(favoriteHotelId.contains(hotel.getIdHotel().toString()));
+                    response.setFavorite(favoriteHotelIds.contains(hotelIdStr));
 
-                    // Set image đầu tiên của hotel
-                    String firstImageUrl = imagesRepository
-                            .findByRefIdOrderByUploadedAtAsc(hotel.getIdHotel().toString())
-                            .stream()
-                            .findFirst()
-                            .map(Images::getUrl)
-                            .orElse(null);
-                    response.setImageHotelUrl(firstImageUrl);
-
+                    response.setImageHotelUrl(hotelImagesMap.get(hotelIdStr));
                     return response;
                 }).toList();
+
+        return new PageImpl<>(responses, pageable, hotelPage.getTotalElements());
     }
 
-    // Hàm lấy danh sách khách sạn bằng paging 8
-
     // Lấy thông tin chi tiết của khách sạn qua id
+    public HotelResponse getHotelDetail(UUID idHotel)
+    {
+        Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
+                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+
+        List<String> imageUrls = imagesRepository.findByRefId(hotel.getIdHotel().toString())
+                .stream()
+                .map(Images::getUrl)
+                .toList();
+        OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(hotel.getUsers());
+
+        HotelResponse hotelResponse = hotelMapper.toHotelResponse(hotel);
+        hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
+        hotelResponse.setImageHotel(imageUrls);
+        return hotelResponse;
+    }
 
     // Thêm khách sạn mới
     public HotelResponse saveHotel(HotelCreationRequest request)
@@ -101,7 +167,7 @@ public class HotelService
             imagesRepository.saveAll(images);
         }
         OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
-        var hotelResponse = hotelMapper.toHotelCreationResponse(savedHotel);
+        var hotelResponse = hotelMapper.toHotelResponse(savedHotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
         return hotelResponse;
     }
@@ -130,7 +196,7 @@ public class HotelService
             imagesRepository.saveAll(images);
         }
         OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
-        var hotelResponse = hotelMapper.toHotelCreationResponse(updateHotel);
+        var hotelResponse = hotelMapper.toHotelResponse(updateHotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
         return hotelResponse;
     }
