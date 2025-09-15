@@ -27,6 +27,14 @@ public enum ErrorCode
     TYPE_USER_NOT_FOUND("TYPE_USER_NOT_FOUND", "Không tìm thấy loại người dùng!", HttpStatus.NOT_FOUND),
     TYPE_USER_EXISTS("TYPE_USER_EXISTS", "Loại người dùng đã tồn tại!", HttpStatus.CONFLICT),
 
+    // Lỗi Type Room
+    TYPE_ROOM_NOT_FOUND("TYPE_ROOM_NOT_FOUND", "Không tìm thấy loại phòng!", HttpStatus.NOT_FOUND),
+    TYPE_ROOM_EXISTS("TYPE_ROOM_EXISTS", "Loại phòng đã tồn tại!", HttpStatus.CONFLICT),
+
+    // Lỗi Type Service
+    TYPE_SERVICE_NOT_FOUND("TYPE_SERVICE_NOT_FOUND", "Không tìm thấy loại dịch vụ!", HttpStatus.NOT_FOUND),
+    TYPE_SERVICE_EXISTS("TYPE_SERVICE_EXISTS", "Loại dịch vụ đã tồn tại!", HttpStatus.CONFLICT),
+
     // Lỗi lưu hình ảnh
     IMAGE_ID_LIST_EMPTY("IMAGE_ID_LIST_EMPTY", "Danh sách id hình ảnh không được để trống!", HttpStatus.BAD_REQUEST),
     UPLOAD_FAILED("UPLOAD_FAILED", "tải ảnh thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),

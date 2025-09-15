@@ -29,8 +29,8 @@ public class Room
     private Hotel hotel;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_type_room",
-            referencedColumnName = "id_type_room",
+    @JoinColumn(name = "type_room",
+            referencedColumnName = "type_room",
             foreignKey = @ForeignKey(name = "FK_ROOM_TYPE_ROOM"))
     private TypeRoom typeRoom;
 

@@ -6,20 +6,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "room")
+@Table(name = "type_service")
 public class TypeService
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id_type_service", nullable = false, updatable = false)
-    private UUID idTypeService;
+    @Column(name = "type_service", nullable = false, updatable = false)
+    private String typeService;
 
     @Column(name = "description",columnDefinition = "TEXT")
     private String description;

@@ -1,0 +1,24 @@
+package com.example.java_service.Services;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class RoomService
+{
+    // Hàm lấy danh sách phòng bằng paging 8
+
+    // Hàm lấy thông tin chi tiết phòng
+
+    // Hàm thêm phòng mới
+
+    // Hàm sửa thông tin phòng
+
+    // Hàm xóa phòng
+}
