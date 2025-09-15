@@ -40,6 +40,15 @@ public class Room
     @Column(name = "room_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal roomPrice;
 
+    @Column(name = "size", length = 50, nullable = false)
+    private String size;
+
+    @Column(name = "view", length = 100, nullable = false)
+    private String view;
+
+    @Column(name = "regulations", columnDefinition = "TEXT")
+    private String regulations;
+
     @Column(name = "status", length = 20)
     private String status;
 
