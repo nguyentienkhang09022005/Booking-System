@@ -201,7 +201,7 @@ public class HotelService
         return hotelResponse;
     }
 
-    // Xóa khách sạn
+    // Xóa khách sạn còn favorite và evaluate
     public ResponseEntity<String> deleteHotel(UUID idHotel)
     {
         Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(

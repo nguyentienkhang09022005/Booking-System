@@ -39,11 +39,11 @@ public class ImageService
     }
 
     // Hàm sửa ảnh đại diện
-    public ResponseEntity<String> updateAvatar(MultipartFile file, String refId)
+    public String updateAvatar(MultipartFile file, String refId)
     {
         imagesRepository.deleteByRefId(refId);
         try {
-            return ResponseEntity.ok(uploadImageFile.uploadImage(file));
+            return uploadImageFile.uploadImage(file);
         } catch (Exception e) {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
         }
@@ -51,7 +51,7 @@ public class ImageService
 
     // Hàm sủa nhiều ảnh (Hotel, Room,...)
     @Transactional
-    public ResponseEntity<List<String>> updateImages(List<MultipartFile> files, String refId) {
+    public List<String> updateImages(List<MultipartFile> files, String refId) {
         if (files == null || files.isEmpty()) {
             throw new ApiException(ErrorCode.IMAGE_FILE_REQUIRED);
         }
@@ -76,7 +76,7 @@ public class ImageService
             }).toList();
             imagesRepository.saveAll(newImages);
 
-            return ResponseEntity.ok(uploadedUrls);
+            return uploadedUrls;
         } catch (Exception e) {
             throw new ApiException(ErrorCode.UPLOAD_FAILED);
         }

@@ -42,7 +42,13 @@ public enum ErrorCode
     INVALID_IMAGE_REFID("INVALID_IMAGE_REFID", "Thiếu id đối tượng sở hữu hình ảnh", HttpStatus.BAD_REQUEST),
 
     // Lỗi khách sạn
-    HOTEL_NOT_FOUND("HOTEL_NOT_FOUND", "Không tìm thấy khách sạn!", HttpStatus.NOT_FOUND),;
+    HOTEL_NOT_FOUND("HOTEL_NOT_FOUND", "Không tìm thấy khách sạn!", HttpStatus.NOT_FOUND),
+
+    // Lỗi phòng
+    ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
+
+    // Dịch vụ
+    ;
 
     private final String code;
     private final String message;

@@ -2,13 +2,16 @@ package com.example.java_service.Controllers;
 
 import com.example.java_service.Dto.Request.RoomCreationRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
-import com.example.java_service.Dto.Response.RoomCreationResponse;
+import com.example.java_service.Dto.Response.RoomResponse;
 import com.example.java_service.Services.RoomService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -21,10 +24,22 @@ public class RoomController
 
     // Endpoint tạo phòng mới
     @PostMapping("/creation")
-    public ApiResponse<RoomCreationResponse> creationRoom(@RequestBody RoomCreationRequest request)
+    public ApiResponse<RoomResponse> creationRoom(@RequestBody RoomCreationRequest request)
     {
-        return ApiResponse.<RoomCreationResponse>builder()
+        return ApiResponse.<RoomResponse>builder()
                 .message("Tạo phòng thành công!")
                 .data(roomService.saveRoom(request))
                 .build();
-    }}
+    }
+
+    // Endpoint xóa phòng
+    @DeleteMapping( "/delele")
+    public ApiResponse<ResponseEntity<String>> deleteRoom(@RequestParam UUID idRoom)
+    {
+        var response = roomService.deleteRoom(idRoom);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+}
+

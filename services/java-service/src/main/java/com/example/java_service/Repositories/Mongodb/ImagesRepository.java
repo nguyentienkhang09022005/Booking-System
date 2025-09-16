@@ -1,10 +1,7 @@
 package com.example.java_service.Repositories.Mongodb;
 
-import com.example.java_service.Helpers.ImageProjection;
 import com.example.java_service.Models.Images;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

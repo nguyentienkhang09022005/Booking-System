@@ -27,6 +27,7 @@ public class ImageController
     public ApiResponse<List<String>> createImage(@RequestPart(value = "files", required = false) List<MultipartFile> files)
     {
         return ApiResponse.<List<String>>builder()
+                .message("Tạo hình ảnh thành công!")
                 .data(imageService.saveImage(files))
                 .build();
     }
@@ -43,21 +44,21 @@ public class ImageController
 
     // Endpoint sửa ảnh đại diện
     @PutMapping(value = "/updateAvatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<ResponseEntity<String>> updateAvatar(@RequestPart(value = "files", required = false) MultipartFile avatar,
+    public ApiResponse<String> updateAvatar(@RequestPart(value = "files", required = false) MultipartFile avatar,
                                                             @RequestParam String refId)
     {
-        var response = imageService.updateAvatar(avatar, refId);
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .message(response.getBody())
+        return ApiResponse.<String>builder()
+                .message("Cập nhật hình ảnh thành công!")
+                .data(imageService.updateAvatar(avatar, refId))
                 .build();
     }
 
     // Endpoint sửa ảnh Hotel, Room,...
     @PutMapping(value = "/updateImages", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<ResponseEntity<List<String>>> updateImages(@RequestPart(value = "files", required = false) List<MultipartFile> images,
+    public ApiResponse<List<String>> updateImages(@RequestPart(value = "files", required = false) List<MultipartFile> images,
                                                                   @RequestParam String refId)
     {
-        return ApiResponse.<ResponseEntity<List<String>>>builder()
+        return ApiResponse.<List<String>>builder()
                 .message("Cập nhật hình ảnh thành công!")
                 .data(imageService.updateImages(images, refId))
                 .build();
