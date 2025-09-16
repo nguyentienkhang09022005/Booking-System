@@ -7,8 +7,10 @@ import com.example.Booking_Hotel_BE.Dto.Response.IntrospectResponse;
 import com.example.Booking_Hotel_BE.Exception.ApiException;
 import com.example.Booking_Hotel_BE.Exception.ErrorCode;
 import com.example.Booking_Hotel_BE.Mappers.UserMapper;
+import com.example.Booking_Hotel_BE.Models.Images;
 import com.example.Booking_Hotel_BE.Models.Invalidated_Token;
 import com.example.Booking_Hotel_BE.Models.Users;
+import com.example.Booking_Hotel_BE.Repositories.ImageRepository;
 import com.example.Booking_Hotel_BE.Repositories.InvalidatedTokenRepository;
 import com.example.Booking_Hotel_BE.Repositories.UserRepository;
 import com.nimbusds.jose.*;
@@ -46,6 +48,7 @@ public class AuthenService
     UserRepository userRepository;
     RefreshTokenService refreshTokenService;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    ImageRepository imageRepository;
     UserMapper userMapper;
 
     @NonFinal
@@ -123,9 +126,18 @@ public class AuthenService
         );
         response.addHeader("Set-Cookie", cookieHeader);
 
+        String avatarUrl = imageRepository.findByRefId(user.getIdUser().toString())
+                .stream()
+                .map(Images::getUrl)
+                .findFirst()
+                .orElse(null);
+
+        var userResponse = userMapper.toUserResponse(user);
+        userResponse.setAvatar(avatarUrl);
+
         return AuthenResponse.builder()
                 .token(token)
-                .infUser(userMapper.toUserResponse(user))
+                .infUser(userResponse)
                 .build();
     }
 
