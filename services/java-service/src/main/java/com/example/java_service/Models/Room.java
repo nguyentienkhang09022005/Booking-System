@@ -22,13 +22,13 @@ public class Room
     @Column(name = "id_room", nullable = false, updatable = false)
     private UUID idRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_hotel",
             referencedColumnName = "id_hotel ",
             foreignKey = @ForeignKey(name = "FK_ROOM_HOTEL"))
     private Hotel hotel;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "type_room",
             referencedColumnName = "type_room",
             foreignKey = @ForeignKey(name = "FK_ROOM_TYPE_ROOM"))

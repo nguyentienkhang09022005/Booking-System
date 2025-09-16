@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class TypeRoom
 {
     @Id
-    @Column(name = "type_room", nullable = false, updatable = false)
+    @Column(name = "type_room")
     private String typeRoom;
 
     @Column(name = "description",columnDefinition = "TEXT")

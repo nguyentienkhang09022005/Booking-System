@@ -13,7 +13,8 @@ public interface RoomMapper
     @Mapping(target = "typeRoom", ignore = true)
     Room toRoom(RoomCreationRequest request);
 
-    RoomResponse toRoomCreationResponse(Room room);
+    @Mapping(target = "typeRoom", ignore = true)
+    RoomResponse toRoomResponse(Room room);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "typeRoom", ignore = true)

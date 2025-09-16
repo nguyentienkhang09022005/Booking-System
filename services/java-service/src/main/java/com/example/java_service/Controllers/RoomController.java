@@ -1,7 +1,10 @@
 package com.example.java_service.Controllers;
 
+import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Request.RoomCreationRequest;
+import com.example.java_service.Dto.Request.RoomUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
+import com.example.java_service.Dto.Response.HotelResponse;
 import com.example.java_service.Dto.Response.RoomResponse;
 import com.example.java_service.Services.RoomService;
 import lombok.AccessLevel;
@@ -29,6 +32,17 @@ public class RoomController
         return ApiResponse.<RoomResponse>builder()
                 .message("Tạo phòng thành công!")
                 .data(roomService.saveRoom(request))
+                .build();
+    }
+
+    // Endpoint cập nhật phòng
+    @PatchMapping( "/update")
+    public ApiResponse<RoomResponse> updateRoom(@RequestParam UUID idRoom,
+                                                @RequestBody RoomUpdateRequest request)
+    {
+        return ApiResponse.<RoomResponse>builder()
+                .message("Thay đổi thông tin phòng thành công!")
+                .data(roomService.updateRoom(request, idRoom))
                 .build();
     }
 

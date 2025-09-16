@@ -187,6 +187,8 @@ public class HotelService
 
         // Nếu có upload ảnh mới
         if (request.getListImageHotel() != null && !request.getListImageHotel().isEmpty()) {
+            imagesRepository.deleteByRefId(updateHotel.getIdHotel().toString());
+
             List<Images> images = request.getListImageHotel().stream().map(url -> {
                 Images image = new Images();
                 image.setUrl(url);

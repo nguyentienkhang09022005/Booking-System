@@ -197,11 +197,19 @@ public class UserService
         }
 
         userMapper.updateUserFromRequest(request, user);
+        user.setTypeUser(typeUserRepository.findById(request.getTypeUser()).orElseThrow(
+                () -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND)
+        ));
+        user.setRole(roleRepository.findById(request.getRole()).orElseThrow(
+                () -> new ApiException(ErrorCode.ROLE_NOT_FOUND)
+        ));
         Users updateUser = userRepository.save(user);
 
         // Nếu có upload ảnh mới
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-                Images avatar = new Images();
+            imagesRepository.deleteByRefId(updateUser.getIdUser().toString());
+
+            Images avatar = new Images();
                 avatar.setUrl(request.getAvatar());
                 avatar.setRefId(updateUser.getIdUser().toString());
             imagesRepository.save(avatar);

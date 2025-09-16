@@ -47,9 +47,7 @@ public class RoomService
 
         Room room = roomMapper.toRoom(request);
         room.setHotel(hotel);
-        room.setTypeRoom(typeRoomRepository.findById(request.getTypeRoom()).orElseThrow(
-                () -> new ApiException(ErrorCode.TYPE_ROOM_NOT_FOUND)
-        ));
+        room.setTypeRoom(typeRoomRepository.getReferenceById(request.getTypeRoom()));
         room.setStatus(PredefinedStatusRoom.STATUS_ROOM_DEFAULT);
         Room savedRoom = roomRepository.save(room);
 
@@ -63,20 +61,40 @@ public class RoomService
             }).toList();
             imagesRepository.saveAll(images);
         }
-        var roomResponse = roomMapper.toRoomCreationResponse(savedRoom);
+        var roomResponse = roomMapper.toRoomResponse(savedRoom);
         return roomResponse;
     }
 
     // Hàm sửa thông tin phòng
-//    public RoomResponse updateRoom(RoomUpdateRequest request, UUID idRoom)
-//    {
-//        Room room = roomRepository.findById(idRoom).orElseThrow(
-//                () -> new ApiException(ErrorCode.ROOM_NOT_FOUND)
-//        );
-//
-//        roomMapper.updateRoomFromRequest(request,room);
-//
-//    }
+    public RoomResponse updateRoom(RoomUpdateRequest request, UUID idRoom)
+    {
+        Room room = roomRepository.findById(idRoom).orElseThrow(
+                () -> new ApiException(ErrorCode.ROOM_NOT_FOUND)
+        );
+
+        roomMapper.updateRoomFromRequest(request, room);
+        room.setTypeRoom(typeRoomRepository.findById(request.getTypeRoom()).orElseThrow(
+                () -> new ApiException(ErrorCode.TYPE_ROOM_NOT_FOUND)
+        ));
+        Room updatedRoom = roomRepository.save(room);
+
+        // Nếu có upload ảnh mới
+        if (request.getListImageRoom() != null && !request.getListImageRoom().isEmpty()) {
+            imagesRepository.deleteByRefId(updatedRoom.getIdRoom().toString());
+
+            List<Images> images = request.getListImageRoom().stream().map(url -> {
+                Images image = new Images();
+                image.setUrl(url);
+                image.setRefId(updatedRoom.getIdRoom().toString());
+                return image;
+            }).toList();
+            imagesRepository.saveAll(images);
+        }
+
+        var roomResponse = roomMapper.toRoomResponse(updatedRoom);
+        roomResponse.setTypeRoom(updatedRoom.getTypeRoom());
+        return roomResponse;
+    }
 
     // Hàm xóa phòng
     public ResponseEntity<String> deleteRoom(UUID idRoom)
