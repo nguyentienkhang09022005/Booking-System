@@ -14,9 +14,9 @@ public class CorsGlobalConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false);
         config.setAllowedOriginPatterns(List.of("*")); // cho phép tất cả origin
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
