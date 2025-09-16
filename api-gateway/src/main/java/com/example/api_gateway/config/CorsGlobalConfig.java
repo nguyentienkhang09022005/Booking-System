@@ -1,18 +1,29 @@
 package com.example.api_gateway.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.reactive.config.CorsRegistry;
-import org.springframework.web.reactive.config.WebFluxConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
-public class CorsGlobalConfig implements WebFluxConfigurer {
+public class CorsGlobalConfig {
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Áp dụng cho tất cả các đường dẫn (path)
-                .allowedOriginPatterns("*") // Cho phép tất cả các nguồn gốc (origin)
-                .allowedMethods("*") // Cho phép tất cả các phương thức HTTP (GET, POST, etc.)
-                .allowedHeaders("*") // Cho phép tất cả các header
-                .allowCredentials(true); // Cho phép gửi cookie và thông tin xác thực
+    @Bean
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+
+        corsConfig.setAllowedOriginPatterns(List.of("*"));
+        corsConfig.setAllowedMethods(List.of("*"));
+        corsConfig.setAllowedHeaders(List.of("*"));
+        corsConfig.setAllowCredentials(true);
+        corsConfig.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
     }
 }
