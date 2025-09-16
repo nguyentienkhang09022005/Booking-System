@@ -184,9 +184,18 @@ public class AuthenService
         );
         response.addHeader("Set-Cookie", cookieHeader);
 
+        String avatarUrl = imageRepository.findByRefId(user.getIdUser().toString())
+                .stream()
+                .map(Images::getUrl)
+                .findFirst()
+                .orElse(null);
+
+        var userResponse = userMapper.toUserResponse(user);
+        userResponse.setAvatar(avatarUrl);
+
         return AuthenResponse.builder()
                 .token(newAccessToken)
-                .infUser(userMapper.toUserResponse(user))
+                .infUser(userResponse)
                 .build();
     }
 
