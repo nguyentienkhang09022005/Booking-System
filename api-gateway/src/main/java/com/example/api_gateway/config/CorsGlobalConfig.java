@@ -1,27 +1,18 @@
 package com.example.api_gateway.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
+import org.springframework.web.reactive.config.CorsRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
 
 @Configuration
-public class CorsGlobalConfig {
+public class CorsGlobalConfig implements WebFluxConfigurer {
 
-    @Bean
-    public CorsWebFilter corsWebFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(false);
-        config.setAllowedOriginPatterns(List.of("*")); // cho phép tất cả origin
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
-        config.setAllowedHeaders(List.of("*"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsWebFilter(source);
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**") // Áp dụng cho tất cả các đường dẫn (path)
+                .allowedOriginPatterns("*") // Cho phép tất cả các nguồn gốc (origin)
+                .allowedMethods("*") // Cho phép tất cả các phương thức HTTP (GET, POST, etc.)
+                .allowedHeaders("*") // Cho phép tất cả các header
+                .allowCredentials(true); // Cho phép gửi cookie và thông tin xác thực
     }
 }
