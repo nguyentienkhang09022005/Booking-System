@@ -15,9 +15,10 @@ public class CorsGlobalConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
 
-        corsConfig.setAllowedOriginPatterns(List.of("*"));
-        corsConfig.setAllowedMethods(List.of("*"));
+        corsConfig.setAllowedOriginPatterns(List.of("http://127.0.0.1:5500")); // hoặc domain FE thật
+        corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         corsConfig.setAllowedHeaders(List.of("*"));
+        corsConfig.setExposedHeaders(List.of("*")); // Cho FE đọc header
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);
 
