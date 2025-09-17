@@ -1,6 +1,5 @@
 package com.example.java_service.Controllers;
 
-import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Request.RoomCreationRequest;
 import com.example.java_service.Dto.Request.RoomUpdateRequest;
 import com.example.java_service.Dto.Response.*;
@@ -48,7 +47,6 @@ public class RoomController
                 .data(roomService.getInfRoom(idRoom))
                 .build();
     }
-
 
     // Endpoint tạo phòng mới
     @PostMapping("/creation")

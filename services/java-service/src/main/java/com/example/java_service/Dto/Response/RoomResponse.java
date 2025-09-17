@@ -1,6 +1,7 @@
 package com.example.java_service.Dto.Response;
 
 import com.example.java_service.Models.TypeRoom;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RoomResponse
 {
     UUID idRoom;

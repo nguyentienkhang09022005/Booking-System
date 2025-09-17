@@ -48,6 +48,7 @@ public enum ErrorCode
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
 
     // Dịch vụ
+    SERVICE_NOT_FOUND("SERVICE_NOT_FOUND", "Không tìm thấy dịch vụ!", HttpStatus.NOT_FOUND),
     ;
 
     private final String code;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
+@Table(name = "service")
 public class Service
 {
     @Id
@@ -22,13 +22,13 @@ public class Service
     @Column(name = "id_service", nullable = false, updatable = false)
     private UUID idService;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_hotel",
             referencedColumnName = "id_hotel",
             foreignKey = @ForeignKey(name = "FK_SERVICE_HOTEL"))
     private Hotel hotel;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "type_service",
             referencedColumnName = "type_service",
             foreignKey = @ForeignKey(name = "FK_SERVICE_TYPE_SERVICE"))

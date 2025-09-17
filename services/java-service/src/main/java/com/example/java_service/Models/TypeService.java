@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class TypeService
 {
     @Id
-    @Column(name = "type_service", nullable = false, updatable = false)
+    @Column(name = "type_service")
     private String typeService;
 
     @Column(name = "description",columnDefinition = "TEXT")

@@ -47,7 +47,7 @@ public class RoomService
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
-        Page<Room> roomPage = roomRepository.findAll(pageable);
+        Page<Room> roomPage = roomRepository.findByHotel_IdHotel(idHotel, pageable);
         List<Room> roomsOnPage = roomPage.getContent();
         if (roomsOnPage.isEmpty()) {
             return Page.empty(pageable);
