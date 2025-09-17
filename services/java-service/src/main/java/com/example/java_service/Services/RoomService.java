@@ -3,8 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Constant.PredefinedStatusRoom;
 import com.example.java_service.Dto.Request.RoomCreationRequest;
 import com.example.java_service.Dto.Request.RoomUpdateRequest;
-import com.example.java_service.Dto.Response.GetListHotelResponse;
-import com.example.java_service.Dto.Response.GetListRoomResponse;
+import com.example.java_service.Dto.Response.GetRoomResponse;
 import com.example.java_service.Dto.Response.RoomResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
@@ -42,12 +41,11 @@ public class RoomService
     RoomMapper roomMapper;
 
     // Hàm lấy danh sách phòng bằng paging 8
-    public Page<GetListRoomResponse> getListRoomByPaging(UUID idHotel, Pageable pageable)
+    public Page<GetRoomResponse> getListRoomByPaging(UUID idHotel, Pageable pageable)
     {
         hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
-
 
         Page<Room> roomPage = roomRepository.findAll(pageable);
         List<Room> roomsOnPage = roomPage.getContent();
@@ -70,9 +68,9 @@ public class RoomService
                         Collectors.mapping(Images::getUrl, Collectors.toList())
                 ));
 
-        List<GetListRoomResponse> responses = roomsOnPage.stream()
+        List<GetRoomResponse> responses = roomsOnPage.stream()
                 .map(room -> {
-                    GetListRoomResponse response = roomMapper.toGetListRoomResponse(room);
+                    GetRoomResponse response = roomMapper.toGetRoomResponse(room);
                     String roomIdStr = room.getIdRoom().toString();
 
                     response.setImageRoomUrl(roomImagesMap.get(roomIdStr));
@@ -84,6 +82,21 @@ public class RoomService
 
 
     // Hàm lấy thông tin chi tiết phòng
+    public GetRoomResponse getInfRoom(UUID idRoom)
+    {
+        Room room = roomRepository.findById(idRoom).orElseThrow(
+                () -> new ApiException(ErrorCode.ROOM_NOT_FOUND)
+        );
+
+        List<String> imageUrls = imagesRepository.findByRefId(room.getIdRoom().toString())
+                .stream()
+                .map(Images::getUrl)
+                .toList();
+
+        GetRoomResponse roomResponse = roomMapper.toGetRoomResponse(room);
+        roomResponse.setImageRoomUrl(imageUrls);
+        return roomResponse;
+    }
 
     // Hàm thêm phòng mới
     public RoomResponse saveRoom(RoomCreationRequest request)

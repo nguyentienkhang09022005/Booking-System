@@ -28,16 +28,27 @@ public class RoomController
 
     // Endpoint lấy danh sách phòng theo paging 8
     @GetMapping("/getListRoom")
-    public ApiResponse<Page<GetListRoomResponse>> getRooms(@RequestParam UUID idHotel,
+    public ApiResponse<Page<GetRoomResponse>> getRooms(@RequestParam UUID idHotel,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "8") int size)
     {
         Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.<Page<GetListRoomResponse>>builder()
+        return ApiResponse.<Page<GetRoomResponse>>builder()
                 .message("Lấy danh sách phòng thành công!")
                 .data(roomService.getListRoomByPaging(idHotel, pageable))
                 .build();
     }
+
+    // Endpoint lấy thông tin chi tiết phòng
+    @GetMapping( "/getInfRoom")
+    public ApiResponse<GetRoomResponse> getInfRoom(@RequestParam UUID idRoom)
+    {
+        return ApiResponse.<GetRoomResponse>builder()
+                .message("Lấy thông tin chi tiết phòng thành công!")
+                .data(roomService.getInfRoom(idRoom))
+                .build();
+    }
+
 
     // Endpoint tạo phòng mới
     @PostMapping("/creation")

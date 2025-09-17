@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GetListRoomResponse
+public class GetRoomResponse
 {
     UUID idRoom;
     TypeRoom typeRoom;
