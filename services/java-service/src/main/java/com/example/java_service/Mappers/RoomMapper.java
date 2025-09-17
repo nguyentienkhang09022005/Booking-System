@@ -2,7 +2,10 @@ package com.example.java_service.Mappers;
 
 import com.example.java_service.Dto.Request.RoomCreationRequest;
 import com.example.java_service.Dto.Request.RoomUpdateRequest;
+import com.example.java_service.Dto.Response.GetListHotelResponse;
+import com.example.java_service.Dto.Response.GetListRoomResponse;
 import com.example.java_service.Dto.Response.RoomResponse;
+import com.example.java_service.Models.Hotel;
 import com.example.java_service.Models.Room;
 import org.mapstruct.*;
 
@@ -15,6 +18,9 @@ public interface RoomMapper
 
     @Mapping(target = "typeRoom", ignore = true)
     RoomResponse toRoomResponse(Room room);
+
+    @Mapping(target = "imageRoomUrl", ignore = true)
+    GetListRoomResponse toGetListRoomResponse(Room room);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "typeRoom", ignore = true)
