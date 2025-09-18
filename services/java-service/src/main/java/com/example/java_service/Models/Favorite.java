@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "images")
+@Document(collection = "favorites")
 public class Favorite
 {
     @Id

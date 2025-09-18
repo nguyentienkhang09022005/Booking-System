@@ -47,8 +47,13 @@ public enum ErrorCode
     // Lỗi phòng
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
 
-    // Dịch vụ
+    // Lỗi dịch vụ
     SERVICE_NOT_FOUND("SERVICE_NOT_FOUND", "Không tìm thấy dịch vụ!", HttpStatus.NOT_FOUND),
+
+    // Lỗi yêu thích
+    FAVORITE_NOT_FOUND("FAVORITE_NOT_FOUND", "Lỗi không tìm thấy khách sạn yêu thích!", HttpStatus.NOT_FOUND),
+    USER_LIKED_HOTEL("USER_LIKED_HOTEL", "Khách sạn đã được yêu thích rồi!", HttpStatus.CONFLICT),
+
     ;
 
     private final String code;
