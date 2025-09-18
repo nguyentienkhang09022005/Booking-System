@@ -20,5 +20,6 @@ public class HotelResponse
     String ward;
     String city;
     String description;
+    Boolean favorite;
     List<String> imageHotel;
 }

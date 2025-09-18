@@ -10,5 +10,8 @@ import java.util.List;
 public interface FavoriteRepository extends MongoRepository<Favorite, String>
 {
     List<Favorite> findByIdUser(String idUser);
+
     Boolean existsByIdUserAndIdHotel(String idUser, String idHotel);
+
+    void deleteByIdUserAndIdHotel(String idUser, String idHotel);
 }

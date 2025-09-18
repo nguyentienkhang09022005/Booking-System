@@ -1,6 +1,7 @@
 package com.example.java_service.Controllers;
 
 import com.example.java_service.Dto.Request.HotelCreationRequest;
+import com.example.java_service.Dto.Request.HotelCheckFavoriteRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
@@ -16,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -63,19 +63,20 @@ public class HotelController
 
     // Endpoint lấy thông tin chi tiết khách sạn
     @GetMapping( "/getInfHotel")
-    public ApiResponse<HotelResponse> getDetailHotel(@RequestParam UUID idHotel)
+    public ApiResponse<HotelResponse> getDetailHotel(@RequestParam UUID idHotel,
+                                                     @RequestParam UUID idUser)
     {
         return ApiResponse.<HotelResponse>builder()
                 .message("Lấy thông tin chi tiết khách sạn thành công!")
-                .data(hotelService.getHotelDetail(idHotel))
+                .data(hotelService.getHotelDetail(idHotel, idUser))
                 .build();
     }
 
     // Endpoint xóa khách sạn
     @DeleteMapping( "/delele")
-    public ApiResponse<ResponseEntity<String>> deleteHotel(@RequestParam UUID idHotel)
+    public ApiResponse<ResponseEntity<String>> deleteHotel(@RequestBody HotelCheckFavoriteRequest request)
     {
-        var response = hotelService.deleteHotel(idHotel);
+        var response = hotelService.deleteHotel(request);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();

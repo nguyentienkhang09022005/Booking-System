@@ -14,6 +14,7 @@ public interface HotelMapper
     Hotel toHotel(HotelCreationRequest request);
 
     @Mapping(target = "ownerHotelResponse", ignore = true)
+    @Mapping(target = "favorite", ignore = true)
     HotelResponse toHotelResponse(Hotel hotel);
 
     @Mapping(target = "imageHotelUrl", ignore = true)

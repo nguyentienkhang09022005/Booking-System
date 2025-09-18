@@ -1,6 +1,7 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Dto.Request.HotelCreationRequest;
+import com.example.java_service.Dto.Request.HotelCheckFavoriteRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Dto.Response.HotelResponse;
@@ -94,7 +95,7 @@ public class HotelService
 
         Set<String> favoriteHotelIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
                 .stream()
-                .map(Favorite::getId)
+                .map(Favorite::getIdHotel)
                 .collect(Collectors.toSet());
 
         // Lấy ID của tất cả khách sạn trong trang hiện tại
@@ -127,21 +128,26 @@ public class HotelService
     }
 
     // Lấy thông tin chi tiết của khách sạn qua id
-    public HotelResponse getHotelDetail(UUID idHotel)
+    public HotelResponse getHotelDetail(UUID idHotel, UUID idUser)
     {
         Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
+        var favoriteCheck = favoriteRepository.existsByIdUserAndIdHotel(
+                idUser.toString(),
+                idHotel.toString());
         List<String> imageUrls = imagesRepository.findByRefId(hotel.getIdHotel().toString())
                 .stream()
                 .map(Images::getUrl)
                 .toList();
+
         OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(hotel.getUsers());
 
         HotelResponse hotelResponse = hotelMapper.toHotelResponse(hotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
         hotelResponse.setImageHotel(imageUrls);
+        hotelResponse.setFavorite(favoriteCheck);
         return hotelResponse;
     }
 
@@ -204,12 +210,17 @@ public class HotelService
     }
 
     // Xóa khách sạn còn favorite và evaluate
-    public ResponseEntity<String> deleteHotel(UUID idHotel)
+    public ResponseEntity<String> deleteHotel(HotelCheckFavoriteRequest request)
     {
-        Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
+        Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
-        imagesRepository.deleteByRefId(idHotel.toString());
+
+        if (!userRepository.existsById(hotel.getUsers().getIdUser()))
+            throw new ApiException(ErrorCode.USER_NOT_FOUND);
+
+        imagesRepository.deleteByRefId(request.getIdHotel().toString());
+        favoriteRepository.deleteByIdUserAndIdHotel(request.getIdUser().toString(), request.getIdHotel().toString());
         hotelRepository.delete(hotel);
         return ResponseEntity.ok("Xóa khách sạn thành công!");
     }
