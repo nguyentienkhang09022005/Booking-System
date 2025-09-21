@@ -2,6 +2,7 @@ package com.example.java_service.Mappers;
 
 import com.example.java_service.Dto.Request.HotelCreationRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
+import com.example.java_service.Dto.Response.GetDetailHotelResponse;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Dto.Response.HotelResponse;
 import com.example.java_service.Models.Hotel;
@@ -14,11 +15,19 @@ public interface HotelMapper
     Hotel toHotel(HotelCreationRequest request);
 
     @Mapping(target = "ownerHotelResponse", ignore = true)
-    @Mapping(target = "favorite", ignore = true)
     HotelResponse toHotelResponse(Hotel hotel);
+
+    @Mapping(target = "ownerHotelResponse", ignore = true)
+    @Mapping(target = "favorite", ignore = true)
+    @Mapping(target = "evaluates", ignore = true)
+    @Mapping(target = "averageStar", ignore = true)
+    @Mapping(target = "allEvaluates", ignore = true)
+    GetDetailHotelResponse toGetDetailHotelResponse(Hotel hotel);
 
     @Mapping(target = "imageHotelUrl", ignore = true)
     @Mapping(target = "favorite", ignore = true)
+    @Mapping(target = "averageStar", ignore = true)
+    @Mapping(target = "allEvaluates", ignore = true)
     GetListHotelResponse toGetListHotelResponse(Hotel hotel);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

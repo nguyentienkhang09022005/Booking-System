@@ -52,8 +52,12 @@ public enum ErrorCode
 
     // Lỗi yêu thích
     FAVORITE_NOT_FOUND("FAVORITE_NOT_FOUND", "Lỗi không tìm thấy khách sạn yêu thích!", HttpStatus.NOT_FOUND),
-    USER_LIKED_HOTEL("USER_LIKED_HOTEL", "Khách sạn đã được yêu thích rồi!", HttpStatus.CONFLICT),
+    USER_LIKED_HOTEL("USER_LIKED_HOTEL", "Bạn đã yêu thích khách sạn này rồi!", HttpStatus.CONFLICT),
 
+    // Lỗi đánh giá
+    EVALUATE_NOT_FOUND("EVALUATE_NOT_FOUND", "Lỗi không tìm thấy đánh giá!", HttpStatus.NOT_FOUND),
+    USER_EVALUATED_HOTEL("USER_EVALUATED_HOTEL", "Bạn đã đánh giá khách sạn này rồi!", HttpStatus.CONFLICT),
+    EVALUATE_UPDATE_TIME_EXPIRED("EVALUATE_UPDATE_TIME_EXPIRED", "Chỉ được thay đổi đánh giá trong 30 phút!", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

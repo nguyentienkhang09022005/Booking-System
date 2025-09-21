@@ -57,7 +57,7 @@ public class ServiceService
         return new PageImpl<>(responses, pageable, servicesPage.getTotalElements());
     }
 
-    // Hàm lấy danh sách dịch vụ
+    // Hàm lấy thông tin chi tiết dịch vụ
 
     // Hàm thêm dịch vụ mới
     public ServiceResponse saveService(ServiceCreationRequest request)

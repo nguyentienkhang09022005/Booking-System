@@ -3,19 +3,16 @@ package com.example.java_service.Services;
 import com.example.java_service.Dto.Request.HotelCreationRequest;
 import com.example.java_service.Dto.Request.HotelCheckFavoriteRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
-import com.example.java_service.Dto.Response.GetListHotelResponse;
-import com.example.java_service.Dto.Response.HotelResponse;
-import com.example.java_service.Dto.Response.OwnerHotelResponse;
+import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
+import com.example.java_service.Mappers.EvaluateMapper;
 import com.example.java_service.Mappers.HotelMapper;
 import com.example.java_service.Mappers.UserMapper;
-import com.example.java_service.Models.Favorite;
-import com.example.java_service.Models.Hotel;
-import com.example.java_service.Models.Images;
-import com.example.java_service.Models.Users;
+import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.HotelRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import lombok.AccessLevel;
@@ -44,8 +41,11 @@ public class HotelService
     HotelRepository hotelRepository;
     FavoriteRepository favoriteRepository;
     ImagesRepository imagesRepository;
+    EvaluatesRepository evaluatesRepository;
+    EvaluatesService evaluatesService;
     HotelMapper hotelMapper;
     UserMapper userMapper;
+    EvaluateMapper evaluateMapper;
 
     // Lấy danh sách khách sạn
 //    public List<GetListHotelResponse> getListHotel(UUID idUser)
@@ -113,22 +113,37 @@ public class HotelService
                         Collectors.mapping(Images::getUrl, Collectors.toList())
                 ));
 
+        // Lấy tất cả thống kê trong 1 query duy nhất bằng MongoDB Aggregation
+        Map<String, HotelStatsResponse> statsMap = evaluatesRepository.findHotelStatsByHotelIds(hotelIdsOnPage)
+                .stream()
+                .collect(Collectors.toMap(HotelStatsResponse::getIdHotel, dto -> dto));
+
         List<GetListHotelResponse> responses = hotelsOnPage.stream()
                 .map(hotel -> {
                     GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
                     String hotelIdStr = hotel.getIdHotel().toString();
 
-                    response.setFavorite(favoriteHotelIds.contains(hotelIdStr));
+                    HotelStatsResponse stats = statsMap.get(hotelIdStr);
 
+                    response.setFavorite(favoriteHotelIds.contains(hotelIdStr));
                     response.setImageHotelUrl(hotelImagesMap.get(hotelIdStr));
+
+                    if (stats != null) {
+                        response.setAllEvaluates(stats.getAllEvaluates().intValue());
+                        response.setAverageStar(stats.getAverageStar());
+                    } else {
+                        // Mặc định nếu khách sạn chưa có đánh giá nào
+                        response.setAllEvaluates(0);
+                        response.setAverageStar(0.0);
+                    }
                     return response;
                 }).toList();
 
         return new PageImpl<>(responses, pageable, hotelPage.getTotalElements());
     }
 
-    // Lấy thông tin chi tiết của khách sạn qua id
-    public HotelResponse getHotelDetail(UUID idHotel, UUID idUser)
+    // Lấy thông tin chi tiết của khách sạn qua id (bổ sung lấy thêm evaluates top 5 gần nhất)
+    public GetDetailHotelResponse getHotelDetail(UUID idHotel, UUID idUser)
     {
         Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
@@ -144,10 +159,24 @@ public class HotelService
 
         OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(hotel.getUsers());
 
-        HotelResponse hotelResponse = hotelMapper.toHotelResponse(hotel);
+        // Lấy tất cả đánh giá của khách sạn
+        Integer allEvaluate = evaluatesService.getAllEvaluateOfHotel(idHotel);
+        // Lấy trung bình số sao của khách sạn
+        Double stars = evaluatesService.getAverageStarOfHotel(idHotel);
+
+        // Lấy danh sách đánh giá
+        List<Evaluates> top3Evaluates = evaluatesRepository.findTop3ByIdHotelOrderByCreatedAtAsc(idHotel.toString());
+        List<EvaluateResponse> evaluateResponses = top3Evaluates.stream()
+                .map(evaluateMapper::toEvaluateResponse)
+                .toList();
+
+        GetDetailHotelResponse hotelResponse = hotelMapper.toGetDetailHotelResponse(hotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
         hotelResponse.setImageHotel(imageUrls);
         hotelResponse.setFavorite(favoriteCheck);
+        hotelResponse.setEvaluates(evaluateResponses);
+        hotelResponse.setAllEvaluates(allEvaluate);
+        hotelResponse.setAverageStar(stars);
         return hotelResponse;
     }
 
@@ -209,7 +238,7 @@ public class HotelService
         return hotelResponse;
     }
 
-    // Xóa khách sạn còn favorite và evaluate
+    // Xóa khách sạn còn và evaluate
     public ResponseEntity<String> deleteHotel(HotelCheckFavoriteRequest request)
     {
         Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(

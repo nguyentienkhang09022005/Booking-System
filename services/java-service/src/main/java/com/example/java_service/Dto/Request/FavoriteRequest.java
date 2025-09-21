@@ -10,6 +10,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FavoriteRequest
 {
-    private String idUser;
-    private String idHotel;
+    String idUser;
+    String idHotel;
 }

@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.HotelCreationRequest;
 import com.example.java_service.Dto.Request.HotelCheckFavoriteRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
+import com.example.java_service.Dto.Response.GetDetailHotelResponse;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Dto.Response.HotelResponse;
 import com.example.java_service.Services.HotelService;
@@ -63,10 +64,10 @@ public class HotelController
 
     // Endpoint lấy thông tin chi tiết khách sạn
     @GetMapping( "/getInfHotel")
-    public ApiResponse<HotelResponse> getDetailHotel(@RequestParam UUID idHotel,
-                                                     @RequestParam UUID idUser)
+    public ApiResponse<GetDetailHotelResponse> getDetailHotel(@RequestParam UUID idHotel,
+                                                              @RequestParam UUID idUser)
     {
-        return ApiResponse.<HotelResponse>builder()
+        return ApiResponse.<GetDetailHotelResponse>builder()
                 .message("Lấy thông tin chi tiết khách sạn thành công!")
                 .data(hotelService.getHotelDetail(idHotel, idUser))
                 .build();

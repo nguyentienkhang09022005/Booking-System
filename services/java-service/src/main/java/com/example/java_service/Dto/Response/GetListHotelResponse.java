@@ -19,5 +19,7 @@ public class GetListHotelResponse
     String ward;
     String city;
     Boolean favorite;
+    Integer allEvaluates;
+    Double averageStar;
     List<String> imageHotelUrl;
 }
