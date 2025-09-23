@@ -8,6 +8,7 @@ import com.example.Booking_Hotel_BE.Services.RefreshTokenService;
 import com.example.Booking_Hotel_BE.Services.RegisterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -73,6 +74,9 @@ public class SecurityConfig
         return new CustomOAuth2UserService(registerService, authenService, refreshTokenService, userMapper);
     }
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -117,7 +121,7 @@ public class SecurityConfig
 
                             response.setContentType("application/json");
                             response.setCharacterEncoding("UTF-8");
-                            new ObjectMapper().writeValue(response.getWriter(), safeResponse);
+                            objectMapper.writeValue(response.getWriter(), safeResponse);
                         })
                 )
                 .csrf(AbstractHttpConfigurer::disable);
