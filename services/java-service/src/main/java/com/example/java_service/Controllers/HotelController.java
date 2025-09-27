@@ -13,11 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -40,25 +39,12 @@ public class HotelController
     }
 
     // Endpoint lấy danh sách khách sạn
-//    @GetMapping( "/getlist")
-//    public ApiResponse<List<GetListHotelResponse>> listHotel(@RequestParam UUID idUser)
-//    {
-//        return ApiResponse.<List<GetListHotelResponse>>builder()
-//                .message("Lấy danh sách khách sạn thành công!")
-//                .data(hotelService.getListHotel(idUser))
-//                .build();
-//    }
-
-    // Endpoint lấy danh sách khách sạn theo paging 8
     @GetMapping("/getListHotel")
-    public ApiResponse<Page<GetListHotelResponse>> getHotels(@RequestParam UUID idUser,
-                                                             @RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "8") int size)
+    public ApiResponse<List<GetListHotelResponse>> getHotels(@RequestParam(required = false) UUID idUser)
     {
-        Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.<Page<GetListHotelResponse>>builder()
+        return ApiResponse.<List<GetListHotelResponse>>builder()
                 .message("Lấy danh sách khách sạn thành công!")
-                .data(hotelService.getListHotelByPaging(idUser, pageable))
+                .data(hotelService.getListHotel(idUser))
                 .build();
     }
 

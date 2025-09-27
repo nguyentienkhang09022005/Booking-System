@@ -3,6 +3,7 @@ package com.example.java_service.Dto.Response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -19,4 +20,6 @@ public class HotelResponse
     String ward;
     String city;
     String description;
+    List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses;
+    List<GetDetailHotelResponse.GeneralRegulationResponse> generalRegulationResponses;
 }

@@ -1,5 +1,6 @@
 package com.example.java_service.Dto.Request;
 
+import com.example.java_service.Models.FacilityCategory;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -20,4 +21,36 @@ public class HotelCreationRequest
     String city;
     String description;
     List<String> listImageHotel;
+    List<FacilityCategoryRequest> facilityCategories;
+    List<GeneralRegulationRequest> generalRegulations;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class FacilityCategoryRequest {
+        String categoryName;
+        List<FacilityRequest> facilities;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class FacilityRequest {
+        String facilityName;
+        Boolean isFree;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class GeneralRegulationRequest {
+        String regulationName;
+        String regulationContent;
+    }
 }

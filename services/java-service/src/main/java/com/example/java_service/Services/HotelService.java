@@ -10,8 +10,7 @@ import com.example.java_service.Mappers.EvaluateMapper;
 import com.example.java_service.Mappers.HotelMapper;
 import com.example.java_service.Mappers.UserMapper;
 import com.example.java_service.Models.*;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
-import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Repositories.Jpa.*;
 import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
@@ -19,16 +18,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,83 +35,52 @@ public class HotelService
     FavoriteRepository favoriteRepository;
     ImagesRepository imagesRepository;
     EvaluatesRepository evaluatesRepository;
+    FacilityCategoryRepository facilityCategoryRepository;
+    GeneralRegulationRepository generalRegulationRepository;
+    HotelFacilityRepository hotelFacilityRepository;
     EvaluatesService evaluatesService;
     HotelMapper hotelMapper;
     UserMapper userMapper;
     EvaluateMapper evaluateMapper;
 
-    // Lấy danh sách khách sạn
-//    public List<GetListHotelResponse> getListHotel(UUID idUser)
-//    {
-//        Users user = userRepository.findById(idUser).orElseThrow(
-//                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
-//
-//        List<Hotel> hotels = hotelRepository.findAll(); // lấy danh sách hotel
-//
-//        Set<String> favoriteHotelId = favoriteRepository.findByIdUser(user.getIdUser().toString()) // Lấy danh sách hotel yêu thích
-//                .stream()
-//                .map(Favorite::getId)
-//                .collect(Collectors.toSet());
-//
-//        return hotels.stream()
-//                .map(hotel -> {
-//                    GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
-//
-//                    // Set favorite
-//                    response.setFavorite(favoriteHotelId.contains(hotel.getIdHotel().toString()));
-//
-//                    // Set image đầu tiên của hotel
-//                    String firstImageUrl = imagesRepository
-//                            .findByRefIdOrderByUploadedAtAsc(hotel.getIdHotel().toString())
-//                            .stream()
-//                            .findFirst()
-//                            .map(Images::getUrl)
-//                            .orElse(null);
-//                    response.setImageHotelUrl(firstImageUrl);
-//
-//                    return response;
-//                }).toList();
-//    }
-
     // Hàm lấy danh sách khách sạn bằng paging 8
-    public Page<GetListHotelResponse> getListHotelByPaging(UUID idUser, Pageable pageable)
-    {
-        Users user = userRepository.findById(idUser).orElseThrow(
-                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
-
-        Page<Hotel> hotelPage = hotelRepository.findAll(pageable); // Lấy danh sách theo trang
-        List<Hotel> hotelsOnPage = hotelPage.getContent();
-
-        if (hotelsOnPage.isEmpty()) {
-            return Page.empty(pageable); // Trả về trang rỗng nếu không có khách sạn nào
+    public List<GetListHotelResponse> getListHotel(UUID idUser) {
+        List<Hotel> hotelList = hotelRepository.findAll();
+        if (hotelList.isEmpty()) {
+            return List.of();
         }
 
-        Set<String> favoriteHotelIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
-                .stream()
-                .map(Favorite::getIdHotel)
-                .collect(Collectors.toSet());
+        final Set<String> favoriteHotelIds;
+        if (idUser != null) {
+            Users user = userRepository.findById(idUser).orElseThrow(
+                    () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+            favoriteHotelIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
+                    .stream()
+                    .map(Favorite::getIdHotel)
+                    .collect(Collectors.toSet());
+        } else {
+            favoriteHotelIds = Set.of();
+        }
 
-        // Lấy ID của tất cả khách sạn trong trang hiện tại
-        List<String> hotelIdsOnPage = hotelsOnPage.stream()
+        // Lấy ID của tất cả khách sạn
+        List<String> hotelIds = hotelList.stream()
                 .map(hotel -> hotel.getIdHotel().toString())
                 .toList();
 
-        // Lấy tất cả ảnh của các hotel trên trang
-        List<Images> images = imagesRepository.findByRefIdIn(hotelIdsOnPage);
-
-        // Gom nhóm ảnh theo idHotel
+        // Lấy tất cả ảnh
+        List<Images> images = imagesRepository.findByRefIdIn(hotelIds);
         Map<String, List<String>> hotelImagesMap = images.stream()
                 .collect(Collectors.groupingBy(
                         Images::getRefId,
                         Collectors.mapping(Images::getUrl, Collectors.toList())
                 ));
 
-        // Lấy tất cả thống kê trong 1 query duy nhất bằng MongoDB Aggregation
-        Map<String, HotelStatsResponse> statsMap = evaluatesRepository.findHotelStatsByHotelIds(hotelIdsOnPage)
+        // Lấy thống kê
+        Map<String, HotelStatsResponse> statsMap = evaluatesRepository.findHotelStatsByHotelIds(hotelIds)
                 .stream()
                 .collect(Collectors.toMap(HotelStatsResponse::getIdHotel, dto -> dto));
 
-        List<GetListHotelResponse> responses = hotelsOnPage.stream()
+        return hotelList.stream()
                 .map(hotel -> {
                     GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
                     String hotelIdStr = hotel.getIdHotel().toString();
@@ -132,14 +94,12 @@ public class HotelService
                         response.setAllEvaluates(stats.getAllEvaluates().intValue());
                         response.setAverageStar(stats.getAverageStar());
                     } else {
-                        // Mặc định nếu khách sạn chưa có đánh giá nào
                         response.setAllEvaluates(0);
                         response.setAverageStar(0.0);
                     }
                     return response;
-                }).toList();
-
-        return new PageImpl<>(responses, pageable, hotelPage.getTotalElements());
+                })
+                .toList();
     }
 
     // Lấy thông tin chi tiết của khách sạn qua id (bổ sung lấy thêm evaluates top 5 gần nhất)
@@ -170,6 +130,36 @@ public class HotelService
                 .map(evaluateMapper::toEvaluateResponse)
                 .toList();
 
+        // Lấy categories + facilities
+        List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses =
+                facilityCategoryRepository.findDistinctByFacilities_HotelFacilities_Hotel_IdHotel(idHotel)
+                        .stream()
+                        .map(cat -> GetDetailHotelResponse.FacilityCategoryResponse.builder()
+                                .idCategory(cat.getIdCategory())
+                                .categoryName(cat.getCategoryName())
+                                .facilities(
+                                        cat.getFacilities().stream()
+                                                .map(fac -> GetDetailHotelResponse.FacilityResponse.builder()
+                                                        .idFacility(fac.getIdFacility())
+                                                        .facilityName(fac.getFacilityName())
+                                                        .isFree(fac.getIsFree())
+                                                        .build())
+                                                .toList()
+                                )
+                                .build())
+                        .toList();
+
+        // 8. Lấy general regulations
+        List<GetDetailHotelResponse.GeneralRegulationResponse> regulationResponses =
+                generalRegulationRepository.findByHotel_IdHotel(idHotel)
+                        .stream()
+                        .map(reg -> GetDetailHotelResponse.GeneralRegulationResponse.builder()
+                                .idRegulation(reg.getIdRegulation())
+                                .regulationName(reg.getRegulationName())
+                                .regulationContent(reg.getRegulationContent())
+                                .build())
+                        .toList();
+
         GetDetailHotelResponse hotelResponse = hotelMapper.toGetDetailHotelResponse(hotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
         hotelResponse.setImageHotel(imageUrls);
@@ -177,6 +167,8 @@ public class HotelService
         hotelResponse.setEvaluates(evaluateResponses);
         hotelResponse.setAllEvaluates(allEvaluate);
         hotelResponse.setAverageStar(stars);
+        hotelResponse.setFacilityCategoryResponses(facilityCategoryResponses);
+        hotelResponse.setGeneralRegulationResponses(regulationResponses);
         return hotelResponse;
     }
 
@@ -201,9 +193,92 @@ public class HotelService
             }).toList();
             imagesRepository.saveAll(images);
         }
+
+        // Map thông tin khách sạn cơ bản
         OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
-        var hotelResponse = hotelMapper.toHotelResponse(savedHotel);
+        HotelResponse hotelResponse = hotelMapper.toHotelResponse(savedHotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
+
+        if (request.getFacilityCategories() != null && !request.getFacilityCategories().isEmpty())
+        {
+            List<FacilityCategory> categories = request.getFacilityCategories()
+                    .stream()
+                    .map(category -> {
+                        FacilityCategory facilityCategory = FacilityCategory.builder()
+                                .categoryName(category.getCategoryName())
+                                .build();
+
+                        if (category.getFacilities() != null && !category.getFacilities().isEmpty()) {
+                            List<Facility> facilities = category.getFacilities().stream()
+                                    .map(facilityRequest -> Facility.builder()
+                                            .facilityName(facilityRequest.getFacilityName())
+                                            .isFree(facilityRequest.getIsFree())
+                                            .category(facilityCategory)
+                                            .build())
+                                    .toList();
+                            facilityCategory.setFacilities(facilities);
+                        }
+                        return facilityCategory;
+                    }).toList();
+            List<FacilityCategory> savedCategories = facilityCategoryRepository.saveAll(categories);
+
+
+            // Tạo quan hệ HotelFacility
+            List<HotelFacility> hotelFacilities = categories.stream()
+                    .flatMap(cat -> cat.getFacilities().stream()
+                            .map(fac -> HotelFacility.builder()
+                                    .idHotelFacility(new HotelFacilityId(savedHotel.getIdHotel(), fac.getIdFacility()))
+                                    .hotel(savedHotel)
+                                    .facility(fac)
+                                    .build()))
+                    .toList();
+            hotelFacilityRepository.saveAll(hotelFacilities);
+
+            // Map sang response
+            List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses =
+                    savedCategories.stream()
+                            .map(cat -> GetDetailHotelResponse.FacilityCategoryResponse.builder()
+                                    .idCategory(cat.getIdCategory())
+                                    .categoryName(cat.getCategoryName())
+                                    .facilities(cat.getFacilities().stream()
+                                            .map(fac -> GetDetailHotelResponse.FacilityResponse.builder()
+                                                    .idFacility(fac.getIdFacility())
+                                                    .facilityName(fac.getFacilityName())
+                                                    .isFree(fac.getIsFree())
+                                                    .build())
+                                            .toList())
+                                    .build())
+                            .toList();
+
+            hotelResponse.setFacilityCategoryResponses(facilityCategoryResponses);
+        }
+
+        if (request.getGeneralRegulations() != null && !request.getGeneralRegulations().isEmpty())
+        {
+            List<GeneralRegulation> generalRegulations = request.getGeneralRegulations().stream()
+                    .map(generalRegulationRequest ->  GeneralRegulation.builder()
+                            .regulationName(generalRegulationRequest.getRegulationName())
+                            .regulationContent(generalRegulationRequest.getRegulationContent())
+                            .hotel(savedHotel)
+                            .build())
+                    .toList();
+            generalRegulationRepository.saveAll(generalRegulations);
+
+            List<GeneralRegulation> savedRegs = generalRegulationRepository.saveAll(generalRegulations);
+
+            // Map sang response
+            List<GetDetailHotelResponse.GeneralRegulationResponse> generalRegulationResponses =
+                    savedRegs.stream()
+                            .map(reg -> GetDetailHotelResponse.GeneralRegulationResponse.builder()
+                                    .idRegulation(reg.getIdRegulation())
+                                    .regulationName(reg.getRegulationName())
+                                    .regulationContent(reg.getRegulationContent())
+                                    .build())
+                            .toList();
+
+            hotelResponse.setGeneralRegulationResponses(generalRegulationResponses);
+        }
+
         return hotelResponse;
     }
 

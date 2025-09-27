@@ -25,4 +25,40 @@ public class GetDetailHotelResponse
     Double averageStar;
     List<String> imageHotel;
     List<EvaluateResponse> evaluates;
+    List<FacilityCategoryResponse> facilityCategoryResponses;
+    List<GeneralRegulationResponse> generalRegulationResponses;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class FacilityCategoryResponse {
+        UUID idCategory;
+        String categoryName;
+        List<FacilityResponse> facilities;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class FacilityResponse {
+        UUID idFacility;
+        String facilityName;
+        Boolean isFree;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    public static class GeneralRegulationResponse {
+        UUID idRegulation;
+        String regulationName;
+        String regulationContent;
+    }
 }
+
