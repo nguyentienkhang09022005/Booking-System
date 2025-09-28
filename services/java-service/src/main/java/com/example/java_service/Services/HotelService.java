@@ -43,7 +43,7 @@ public class HotelService
     UserMapper userMapper;
     EvaluateMapper evaluateMapper;
 
-    // Hàm lấy danh sách khách sạn bằng paging 8
+    // Hàm lấy danh sách khách sạn
     public List<GetListHotelResponse> getListHotel(UUID idUser) {
         List<Hotel> hotelList = hotelRepository.findAll();
         if (hotelList.isEmpty()) {
@@ -149,7 +149,7 @@ public class HotelService
                                 .build())
                         .toList();
 
-        // 8. Lấy general regulations
+        // Lấy general regulations
         List<GetDetailHotelResponse.GeneralRegulationResponse> regulationResponses =
                 generalRegulationRepository.findByHotel_IdHotel(idHotel)
                         .stream()

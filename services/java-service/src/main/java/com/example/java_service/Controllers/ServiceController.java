@@ -9,12 +9,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -26,16 +24,13 @@ public class ServiceController
 {
     ServiceService serviceService;
 
-    // Endpoint lấy danh sách dịch vụ theo paging 8
+    // Endpoint lấy danh sách dịch vụ
     @GetMapping("/getListService")
-    public ApiResponse<Page<ServiceResponse>> getServices(@RequestParam UUID idHotel,
-                                                       @RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "8") int size)
+    public ApiResponse<List<ServiceResponse>> getServices(@RequestParam UUID idHotel)
     {
-        Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.<Page<ServiceResponse>>builder()
+        return ApiResponse.<List<ServiceResponse>>builder()
                 .message("Lấy danh sách dịch vụ thành công!")
-                .data(serviceService.getListServiceByPaging(pageable, idHotel))
+                .data(serviceService.getListService(idHotel))
                 .build();
     }
 

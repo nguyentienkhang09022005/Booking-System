@@ -17,9 +17,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -40,26 +37,25 @@ public class RoomService
     TypeRoomRepository typeRoomRepository;
     RoomMapper roomMapper;
 
-    // Hàm lấy danh sách phòng bằng paging 8
-    public Page<GetRoomResponse> getListRoomByPaging(UUID idHotel, Pageable pageable)
+    // Hàm lấy danh sách phòng
+    public List<GetRoomResponse> getListRoom(UUID idHotel)
     {
         hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
-        Page<Room> roomPage = roomRepository.findByHotel_IdHotel(idHotel, pageable);
-        List<Room> roomsOnPage = roomPage.getContent();
-        if (roomsOnPage.isEmpty()) {
-            return Page.empty(pageable);
+        List<Room> roomList = roomRepository.findByHotel_IdHotel(idHotel);
+        if (roomList.isEmpty()) {
+            return List.of();
         }
 
-        // Lấy ID của tất cả phòng trong trang hiện tại
-        List<String> roomIdsOnPage = roomsOnPage.stream()
+        // Lấy ID của tất cả phòng
+        List<String> roomIds = roomList.stream()
                 .map(room -> room.getIdRoom().toString())
                 .toList();
 
-        // Lấy tất cả ảnh của các room trên trang
-        List<Images> images = imagesRepository.findByRefIdIn(roomIdsOnPage);
+        // Lấy tất cả ảnh của các room
+        List<Images> images = imagesRepository.findByRefIdIn(roomIds);
 
         // Gom nhóm ảnh theo idRoom
         Map<String, List<String>> roomImagesMap = images.stream()
@@ -68,7 +64,7 @@ public class RoomService
                         Collectors.mapping(Images::getUrl, Collectors.toList())
                 ));
 
-        List<GetRoomResponse> responses = roomsOnPage.stream()
+        return roomList.stream()
                 .map(room -> {
                     GetRoomResponse response = roomMapper.toGetRoomResponse(room);
                     String roomIdStr = room.getIdRoom().toString();
@@ -76,12 +72,9 @@ public class RoomService
                     response.setImageRoomUrl(roomImagesMap.get(roomIdStr));
                     return response;
                 }).toList();
-
-        return new PageImpl<>(responses, pageable, roomPage.getTotalElements());
     }
 
-
-    // Hàm lấy thông tin chi tiết phòng
+   // Hàm lấy thông tin chi tiết phòng
     public GetRoomResponse getInfRoom(UUID idRoom)
     {
         Room room = roomRepository.findById(idRoom).orElseThrow(

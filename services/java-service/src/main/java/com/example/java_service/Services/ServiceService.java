@@ -16,9 +16,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -35,26 +32,23 @@ public class ServiceService
     TypeServiceRepository typeServiceRepository;
     ServiceMapper serviceMapper;
 
-    // Hàm lấy danh sách dịch vụ bằng paging 8
-    public Page<ServiceResponse> getListServiceByPaging(Pageable pageable, UUID idHotel)
+    // Hàm lấy danh sách dịch vụ
+    public List<ServiceResponse> getListService(UUID idHotel)
     {
         hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
-        Page<Service> servicesPage = serviceRepository.findByHotel_IdHotel(idHotel, pageable);
-        List<Service> servicesOnPage = servicesPage.getContent();
-        if (servicesOnPage.isEmpty()) {
-            return Page.empty(pageable);
+        List<Service> servicesList = serviceRepository.findByHotel_IdHotel(idHotel);
+        if (servicesList.isEmpty()) {
+            return List.of();
         }
 
-        List<ServiceResponse> responses = servicesOnPage.stream()
+        return servicesList.stream()
                 .map(service -> {
                     ServiceResponse response = serviceMapper.toServiceResponse(service);
                     return response;
                 }).toList();
-
-        return new PageImpl<>(responses, pageable, servicesPage.getTotalElements());
     }
 
     // Hàm lấy thông tin chi tiết dịch vụ

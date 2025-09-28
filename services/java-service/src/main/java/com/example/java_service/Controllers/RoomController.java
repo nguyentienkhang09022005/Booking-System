@@ -8,12 +8,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -25,16 +23,13 @@ public class RoomController
 {
     RoomService roomService;
 
-    // Endpoint lấy danh sách phòng theo paging 8
+    // Endpoint lấy danh sách phòng
     @GetMapping("/getListRoom")
-    public ApiResponse<Page<GetRoomResponse>> getRooms(@RequestParam UUID idHotel,
-                                                            @RequestParam(defaultValue = "0") int page,
-                                                            @RequestParam(defaultValue = "8") int size)
+    public ApiResponse<List<GetRoomResponse>> getRooms(@RequestParam UUID idHotel)
     {
-        Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.<Page<GetRoomResponse>>builder()
+        return ApiResponse.<List<GetRoomResponse>>builder()
                 .message("Lấy danh sách phòng thành công!")
-                .data(roomService.getListRoomByPaging(idHotel, pageable))
+                .data(roomService.getListRoom(idHotel))
                 .build();
     }
 
