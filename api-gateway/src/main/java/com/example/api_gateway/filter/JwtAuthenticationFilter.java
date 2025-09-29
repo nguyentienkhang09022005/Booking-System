@@ -42,11 +42,11 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                 || path.contains("/api/otp/")
                 || path.contains("/api/authen/refresh")
                 || path.contains("/api/authen/logout")
-                || path.contains("/hotel/getListHotel?idUser=")
                 || path.contains("/hotel/getListHotel")
                 || path.contains("/room/getListRoom")
                 || path.contains("/room/getInfRoom")
-                || path.contains("/service/getListService")){
+                || path.contains("/service/getListService")
+                || path.contains("/hotel/getInfHotel")){
             return chain.filter(exchange);
         }
 
