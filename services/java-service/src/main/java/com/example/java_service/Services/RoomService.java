@@ -92,7 +92,7 @@ public class RoomService
     }
 
     // Hàm thêm phòng mới
-    public RoomResponse saveRoom(RoomCreationRequest request)
+    public ResponseEntity<String> saveRoom(RoomCreationRequest request)
     {
         Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
@@ -114,8 +114,7 @@ public class RoomService
             }).toList();
             imagesRepository.saveAll(images);
         }
-        var roomResponse = roomMapper.toRoomResponse(savedRoom);
-        return roomResponse;
+        return ResponseEntity.ok("Tạo phòng thành công!");
     }
 
     // Hàm sửa thông tin phòng

@@ -39,6 +39,7 @@ public class HotelService
     GeneralRegulationRepository generalRegulationRepository;
     HotelFacilityRepository hotelFacilityRepository;
     EvaluatesService evaluatesService;
+    RoomService roomService;
     HotelMapper hotelMapper;
     UserMapper userMapper;
     EvaluateMapper evaluateMapper;
@@ -168,6 +169,9 @@ public class HotelService
                                 .build())
                         .toList();
 
+        // Lấy danh sách phòng thuộc khách sạn
+        List<GetRoomResponse> listRoomOfHotel = roomService.getListRoom(idHotel);
+
         GetDetailHotelResponse hotelResponse = hotelMapper.toGetDetailHotelResponse(hotel);
         hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
         hotelResponse.setImageHotel(imageUrls);
@@ -175,13 +179,14 @@ public class HotelService
         hotelResponse.setEvaluates(evaluateResponses);
         hotelResponse.setAllEvaluates(allEvaluate);
         hotelResponse.setAverageStar(stars);
+        hotelResponse.setRoomResponses(listRoomOfHotel);
         hotelResponse.setFacilityCategoryResponses(facilityCategoryResponses);
         hotelResponse.setGeneralRegulationResponses(regulationResponses);
         return hotelResponse;
     }
 
     // Thêm khách sạn mới
-    public HotelResponse saveHotel(HotelCreationRequest request)
+    public ResponseEntity<String> saveHotel(HotelCreationRequest request)
     {
         Users user = userRepository.findById(request.getIdUser()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -201,11 +206,6 @@ public class HotelService
             }).toList();
             imagesRepository.saveAll(images);
         }
-
-        // Map thông tin khách sạn cơ bản
-        OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
-        HotelResponse hotelResponse = hotelMapper.toHotelResponse(savedHotel);
-        hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
 
         if (request.getFacilityCategories() != null && !request.getFacilityCategories().isEmpty())
         {
@@ -228,8 +228,7 @@ public class HotelService
                         }
                         return facilityCategory;
                     }).toList();
-            List<FacilityCategory> savedCategories = facilityCategoryRepository.saveAll(categories);
-
+            facilityCategoryRepository.saveAll(categories);
 
             // Tạo quan hệ HotelFacility
             List<HotelFacility> hotelFacilities = categories.stream()
@@ -241,24 +240,6 @@ public class HotelService
                                     .build()))
                     .toList();
             hotelFacilityRepository.saveAll(hotelFacilities);
-
-            // Map sang response
-            List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses =
-                    savedCategories.stream()
-                            .map(cat -> GetDetailHotelResponse.FacilityCategoryResponse.builder()
-                                    .idCategory(cat.getIdCategory())
-                                    .categoryName(cat.getCategoryName())
-                                    .facilities(cat.getFacilities().stream()
-                                            .map(fac -> GetDetailHotelResponse.FacilityResponse.builder()
-                                                    .idFacility(fac.getIdFacility())
-                                                    .facilityName(fac.getFacilityName())
-                                                    .isFree(fac.getIsFree())
-                                                    .build())
-                                            .toList())
-                                    .build())
-                            .toList();
-
-            hotelResponse.setFacilityCategoryResponses(facilityCategoryResponses);
         }
 
         if (request.getGeneralRegulations() != null && !request.getGeneralRegulations().isEmpty())
@@ -271,23 +252,8 @@ public class HotelService
                             .build())
                     .toList();
             generalRegulationRepository.saveAll(generalRegulations);
-
-            List<GeneralRegulation> savedRegs = generalRegulationRepository.saveAll(generalRegulations);
-
-            // Map sang response
-            List<GetDetailHotelResponse.GeneralRegulationResponse> generalRegulationResponses =
-                    savedRegs.stream()
-                            .map(reg -> GetDetailHotelResponse.GeneralRegulationResponse.builder()
-                                    .idRegulation(reg.getIdRegulation())
-                                    .regulationName(reg.getRegulationName())
-                                    .regulationContent(reg.getRegulationContent())
-                                    .build())
-                            .toList();
-
-            hotelResponse.setGeneralRegulationResponses(generalRegulationResponses);
         }
-
-        return hotelResponse;
+        return ResponseEntity.ok("Tạo khách sạn thành công!");
     }
 
     // Sửa thông tin khách sạn

@@ -24,6 +24,7 @@ public class GetDetailHotelResponse
     Integer allEvaluates;
     Double averageStar;
     List<String> imageHotel;
+    List<GetRoomResponse> roomResponses;
     List<EvaluateResponse> evaluates;
     List<FacilityCategoryResponse> facilityCategoryResponses;
     List<GeneralRegulationResponse> generalRegulationResponses;

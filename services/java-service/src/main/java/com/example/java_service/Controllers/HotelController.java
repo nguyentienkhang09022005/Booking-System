@@ -12,7 +12,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,11 +29,11 @@ public class HotelController
 
     // Endpoint tạo khách sạn mới
     @PostMapping("/creation")
-    public ApiResponse<HotelResponse> creationHotel(@RequestBody HotelCreationRequest request)
+    public ApiResponse<ResponseEntity<String>> creationHotel(@RequestBody HotelCreationRequest request)
     {
-        return ApiResponse.<HotelResponse>builder()
-                .message("Tạo khách sạn thành công!")
-                .data(hotelService.saveHotel(request))
+        var response = hotelService.saveHotel(request);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
                 .build();
     }
 

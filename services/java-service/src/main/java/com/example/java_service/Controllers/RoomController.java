@@ -45,11 +45,11 @@ public class RoomController
 
     // Endpoint tạo phòng mới
     @PostMapping("/creation")
-    public ApiResponse<RoomResponse> creationRoom(@RequestBody RoomCreationRequest request)
+    public ApiResponse<ResponseEntity<String>> creationRoom(@RequestBody RoomCreationRequest request)
     {
-        return ApiResponse.<RoomResponse>builder()
-                .message("Tạo phòng thành công!")
-                .data(roomService.saveRoom(request))
+        var response = roomService.saveRoom(request);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
                 .build();
     }
 
