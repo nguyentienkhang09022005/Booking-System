@@ -51,7 +51,7 @@ public class HotelController
     // Endpoint lấy thông tin chi tiết khách sạn
     @GetMapping( "/getInfHotel")
     public ApiResponse<GetDetailHotelResponse> getDetailHotel(@RequestParam UUID idHotel,
-                                                              @RequestParam UUID idUser)
+                                                              @RequestParam(required = false) UUID idUser)
     {
         return ApiResponse.<GetDetailHotelResponse>builder()
                 .message("Lấy thông tin chi tiết khách sạn thành công!")

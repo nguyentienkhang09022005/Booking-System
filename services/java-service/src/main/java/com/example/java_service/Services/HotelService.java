@@ -109,9 +109,17 @@ public class HotelService
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
-        var favoriteCheck = favoriteRepository.existsByIdUserAndIdHotel(
-                idUser.toString(),
-                idHotel.toString());
+        Boolean favoriteCheck;
+        if (idUser != null) {
+            userRepository.findById(idUser).orElseThrow(
+                    () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+            favoriteCheck = favoriteRepository.existsByIdUserAndIdHotel(
+                    idUser.toString(),
+                    idHotel.toString());
+        } else {
+            favoriteCheck = false;
+        }
+
         List<String> imageUrls = imagesRepository.findByRefId(hotel.getIdHotel().toString())
                 .stream()
                 .map(Images::getUrl)
