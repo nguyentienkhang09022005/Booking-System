@@ -1,11 +1,24 @@
-FROM maven:3-openjdk-17 AS build
+# Build stage
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY . .
+
+# Copy file cấu hình trước để cache dependency
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy source và build
+COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Run stage
-FROM openjdk:17-jdk-slim
+# Run stage (chỉ cần JRE, không cần JDK)
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+
+# Copy jar đã build
 COPY --from=build /app/target/api-gateway-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port
 EXPOSE 8080
+
+# Run
 ENTRYPOINT ["java", "-jar", "app.jar"]
