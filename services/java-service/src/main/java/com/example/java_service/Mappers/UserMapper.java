@@ -11,6 +11,7 @@ import org.mapstruct.*;
 public interface UserMapper
 {
     @Mapping(target = "passwordUser", ignore = true)
+    @Mapping(target = "role", ignore = true)
     Users toUser(UserCreationRequest request);
 
     @Mapping(target = "role", ignore = true)
