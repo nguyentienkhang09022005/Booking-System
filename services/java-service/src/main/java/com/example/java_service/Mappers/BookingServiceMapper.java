@@ -1,12 +1,15 @@
 package com.example.java_service.Mappers;
 
-import com.example.java_service.Dto.Request.FavoriteRequest;
-import com.example.java_service.Models.Favorite;
-import org.mapstruct.*;
+import com.example.java_service.Dto.Request.BookingServiceRequest;
+import com.example.java_service.Models.BookingService;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface FavoriteMapper
+public interface BookingServiceMapper
 {
-    @Mapping(target = "createdAt", ignore = true)
-    Favorite toFavorite(FavoriteRequest request);
+    @Mapping(target = "priceBookingService", ignore = true)
+    @Mapping(target = "booking", ignore = true)
+    @Mapping(target = "service", ignore = true)
+    BookingService toBookingService(BookingServiceRequest request);
 }

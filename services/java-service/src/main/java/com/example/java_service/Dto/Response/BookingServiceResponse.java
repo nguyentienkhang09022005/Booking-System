@@ -3,6 +3,7 @@ package com.example.java_service.Dto.Response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -10,12 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EvaluateResponse
+public class BookingServiceResponse
 {
-    String id;
-    String idHotel;
-    String idUser;
-    Integer stars;
-    String comment;
-    LocalDateTime createdAt;
+    BigDecimal priceBookingService;
 }

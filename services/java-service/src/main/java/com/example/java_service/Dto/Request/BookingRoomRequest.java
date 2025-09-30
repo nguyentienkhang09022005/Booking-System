@@ -3,6 +3,7 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -10,9 +11,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingServiceRequest
+public class BookingRoomRequest
 {
+    UUID idRoom;
     Integer quantity;
-    UUID idBooking;
-    UUID idService;
 }

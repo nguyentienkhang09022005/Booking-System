@@ -1,6 +1,6 @@
 package com.example.java_service.Constant;
 
-public class PredefinedStatusService
+public class PredefinedStatusBooking
 {
-    public static final String STATUS_SERVICE_DEFAULT = "Đang Cung Cấp";
+    public static final String STATUS_BOOKING_DEFAULT = "Chờ Xữ Lý";
 }

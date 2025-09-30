@@ -4,14 +4,13 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingServiceResponse
+public class BookingRoomResponse
 {
-    BigDecimal priceBookingService;
+    BigDecimal priceBookingRoom;
 }

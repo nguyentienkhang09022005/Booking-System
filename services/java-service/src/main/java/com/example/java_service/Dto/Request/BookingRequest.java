@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -11,11 +12,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingRoomRequest
+public class BookingRequest
 {
-    UUID idBooking;
-    UUID idRoom;
+    UUID idUser;
     Date checkinDate;
     Date checkoutDate;
-    Integer quantity;
+    List<BookingRoomRequest> bookingRooms;
+    List<BookingServiceRequest> bookingServices;
 }

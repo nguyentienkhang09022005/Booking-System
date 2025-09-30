@@ -58,6 +58,9 @@ public enum ErrorCode
     EVALUATE_NOT_FOUND("EVALUATE_NOT_FOUND", "Lỗi không tìm thấy đánh giá!", HttpStatus.NOT_FOUND),
     USER_EVALUATED_HOTEL("USER_EVALUATED_HOTEL", "Bạn đã đánh giá khách sạn này rồi!", HttpStatus.CONFLICT),
     EVALUATE_UPDATE_TIME_EXPIRED("EVALUATE_UPDATE_TIME_EXPIRED", "Chỉ được thay đổi đánh giá trong 30 phút!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi đặt phòng
+    BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
     ;
 
     private final String code;

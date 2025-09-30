@@ -144,10 +144,14 @@ public class UserService
             throw new ApiException(ErrorCode.INVALID_PHONE_FORMAT);
         }
 
+        // Kiểm tra role
+        Roles role = roleRepository.findById(request.getRole()).orElseThrow(
+                () -> new ApiException(ErrorCode.ROLE_NOT_FOUND)
+        );
         Users newUser = userMapper.toUser(request);
         newUser.setPasswordUser(passwordEncoder.encode(request.getPasswordUser()));
         newUser.setTypeUser(getDefaultTypeUser());
-        newUser.setRole(getDefaultRole());
+        newUser.setRole(role);
         Users savedUser = userRepository.save(newUser);
         // Lưu ảnh từ URL đã upload
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
@@ -157,7 +161,7 @@ public class UserService
             imagesRepository.save(avatar);
         }
         var userResponse = userMapper.toUserResponse(savedUser);
-        userResponse.setRole(getDefaultRole());
+        userResponse.setRole(savedUser.getRole());
         userResponse.setTypeUser(getDefaultTypeUser());
         return userResponse;
     }

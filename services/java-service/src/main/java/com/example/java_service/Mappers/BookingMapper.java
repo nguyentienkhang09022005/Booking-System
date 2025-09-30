@@ -1,15 +1,16 @@
 package com.example.java_service.Mappers;
 
-import com.example.java_service.Dto.Request.BookingRoomRequest;
-import com.example.java_service.Models.BookingRoom;
+import com.example.java_service.Dto.Request.BookingRequest;
+import com.example.java_service.Models.Booking;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface BookingRoomMapper
+public interface BookingMapper
 {
-    @Mapping(target = "priceBookingRoom", ignore = true)
-    @Mapping(target = "booking", ignore = true)
-    @Mapping(target = "room", ignore = true)
-    BookingRoom toBookingRoom(BookingRoomRequest request);
+    @Mapping(target = "totalPrice", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "users", ignore = true)
+    @Mapping(target = "bookingDate", ignore = true)
+    Booking toBooking(BookingRequest request);
 }

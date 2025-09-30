@@ -2,8 +2,11 @@ package com.example.java_service.Models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -19,8 +22,15 @@ public class Booking {
     @Column(name = "id_booking", nullable = false, updatable = false)
     private UUID idBooking;
 
-    @Column(name = "booking_date", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private Timestamp bookingDate;
+    @CreationTimestamp
+    @Column(name = "booking_date", nullable = false, updatable = false)
+    private LocalDateTime bookingDate;
+
+    @Column(name = "checkin_date")
+    private Date checkinDate;
+
+    @Column(name = "checkout_date")
+    private Date checkoutDate;
 
     @Column(name = "status", length = 20)
     private String status;
