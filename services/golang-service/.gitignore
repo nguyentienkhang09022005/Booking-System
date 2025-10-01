@@ -1,0 +1,46 @@
+# ---- Go ----
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go build cache
+*.log
+*.lock
+*.pid
+*.prof
+*.profraw
+*.syso
+
+# Go modules
+vendor/
+
+# Go workspace file (Go 1.18+)
+go.work
+go.work.sum
+
+# ---- IDEs & Editors ----
+# VSCode
+.vscode/
+.idea/
+
+# JetBrains
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ---- Env & Config ----
+.env
+
+# Docker
+docker-compose.override.yml
+
+# ---- Logs ----
+*.log
+logs/
+tmp/
