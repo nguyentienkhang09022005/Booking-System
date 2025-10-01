@@ -17,13 +17,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -60,31 +56,31 @@ public class UserService
                 .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND));
     }
 
-    // Hàm lấy danh sách người dùng bằng paging 8
-    public Page<UserResponse> getListUsersByPage(Pageable pageable)
+    // Hàm lấy danh sách người dùng
+    public List<UserResponse> getListUsers()
     {
-        Page<Users> usersPage = userRepository.findAll(pageable);
-        List<Users> usersOnPage =usersPage.getContent();
+        List<Users> usersList = userRepository.findAll();
 
-        if (usersOnPage.isEmpty()) {
-            return Page.empty(pageable);
+        if (usersList.isEmpty()) {
+            return List.of();
         }
 
-        // Lấy ID của tất cả người dùng trong trang hiện tại
-        List<String> usersIdsOnPage = usersOnPage.stream()
+        // Lấy ID của tất cả người dùng
+        List<String> usersIds = usersList.stream()
                 .map(hotel -> hotel.getIdUser().toString())
                 .toList();
 
-        List<Images> avatars = imagesRepository.findByRefIdIn(usersIdsOnPage);
+        List<Images> avatars = imagesRepository.findByRefIdIn(usersIds);
 
         // Map userId -> avatarUrl (mỗi user chỉ có 1 ảnh)
         Map<String, String> avatarMap = avatars.stream()
                 .collect(Collectors.toMap(
                         Images::getRefId,
-                        Images::getUrl
+                        Images::getUrl,
+                        (existing, replacement) -> replacement
                 ));
 
-        List<UserResponse> responses = usersOnPage.stream()
+        return usersList.stream()
                 .map(user -> {
                     UserResponse response = userMapper.toUserResponse(user);
                     String hotelIdStr = user.getIdUser().toString();
@@ -94,8 +90,6 @@ public class UserService
                     response.setRole(user.getRole());
                     return response;
                 }).toList();
-
-        return new PageImpl<>(responses, pageable, usersPage.getTotalElements());
     }
 
     // Hàm lấy thông tin chi tiết người dùng

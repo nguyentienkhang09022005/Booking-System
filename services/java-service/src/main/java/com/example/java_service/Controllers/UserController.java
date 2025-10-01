@@ -9,12 +9,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -59,13 +57,11 @@ public class UserController
 
     // Endpoint lấy danh sách người dùng
     @GetMapping("/getListUser")
-    public ApiResponse<Page<UserResponse>> getListUser(@RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "8") int size)
+    public ApiResponse<List<UserResponse>> getListUser()
     {
-        Pageable pageable = PageRequest.of(page, size);
-        return ApiResponse.<Page<UserResponse>>builder()
+        return ApiResponse.<List<UserResponse>>builder()
                 .message("Lấy danh sách người dùng thành công!")
-                .data(userService.getListUsersByPage(pageable))
+                .data(userService.getListUsers())
                 .build();
     }
 
