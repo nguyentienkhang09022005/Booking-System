@@ -12,6 +12,7 @@ public enum ErrorCode
     UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("UNAUTHORIZED", "Không có quyền truy cập", HttpStatus.FORBIDDEN),
     PASSWORD_MISMATCH("PASSWORD_MISMATCH", "Mật khẩu không khớp", HttpStatus.BAD_REQUEST),
+    REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID", "Token invalid", HttpStatus.FORBIDDEN),
 
     // Lỗi người dùng
     USER_NOT_FOUND("USER_NOT_FOUND", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),

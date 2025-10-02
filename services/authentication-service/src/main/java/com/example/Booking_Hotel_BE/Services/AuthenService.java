@@ -142,54 +142,75 @@ public class AuthenService
     }
 
     // Hàm Refresh Token
-    public AuthenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException
-    {
-        // Lấy refreshToken từ cookie
-        String refreshToken = Arrays.stream(request.getCookies())
+    public AuthenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        // 1. Lấy cookie
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            throw new ApiException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String refreshToken = Arrays.stream(cookies)
                 .filter(c -> "refreshToken".equals(c.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
                 .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHENTICATED));
 
-        var signToken = verifyToken(refreshToken);
+        // 2. Verify token
+        SignedJWT signToken;
+        try {
+            signToken = verifyToken(refreshToken);
+        } catch (JOSEException | ParseException e) {
+            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID);
+        }
 
-        var idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
-        UUID idUser = UUID.fromString(idUserStr);
+        String idUserStr;
+        try {
+            idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
+        } catch (Exception e) {
+            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID);
+        }
 
+        UUID idUser;
+        try {
+            idUser = UUID.fromString(idUserStr);
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID);
+        }
 
-        var user = userRepository.findById(idUser).orElseThrow(
-                () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+        // 3. Check user
+        var user = userRepository.findById(idUser)
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
 
-        // Lấy refresh token trong Redis
+        // 4. Check Redis
         String storedRefreshToken = refreshTokenService.getRefreshToken(idUserStr);
-
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
             throw new ApiException(ErrorCode.UNAUTHENTICATED);
         }
 
-        var newAccessToken = generateAccessToken(user);
-        var newRefreshToken = generateRefreshToken(user);
+        // 5. Tạo token mới
+        String newAccessToken = generateAccessToken(user);
+        String newRefreshToken = generateRefreshToken(user);
 
-        refreshTokenService.saveRefreshToken(
-                user.getIdUser().toString(),
-                newRefreshToken,
-                REFRESHABLE_DURATION
-        );
+        refreshTokenService.saveRefreshToken(idUserStr, newRefreshToken, REFRESHABLE_DURATION);
 
-        // Set lại cookie refreshToken mới
+        // 6. Cookie mới
         String cookieHeader = String.format(
                 "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
-                newRefreshToken,
-                REFRESHABLE_DURATION
+                newRefreshToken, REFRESHABLE_DURATION
         );
         response.addHeader("Set-Cookie", cookieHeader);
 
-        String avatarUrl = imageRepository.findByRefId(user.getIdUser().toString())
-                .stream()
-                .map(Images::getUrl)
-                .findFirst()
-                .orElse(null);
+        // 7. Avatar optional
+        String avatarUrl = null;
+        try {
+            avatarUrl = imageRepository.findByRefId(idUserStr)
+                    .stream()
+                    .map(Images::getUrl)
+                    .findFirst()
+                    .orElse(null);
+        } catch (Exception ignored) {}
 
+        // 8. Build response
         var userResponse = userMapper.toUserResponse(user);
         userResponse.setAvatar(avatarUrl);
 
