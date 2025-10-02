@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface GeneralRegulationRepository extends JpaRepository<GeneralRegulation, UUID>
 {
     List<GeneralRegulation> findByHotel_IdHotel(UUID idHotel);
+
+    void deleteByHotel_IdHotel(UUID idHotel);
 }

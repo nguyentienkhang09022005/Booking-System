@@ -198,12 +198,17 @@ public class UserService
         }
 
         userMapper.updateUserFromRequest(request, user);
-        user.setTypeUser(typeUserRepository.findById(request.getTypeUser()).orElseThrow(
-                () -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND)
-        ));
-        user.setRole(roleRepository.findById(request.getRole()).orElseThrow(
-                () -> new ApiException(ErrorCode.ROLE_NOT_FOUND)
-        ));
+
+        if (request.getTypeUser() != null) {
+            user.setTypeUser(typeUserRepository.findById(request.getTypeUser())
+                    .orElseThrow(() -> new ApiException(ErrorCode.TYPE_USER_NOT_FOUND)));
+        }
+
+        if (request.getRole() != null) {
+            user.setRole(roleRepository.findById(request.getRole())
+                    .orElseThrow(() -> new ApiException(ErrorCode.ROLE_NOT_FOUND)));
+        }
+
         Users updateUser = userRepository.save(user);
 
         // Nếu có upload ảnh mới

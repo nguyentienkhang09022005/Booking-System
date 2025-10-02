@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface FacilityCategoryRepository extends JpaRepository<FacilityCategory, UUID>
 {
     List<FacilityCategory> findByHotel_IdHotel(UUID hotelIdHotel);
+
+    void deleteByHotel_IdHotel(UUID idHotel);
 }

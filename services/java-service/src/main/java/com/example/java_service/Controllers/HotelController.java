@@ -1,7 +1,6 @@
 package com.example.java_service.Controllers;
 
 import com.example.java_service.Dto.Request.HotelCreationRequest;
-import com.example.java_service.Dto.Request.HotelCheckFavoriteRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.GetDetailHotelResponse;
@@ -70,12 +69,12 @@ public class HotelController
 
     // Endpoint cập nhật khách sạn
     @PatchMapping( "/update")
-    public ApiResponse<HotelResponse> updateHotel(@RequestParam UUID idHotel,
+    public ApiResponse<ResponseEntity<String>> updateHotel(@RequestParam UUID idHotel,
                                                            @RequestBody HotelUpdateRequest request)
     {
-        return ApiResponse.<HotelResponse>builder()
-                .message("Thay đổi thông tin khách sạn thành công!")
-                .data(hotelService.updateHotel(idHotel, request))
+        var response = hotelService.updateHotel(idHotel, request);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
                 .build();
     }
 }

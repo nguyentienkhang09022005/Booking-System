@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +18,6 @@ public class HotelUpdateRequest
     String city;
     String description;
     List<String> listImageHotel;
+    List<HotelCreationRequest.FacilityCategoryRequest> facilityCategories;
+    List<HotelCreationRequest.GeneralRegulationRequest> generalRegulations;
 }

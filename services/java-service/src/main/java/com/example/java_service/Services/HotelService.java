@@ -249,15 +249,12 @@ public class HotelService
     }
 
     // Sửa thông tin khách sạn
-    public HotelResponse updateHotel(UUID idHotel, HotelUpdateRequest request)
+    public ResponseEntity<String> updateHotel(UUID idHotel, HotelUpdateRequest request)
     {
         Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
-        Users user = userRepository.findById(hotel.getUsers().getIdUser()).orElseThrow(
-                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
-        );
         hotelMapper.updateHotelFromRequest(request, hotel);
         Hotel updateHotel = hotelRepository.save(hotel);
 
@@ -273,10 +270,50 @@ public class HotelService
             }).toList();
             imagesRepository.saveAll(images);
         }
-        OwnerHotelResponse ownerHotelResponse = userMapper.toOwnerHotelResponse(user);
-        var hotelResponse = hotelMapper.toHotelResponse(updateHotel);
-        hotelResponse.setOwnerHotelResponse(ownerHotelResponse);
-        return hotelResponse;
+
+        // Nếu có thay đổi loại tiện ích hoặc tiện ich thì xóa cũ thêm mới
+        if (request.getFacilityCategories() != null && !request.getFacilityCategories().isEmpty()) {
+            facilityCategoryRepository.deleteByHotel_IdHotel(idHotel);
+
+            List<FacilityCategory> categories = request.getFacilityCategories()
+                    .stream()
+                    .map(category -> {
+                        FacilityCategory facilityCategory = FacilityCategory.builder()
+                                .categoryName(category.getCategoryName())
+                                .hotel(updateHotel)
+                                .build();
+
+                        if (category.getFacilities() != null && !category.getFacilities().isEmpty()) {
+                            List<Facility> facilities = category.getFacilities().stream()
+                                    .map(facilityRequest -> Facility.builder()
+                                            .facilityName(facilityRequest.getFacilityName())
+                                            .isFree(facilityRequest.getIsFree())
+                                            .category(facilityCategory)
+                                            .build())
+                                    .toList();
+                            facilityCategory.setFacilities(facilities);
+                        }
+                        return facilityCategory;
+                    }).toList();
+            facilityCategoryRepository.saveAll(categories);
+
+            // Nếu có thay đổi luật thì xóa list cũ thêm list mới
+            if (request.getGeneralRegulations() != null && !request.getGeneralRegulations().isEmpty()) {
+                generalRegulationRepository.deleteByHotel_IdHotel(idHotel);
+
+                List<GeneralRegulation> generalRegulations = request.getGeneralRegulations().stream()
+                        .map(generalRegulationRequest -> GeneralRegulation.builder()
+                                .regulationName(generalRegulationRequest.getRegulationName())
+                                .regulationContent(generalRegulationRequest.getRegulationContent())
+                                .hotel(updateHotel)
+                                .build())
+                        .toList();
+                generalRegulationRepository.saveAll(generalRegulations);
+            }
+
+        }
+
+        return ResponseEntity.ok("Cập nhật thông tin khách sạn thành công!");
     }
 
     // Xóa khách sạn
