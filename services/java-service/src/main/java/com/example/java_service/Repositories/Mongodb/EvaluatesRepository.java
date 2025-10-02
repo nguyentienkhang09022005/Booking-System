@@ -37,7 +37,7 @@ public interface EvaluatesRepository extends MongoRepository<Evaluates, String>
     })
     List<HotelStatsResponse> findHotelStatsByHotelIds(List<String> hotelIds);
 
-    void deleteByIdUserAndIdHotel(String idUser, String idHotel);
-
     void deleteByIdUser(String idUser);
+
+    void deleteByIdHotel(String idHotel);
 }

@@ -1,7 +1,6 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Dto.Request.HotelCreationRequest;
-import com.example.java_service.Dto.Request.HotelCheckFavoriteRequest;
 import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
@@ -37,7 +36,6 @@ public class HotelService
     EvaluatesRepository evaluatesRepository;
     FacilityCategoryRepository facilityCategoryRepository;
     GeneralRegulationRepository generalRegulationRepository;
-    HotelFacilityRepository hotelFacilityRepository;
     EvaluatesService evaluatesService;
     RoomService roomService;
     HotelMapper hotelMapper;
@@ -141,7 +139,7 @@ public class HotelService
 
         // Lấy categories + facilities
         List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses =
-                facilityCategoryRepository.findDistinctByFacilities_HotelFacilities_Hotel_IdHotel(idHotel)
+                facilityCategoryRepository.findByHotel_IdHotel(idHotel)
                         .stream()
                         .map(cat -> GetDetailHotelResponse.FacilityCategoryResponse.builder()
                                 .idCategory(cat.getIdCategory())
@@ -218,6 +216,7 @@ public class HotelService
                     .map(category -> {
                         FacilityCategory facilityCategory = FacilityCategory.builder()
                                 .categoryName(category.getCategoryName())
+                                .hotel(savedHotel)
                                 .build();
 
                         if (category.getFacilities() != null && !category.getFacilities().isEmpty()) {
@@ -233,17 +232,6 @@ public class HotelService
                         return facilityCategory;
                     }).toList();
             facilityCategoryRepository.saveAll(categories);
-
-            // Tạo quan hệ HotelFacility
-            List<HotelFacility> hotelFacilities = categories.stream()
-                    .flatMap(cat -> cat.getFacilities().stream()
-                            .map(fac -> HotelFacility.builder()
-                                    .idHotelFacility(new HotelFacilityId(savedHotel.getIdHotel(), fac.getIdFacility()))
-                                    .hotel(savedHotel)
-                                    .facility(fac)
-                                    .build()))
-                    .toList();
-            hotelFacilityRepository.saveAll(hotelFacilities);
         }
 
         if (request.getGeneralRegulations() != null && !request.getGeneralRegulations().isEmpty())
@@ -292,18 +280,18 @@ public class HotelService
     }
 
     // Xóa khách sạn
-    public ResponseEntity<String> deleteHotel(HotelCheckFavoriteRequest request)
+    public ResponseEntity<String> deleteHotel(UUID idHotel)
     {
-        Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
+        Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
         if (!userRepository.existsById(hotel.getUsers().getIdUser()))
             throw new ApiException(ErrorCode.USER_NOT_FOUND);
 
-        imagesRepository.deleteByRefId(request.getIdHotel().toString());
-        favoriteRepository.deleteByIdUserAndIdHotel(request.getIdUser().toString(), request.getIdHotel().toString());
-        evaluatesRepository.deleteByIdUserAndIdHotel(request.getIdUser().toString(), request.getIdHotel().toString());
+        imagesRepository.deleteByRefId(idHotel.toString());
+        favoriteRepository.deleteByIdHotel(idHotel.toString());
+        evaluatesRepository.deleteByIdHotel(idHotel.toString());
         hotelRepository.delete(hotel);
         return ResponseEntity.ok("Xóa khách sạn thành công!");
     }

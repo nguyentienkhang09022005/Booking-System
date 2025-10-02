@@ -3,7 +3,6 @@ package com.example.java_service.Models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -25,14 +24,10 @@ public class Facility {
     @Column(name = "is_free", nullable = false)
     private Boolean isFree = true;
 
-    // Mỗi facility thuộc về 1 category
     @ManyToOne
     @JoinColumn(name = "id_category",
             referencedColumnName = "id_category",
             foreignKey = @ForeignKey(name = "FK_FACILITY_CATEGORY"))
     private FacilityCategory category;
 
-    // Nhiều facility có thể thuộc nhiều hotel
-    @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HotelFacility> hotelFacilities;
 }

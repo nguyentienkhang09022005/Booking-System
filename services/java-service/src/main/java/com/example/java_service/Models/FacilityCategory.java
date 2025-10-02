@@ -19,6 +19,12 @@ public class FacilityCategory {
     @Column(name = "id_category", nullable = false, updatable = false)
     private UUID idCategory;
 
+    @ManyToOne
+    @JoinColumn(name = "id_hotel",
+            referencedColumnName = "id_hotel ",
+            foreignKey = @ForeignKey(name = "FK_CATEGORY_HOTEL"))
+    private Hotel hotel;
+
     @Column(name = "category_name", length = 100, nullable = false)
     private String categoryName;
 

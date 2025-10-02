@@ -60,9 +60,9 @@ public class HotelController
 
     // Endpoint xóa khách sạn
     @DeleteMapping( "/delele")
-    public ApiResponse<ResponseEntity<String>> deleteHotel(@RequestBody HotelCheckFavoriteRequest request)
+    public ApiResponse<ResponseEntity<String>> deleteHotel(@RequestParam UUID idHotel)
     {
-        var response = hotelService.deleteHotel(request);
+        var response = hotelService.deleteHotel(idHotel);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();

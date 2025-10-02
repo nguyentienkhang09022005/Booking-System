@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface FacilityCategoryRepository extends JpaRepository<FacilityCategory, UUID>
 {
-    List<FacilityCategory> findDistinctByFacilities_HotelFacilities_Hotel_IdHotel(UUID idHotel);
+    List<FacilityCategory> findByHotel_IdHotel(UUID hotelIdHotel);
 }
