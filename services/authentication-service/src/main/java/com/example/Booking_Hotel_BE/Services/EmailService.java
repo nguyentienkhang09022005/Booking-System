@@ -41,7 +41,6 @@ public class EmailService {
             log.info("SendGrid response status code: {}", response.getStatusCode());
         } catch (IOException ex) {
             log.error("Error sending email with SendGrid", ex);
-            // Ném ra exception hoặc xử lý lỗi phù hợp
         }
     }
 }

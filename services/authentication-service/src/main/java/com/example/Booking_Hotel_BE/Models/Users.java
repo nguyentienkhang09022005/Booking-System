@@ -61,6 +61,6 @@ public class Users {
     private BigDecimal totalAmount;
 
     @CreationTimestamp
-    @Column(name = "create_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createAt = LocalDateTime.now();
 }
