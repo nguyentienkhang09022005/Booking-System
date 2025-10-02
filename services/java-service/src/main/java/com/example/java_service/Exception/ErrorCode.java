@@ -43,6 +43,7 @@ public enum ErrorCode
 
     // Lỗi khách sạn
     HOTEL_NOT_FOUND("HOTEL_NOT_FOUND", "Không tìm thấy khách sạn!", HttpStatus.NOT_FOUND),
+    USER_CREATED_HOTEL("USER_CREATED_HOTEL", "Tài khoản này đã tạo khách sạn rồi!", HttpStatus.CONFLICT),
 
     // Lỗi phòng
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),

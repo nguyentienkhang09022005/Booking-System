@@ -192,6 +192,10 @@ public class HotelService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
+        if (hotelRepository.existsByUsers_IdUser(user.getIdUser())){
+            throw new ApiException(ErrorCode.USER_CREATED_HOTEL);
+        }
+
         Hotel hotel = hotelMapper.toHotel(request);
         hotel.setUsers(user);
         Hotel savedHotel = hotelRepository.save(hotel);
@@ -287,7 +291,7 @@ public class HotelService
         return hotelResponse;
     }
 
-    // Xóa khách sạn còn và evaluate
+    // Xóa khách sạn
     public ResponseEntity<String> deleteHotel(HotelCheckFavoriteRequest request)
     {
         Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
@@ -299,6 +303,7 @@ public class HotelService
 
         imagesRepository.deleteByRefId(request.getIdHotel().toString());
         favoriteRepository.deleteByIdUserAndIdHotel(request.getIdUser().toString(), request.getIdHotel().toString());
+        evaluatesRepository.deleteByIdUserAndIdHotel(request.getIdUser().toString(), request.getIdHotel().toString());
         hotelRepository.delete(hotel);
         return ResponseEntity.ok("Xóa khách sạn thành công!");
     }

@@ -36,4 +36,8 @@ public interface EvaluatesRepository extends MongoRepository<Evaluates, String>
             "{ $project: { idHotel: '$_id', allEvaluates: 1, averageStar: 1, _id: 0 } }"
     })
     List<HotelStatsResponse> findHotelStatsByHotelIds(List<String> hotelIds);
+
+    void deleteByIdUserAndIdHotel(String idUser, String idHotel);
+
+    void deleteByIdUser(String idUser);
 }

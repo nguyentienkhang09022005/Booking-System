@@ -12,6 +12,8 @@ import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.RoleRepository;
 import com.example.java_service.Repositories.Jpa.TypeUserRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
+import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,8 @@ public class UserService
     TypeUserRepository typeUserRepository;
     RoleRepository roleRepository;
     ImagesRepository imagesRepository;
+    FavoriteRepository favoriteRepository;
+    EvaluatesRepository evaluatesRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
 
@@ -76,8 +80,7 @@ public class UserService
         Map<String, String> avatarMap = avatars.stream()
                 .collect(Collectors.toMap(
                         Images::getRefId,
-                        Images::getUrl,
-                        (existing, replacement) -> replacement
+                        Images::getUrl
                 ));
 
         return usersList.stream()
@@ -226,6 +229,8 @@ public class UserService
         );
         userRepository.delete(user);
         imagesRepository.deleteByRefId(idUser.toString());
+        evaluatesRepository.deleteByIdUser(idUser.toString());
+        favoriteRepository.deleteByIdUser(idUser.toString());
         return ResponseEntity.ok("Xóa người dùng thành công!");
     }
 }

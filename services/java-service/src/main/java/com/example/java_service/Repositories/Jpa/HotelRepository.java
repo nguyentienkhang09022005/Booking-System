@@ -9,5 +9,5 @@ import java.util.UUID;
 @Repository
 public interface HotelRepository extends JpaRepository<Hotel, UUID>
 {
-
+    Boolean existsByUsers_IdUser(UUID usersIdUser);
 }
