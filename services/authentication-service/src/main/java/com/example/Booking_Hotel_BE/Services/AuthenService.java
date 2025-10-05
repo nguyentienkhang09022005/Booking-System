@@ -143,11 +143,8 @@ public class AuthenService
 
     // Hàm Refresh Token
     public AuthenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        log.info("=== [REFRESH TOKEN] Bắt đầu xử lý ===");
-
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
-            log.warn("[REFRESH TOKEN] Không tìm thấy cookie trong request");
             throw new ApiException(ErrorCode.UNAUTHENTICATED, "Không có cookie trong request");
         }
 
@@ -158,27 +155,20 @@ public class AuthenService
                 .orElse(null);
 
         if (refreshToken == null) {
-            log.warn("[REFRESH TOKEN] Không tìm thấy cookie tên refreshToken");
             throw new ApiException(ErrorCode.UNAUTHENTICATED, "Không tìm thấy refreshToken trong cookie");
         }
-
-        log.info("[REFRESH TOKEN] Token nhận được từ cookie: {}", refreshToken.substring(0, 20) + "...");
 
         SignedJWT signToken;
         try {
             signToken = verifyToken(refreshToken);
-            log.info("[REFRESH TOKEN] Token verify thành công");
         } catch (JOSEException | ParseException e) {
-            log.error("[REFRESH TOKEN] Lỗi verify token: {}", e.getMessage());
             throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID, "Refresh token không hợp lệ");
         }
 
         String idUserStr;
         try {
             idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
-            log.info("[REFRESH TOKEN] idUser trong token: {}", idUserStr);
         } catch (Exception e) {
-            log.error("[REFRESH TOKEN] Không đọc được claim idUser từ token: {}", e.getMessage());
             throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID, "Thiếu claim idUser trong refresh token");
         }
 
@@ -186,42 +176,23 @@ public class AuthenService
         try {
             idUser = UUID.fromString(idUserStr);
         } catch (IllegalArgumentException e) {
-            log.error("[REFRESH TOKEN] idUser không hợp lệ: {}", idUserStr);
             throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID, "idUser không hợp lệ trong refresh token");
         }
 
         var user = userRepository.findById(idUser).orElse(null);
         if (user == null) {
-            log.warn("[REFRESH TOKEN] Không tìm thấy người dùng trong DB với idUser={}", idUserStr);
             throw new ApiException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng");
         }
-        log.info("[REFRESH TOKEN] Người dùng tồn tại trong DB: {}", user.getEmail());
 
         String storedRefreshToken = refreshTokenService.getRefreshToken(idUserStr);
         if (storedRefreshToken == null) {
-            log.warn("[REFRESH TOKEN] Không tìm thấy refresh token trong Redis với idUser={}", idUserStr);
             throw new ApiException(ErrorCode.UNAUTHENTICATED, "Refresh token không tồn tại trong Redis");
         }
         if (!storedRefreshToken.equals(refreshToken)) {
-            log.warn("[REFRESH TOKEN] Refresh token không trùng khớp trong Redis cho user={}", idUserStr);
             throw new ApiException(ErrorCode.UNAUTHENTICATED, "Refresh token không khớp với Redis");
         }
-        log.info("[REFRESH TOKEN] Refresh token hợp lệ trong Redis");
 
         String newAccessToken = generateAccessToken(user);
-        String newRefreshToken = generateRefreshToken(user);
-        log.info("[REFRESH TOKEN] Đã tạo token mới thành công");
-
-        refreshTokenService.saveRefreshToken(idUserStr, newRefreshToken, REFRESHABLE_DURATION);
-        log.info("[REFRESH TOKEN] Đã lưu refresh token mới vào Redis");
-
-        String cookieHeader = String.format(
-                "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
-                newRefreshToken, REFRESHABLE_DURATION
-        );
-        response.addHeader("Set-Cookie", cookieHeader);
-        log.info("[REFRESH TOKEN] Đã gửi cookie refreshToken mới về FE");
-
         String avatarUrl = null;
         try {
             avatarUrl = imageRepository.findByRefId(idUserStr)
@@ -236,7 +207,6 @@ public class AuthenService
         var userResponse = userMapper.toUserResponse(user);
         userResponse.setAvatar(avatarUrl);
 
-        log.info("[REFRESH TOKEN] Hoàn tất refresh token cho user {}", idUserStr);
         return AuthenResponse.builder()
                 .token(newAccessToken)
                 .infUser(userResponse)
