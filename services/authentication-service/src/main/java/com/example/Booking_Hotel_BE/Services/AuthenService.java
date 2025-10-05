@@ -143,64 +143,85 @@ public class AuthenService
 
     // Hàm Refresh Token
     public AuthenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        // 1. Lấy cookie
+        log.info("=== [REFRESH TOKEN] Bắt đầu xử lý ===");
+
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
-            throw new ApiException(ErrorCode.UNAUTHENTICATED);
+            log.warn("[REFRESH TOKEN] Không tìm thấy cookie trong request");
+            throw new ApiException(ErrorCode.UNAUTHENTICATED, "Không có cookie trong request");
         }
 
         String refreshToken = Arrays.stream(cookies)
                 .filter(c -> "refreshToken".equals(c.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
-                .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHENTICATED));
+                .orElse(null);
 
-        // 2. Verify token
+        if (refreshToken == null) {
+            log.warn("[REFRESH TOKEN] Không tìm thấy cookie tên refreshToken");
+            throw new ApiException(ErrorCode.UNAUTHENTICATED, "Không tìm thấy refreshToken trong cookie");
+        }
+
+        log.info("[REFRESH TOKEN] Token nhận được từ cookie: {}", refreshToken.substring(0, 20) + "...");
+
         SignedJWT signToken;
         try {
             signToken = verifyToken(refreshToken);
+            log.info("[REFRESH TOKEN] Token verify thành công");
         } catch (JOSEException | ParseException e) {
-            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID);
+            log.error("[REFRESH TOKEN] Lỗi verify token: {}", e.getMessage());
+            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID, "Refresh token không hợp lệ");
         }
 
         String idUserStr;
         try {
             idUserStr = signToken.getJWTClaimsSet().getStringClaim("idUser");
+            log.info("[REFRESH TOKEN] idUser trong token: {}", idUserStr);
         } catch (Exception e) {
-            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID);
+            log.error("[REFRESH TOKEN] Không đọc được claim idUser từ token: {}", e.getMessage());
+            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID, "Thiếu claim idUser trong refresh token");
         }
 
         UUID idUser;
         try {
             idUser = UUID.fromString(idUserStr);
         } catch (IllegalArgumentException e) {
-            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID);
+            log.error("[REFRESH TOKEN] idUser không hợp lệ: {}", idUserStr);
+            throw new ApiException(ErrorCode.REFRESH_TOKEN_INVALID, "idUser không hợp lệ trong refresh token");
         }
 
-        // 3. Check user
-        var user = userRepository.findById(idUser)
-                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+        var user = userRepository.findById(idUser).orElse(null);
+        if (user == null) {
+            log.warn("[REFRESH TOKEN] Không tìm thấy người dùng trong DB với idUser={}", idUserStr);
+            throw new ApiException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng");
+        }
+        log.info("[REFRESH TOKEN] Người dùng tồn tại trong DB: {}", user.getEmail());
 
-        // 4. Check Redis
         String storedRefreshToken = refreshTokenService.getRefreshToken(idUserStr);
-        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
-            throw new ApiException(ErrorCode.UNAUTHENTICATED);
+        if (storedRefreshToken == null) {
+            log.warn("[REFRESH TOKEN] Không tìm thấy refresh token trong Redis với idUser={}", idUserStr);
+            throw new ApiException(ErrorCode.UNAUTHENTICATED, "Refresh token không tồn tại trong Redis");
         }
+        if (!storedRefreshToken.equals(refreshToken)) {
+            log.warn("[REFRESH TOKEN] Refresh token không trùng khớp trong Redis cho user={}", idUserStr);
+            throw new ApiException(ErrorCode.UNAUTHENTICATED, "Refresh token không khớp với Redis");
+        }
+        log.info("[REFRESH TOKEN] Refresh token hợp lệ trong Redis");
 
-        // 5. Tạo token mới
         String newAccessToken = generateAccessToken(user);
         String newRefreshToken = generateRefreshToken(user);
+        log.info("[REFRESH TOKEN] Đã tạo token mới thành công");
 
         refreshTokenService.saveRefreshToken(idUserStr, newRefreshToken, REFRESHABLE_DURATION);
+        log.info("[REFRESH TOKEN] Đã lưu refresh token mới vào Redis");
 
-        // 6. Cookie mới
         String cookieHeader = String.format(
                 "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
                 newRefreshToken, REFRESHABLE_DURATION
         );
         response.addHeader("Set-Cookie", cookieHeader);
+        log.info("[REFRESH TOKEN] Đã gửi cookie refreshToken mới về FE");
 
-        // 7. Avatar optional
         String avatarUrl = null;
         try {
             avatarUrl = imageRepository.findByRefId(idUserStr)
@@ -208,12 +229,14 @@ public class AuthenService
                     .map(Images::getUrl)
                     .findFirst()
                     .orElse(null);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("[REFRESH TOKEN] Không thể lấy avatar: {}", e.getMessage());
+        }
 
-        // 8. Build response
         var userResponse = userMapper.toUserResponse(user);
         userResponse.setAvatar(avatarUrl);
 
+        log.info("[REFRESH TOKEN] Hoàn tất refresh token cho user {}", idUserStr);
         return AuthenResponse.builder()
                 .token(newAccessToken)
                 .infUser(userResponse)
