@@ -16,5 +16,7 @@ type Booking struct {
 
 	// Khóa ngoại
 	IDUser uuid.UUID `gorm:"type:uuid" json:"id_user"`
-	User   User      `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+
+	// Quan hệ
+	User User `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 }

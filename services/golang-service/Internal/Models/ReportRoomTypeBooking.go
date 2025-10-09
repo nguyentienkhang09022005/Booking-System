@@ -11,7 +11,7 @@ type ReportRoomTypeBooking struct {
 	TotalBooking        int       `json:"total_booking"`
 
 	// Khóa ngoại
-	IDTypeRoom uuid.UUID `gorm:"type:uuid" json:"id_type_room"`
+	IDTypeRoom uuid.UUID `gorm:"type:varchar(30)" json:"type_room"`
 	IDUser     uuid.UUID `gorm:"type:uuid" json:"id_user"`
 	IDHotel    uuid.UUID `gorm:"type:uuid" json:"id_hotel"`
 }

@@ -9,9 +9,7 @@ import (
 	"os"
 )
 
-var HotelDB *gorm.DB
-
-func ConnectToDB() {
+func ConnectToDB() *gorm.DB {
 
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -35,6 +33,5 @@ func ConnectToDB() {
 		log.Fatal("Kết nối database thất bại!", err)
 	}
 	fmt.Printf("Kết nối database thành công!")
-
-	HotelDB = db
+	return db
 }

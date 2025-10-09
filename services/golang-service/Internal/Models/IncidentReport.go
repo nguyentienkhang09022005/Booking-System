@@ -11,7 +11,7 @@ type IncidentReport struct {
 	IncidentName        string    `gorm:"type:varchar(100)" json:"incident_name"`
 	IncidentDescription string    `gorm:"type:text" json:"incident_description"`
 	Status              string    `gorm:"type:varchar(20)" json:"status"`
-	CreatedAt           time.Time `gorm:"type:timestamp;default:current_timestamp" json:"created_at"`
+	CreateAt            time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại
 	IDUser    uuid.UUID `gorm:"type:uuid" json:"id_user"`

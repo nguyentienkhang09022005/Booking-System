@@ -17,7 +17,7 @@ type User struct {
 	DOB         time.Time `json:"dob"`
 	AddressUser string    `gorm:"type:text" json:"address_user"`
 	Email       string    `gorm:"type:text;unique" json:"email"`
-	Password    string    `gorm:"type:text" json:"password_user"`
+	Password    string    `gorm:"column:password_user;type:text" json:"password_user"`
 	TotalAmount float64   `gorm:"type:numeric(10,2)" json:"total_amount"`
 	CreatedAt   time.Time `gorm:"type:timestamp;default:current_timestamp" json:"created_at"`
 
