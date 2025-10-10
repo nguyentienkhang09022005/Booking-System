@@ -104,7 +104,7 @@ public class OtpService
 
         OTP saveOtp = OTP.builder()
                 .otp(otp)
-                .expiryTime(LocalDateTime.now().plusMinutes(10))// OTP có hiệu lực trong 2 phút
+                .expiryTime(LocalDateTime.now().plusMinutes(2))// OTP có hiệu lực trong 2 phút
                 .build();
 
         emailService.sendOtpEmail(mainBody);
