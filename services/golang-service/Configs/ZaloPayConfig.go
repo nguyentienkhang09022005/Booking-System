@@ -17,9 +17,7 @@ var (
 )
 
 func ZaloPayConfig() error {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Println("Lỗi: không tìm thấy file .env!")
-	}
+	_ = godotenv.Load(".env")
 
 	// Đọc AppID
 	var err error
