@@ -15,7 +15,7 @@ func PaymentRouter(router *gin.Engine, db *gorm.DB) {
 
 	paymentRoutes := router.Group("/api/v1/payments")
 	{
-		paymentRoutes.POST("", paymentController.CreatePayment)
-		paymentRoutes.POST("/callback", paymentController.CreatePayment)
+		paymentRoutes.POST("/", paymentController.CreatePayment)
+		paymentRoutes.POST("/callback", paymentController.HandleCallBack)
 	}
 }
