@@ -29,3 +29,17 @@ func (pc *PaymentController) CreatePayment(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, paymentResponse)
 }
+
+func (pc *PaymentController) HandleCallBack(c *gin.Context) {
+	var zaloPayCallBackRequest Request.ZaloPayCallBackRequest
+	if err := c.ShouldBind(&zaloPayCallBackRequest); err != nil {
+		c.JSON(http.StatusOK, gin.H{"return_code": 0, "return_message": "Dữ liệu không hợp lệ!"})
+		return
+	}
+	err := pc._paymentService.ResolveCallBackZaloPay(zaloPayCallBackRequest)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"return_code": 0, "return_message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"return_code": 1, "return_message": "Thành công"})
+}

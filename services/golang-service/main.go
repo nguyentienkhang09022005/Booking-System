@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"os"
 	"payment-service/Configs"
 	"payment-service/Routes"
 )
@@ -22,5 +24,10 @@ func main() {
 	Routes.PaymentRouter(r, db)
 
 	// Chạy server
-	r.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := fmt.Sprintf(":%s", port)
+	r.Run(addr)
 }

@@ -19,6 +19,7 @@ import (
 
 type PaymentService interface {
 	CreatePayment(paymentRequest Request.PaymentRequest) (*Response.PaymentResponse, error)
+	ResolveCallBackZaloPay(zaloPayCallBackRequest Request.ZaloPayCallBackRequest) error
 }
 
 type paymentService struct {
@@ -27,6 +28,14 @@ type paymentService struct {
 
 func NewPaymentService(paymentRepository Repositories.PaymentRepository) PaymentService {
 	return &paymentService{_paymentRepository: paymentRepository}
+}
+
+type ZaloPayCallBackData struct {
+	AppID      int    `json:"app_id"`
+	AppTransID string `json:"app_trans_id"`
+	AppTime    int64  `json:"app_time"`
+	AppUser    string `json:"app_user"`
+	Amount     int64  `json:"amount"`
 }
 
 // Hàm tạo thanh toán
@@ -41,8 +50,8 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		IDUser:     paymentRequest.IDUser,
 		IDBooking:  paymentRequest.IDBooking,
 		Amount:     paymentRequest.Amount,
-		Method:     paymentRequest.Method,
-		Status:     paymentRequest.Status,
+		Method:     "ZaloPay",
+		Status:     "Pending",
 		IDAppTrans: IdAppTrans,
 	}
 	createdPayment, err := p._paymentRepository.Create(newPayment)
@@ -78,7 +87,7 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		"app_time":     appTime,
 		"amount":       int64(paymentRequest.Amount),
 		"item":         string(items),
-		"description":  fmt.Sprintf("Thanh Tóan Đơn Đặt Phòng #%s", paymentRequest.IDBooking),
+		"description":  fmt.Sprintf("Thanh Toán Đơn Đặt Phòng #%s", paymentRequest.IDBooking),
 		"embed_data":   string(embedData),
 		"mac":          mac,
 		"bank_code":    "zalopayapp",
@@ -109,6 +118,38 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		CreatedAt: createdPayment.CreateAt,
 	}
 	return response, nil
+}
+
+func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.ZaloPayCallBackRequest) error {
+	// Tạo chữ ký với Key 2
+	mac := computeHmacSha256(zaloPayCallBackRequest.Data, Configs.ZaloPayKey2)
+	if mac != zaloPayCallBackRequest.Mac {
+		return fmt.Errorf("Chữ ký không hợp lệ!")
+	}
+
+	// Parse dữ liệu
+	var zaloPayCallBackData ZaloPayCallBackData
+	err := json.Unmarshal([]byte(zaloPayCallBackRequest.Data), &zaloPayCallBackData)
+	if err != nil {
+		return fmt.Errorf("Không thể parse dữ liệu callback: %w", err)
+	}
+
+	// Tìm giao dịch trong db
+	payment, err := p._paymentRepository.FindByAppTransID(zaloPayCallBackData.AppTransID)
+	if err != nil {
+		return fmt.Errorf("Không tìm thấy giao dịch!")
+	}
+
+	if payment.Status == "Success" {
+		return nil
+	}
+
+	// Cập nhật trạng thái thành công
+	err = p._paymentRepository.UpdateStatus(payment.IDPayment, "Success")
+	if err != nil {
+		return fmt.Errorf("Cập nhật trạng thái giao dịch thất bại!: %w", err)
+	}
+	return nil
 }
 
 // Hàm tạo chữ ký với Key 1

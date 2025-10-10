@@ -32,7 +32,10 @@ func (p *paymentRepository) Create(payment *Models.Payment) (*Models.Payment, er
 func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
 	var payment Models.Payment
 	err := p._db.Where("id_app_trans = ?", IDAppTrans).First(&payment).Error
-	return &payment, err
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
 }
 
 func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, status string) error {

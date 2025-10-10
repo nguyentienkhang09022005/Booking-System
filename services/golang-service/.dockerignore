@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+bin
+Dockerfile*
+*.md
+*.log
+.env
+.vscode
+.idea
+/tmp
