@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Constant.PredefinedStatusRoom;
 import com.example.java_service.Dto.Request.BookingRoomRequest;
 import com.example.java_service.Dto.Response.BookingRoomResponse;
 import com.example.java_service.Exception.ApiException;
@@ -53,6 +54,9 @@ public class BookingRoomService
         if (rooms.size() != idRoom.size()){
             throw new ApiException(ErrorCode.ROOM_NOT_FOUND);
         }
+        // Cập nhật trạng thái cho toàn bộ room
+        rooms.forEach(room -> room.setStatus(PredefinedStatusRoom.STATUS_ROOM_BOOKED));
+        roomRepository.saveAll(rooms);
 
         List<BookingRoom> bookingRooms = bookingRoomRequest.stream()
                 .map(request -> {
@@ -64,6 +68,7 @@ public class BookingRoomService
                             .filter(r -> r.getIdRoom().equals(request.getIdRoom()))
                             .findFirst()
                             .orElseThrow(() -> new ApiException(ErrorCode.ROOM_NOT_FOUND));
+
                     bookingRoomMapping.setRoom(room);
 
                     // giá = đơn giá * số lượng

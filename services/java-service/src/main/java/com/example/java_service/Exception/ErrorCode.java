@@ -62,6 +62,10 @@ public enum ErrorCode
 
     // Lỗi đặt phòng
     BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
+    BOOKING_FAILED("BOOKING_FAILED", "Đặt phòng thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // Lỗi thanh toán
+    PAYMENT_FAILED("PAYMENT_FAILED", "Thanh toán thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     private final String code;
