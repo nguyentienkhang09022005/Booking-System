@@ -47,7 +47,7 @@ public enum ErrorCode
 
     // Lỗi phòng
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
-
+    ROOM_ALREADY_BOOKED("ROOM_ALREADY_BOOKED", "Phòng đã được đặt!", HttpStatus.CONFLICT),
     // Lỗi dịch vụ
     SERVICE_NOT_FOUND("SERVICE_NOT_FOUND", "Không tìm thấy dịch vụ!", HttpStatus.NOT_FOUND),
 

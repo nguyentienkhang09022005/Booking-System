@@ -47,12 +47,24 @@ public class BookingRoomService
         );
 
         // Lấy tất cả idRoom từ request
-        List<UUID> idRoom = bookingRoomRequest.stream()
+        List<UUID> idRooms = bookingRoomRequest.stream()
                 .map(BookingRoomRequest::getIdRoom)
                 .toList();
-        List<Room> rooms = roomRepository.findAllById(idRoom);
-        if (rooms.size() != idRoom.size()){
+        List<Room> rooms = roomRepository.findAllById(idRooms);
+        if (rooms.size() != idRooms.size()){
             throw new ApiException(ErrorCode.ROOM_NOT_FOUND);
+        }
+
+        for (UUID idRoom : idRooms)
+        {
+            int updateStatusRoom = roomRepository.updateStatus(
+                    idRoom,
+                    PredefinedStatusRoom.STATUS_ROOM_DEFAULT,
+                    PredefinedStatusRoom.STATUS_ROOM_BOOKED
+            );
+            if (updateStatusRoom == 0) {
+                throw new ApiException(ErrorCode.ROOM_ALREADY_BOOKED);
+            }
         }
         // Cập nhật trạng thái cho toàn bộ room
         rooms.forEach(room -> room.setStatus(PredefinedStatusRoom.STATUS_ROOM_BOOKED));

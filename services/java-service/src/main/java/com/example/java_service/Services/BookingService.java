@@ -72,7 +72,6 @@ public class BookingService
                     .header("Content-Type", "application/json")
                     .bodyValue(paymentRequest)
                     .retrieve()
-
                     .bodyToMono(PaymentResponse.class)
                     .block();
 
