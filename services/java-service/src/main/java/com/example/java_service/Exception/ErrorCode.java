@@ -64,10 +64,13 @@ public enum ErrorCode
     // Lỗi đặt phòng
     BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
     BOOKING_FAILED("BOOKING_FAILED", "Đặt phòng thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
+    BOOKING_NOT_CANCEL("BOOKING_NOT_CANCEL", "Không thể hủy đặt phòng!", HttpStatus.BAD_REQUEST),
 
     // Lỗi thanh toán
+    PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", "Không tìm thấy thông tin thanh toán!", HttpStatus.NOT_FOUND),
     PAYMENT_FAILED("PAYMENT_FAILED", "Thanh toán thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
-    PAID("PAYMENTED", "Đã thanh toán không thể thay đổi thông tin!", HttpStatus.CONFLICT),
+    PAID("PAYMENTED", "Đã thanh toán không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),
+    USER_UNPAID("USER_UNPAID", "Người dùng chưa thanh toán không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

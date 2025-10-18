@@ -1,12 +1,9 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Constant.PredefinedStatusBooking;
+import com.example.java_service.Constant.PredefinedStatusPayment;
 import com.example.java_service.Constant.PredefinedStatusRoom;
-import com.example.java_service.Dto.Request.BookingRequest;
-import com.example.java_service.Dto.Request.BookingRoomRequest;
-import com.example.java_service.Dto.Request.BookingUpdateRequest;
-import com.example.java_service.Dto.Request.PaymentRequest;
-import com.example.java_service.Dto.Response.BookingResponse;
+import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.BookingRoomResponse;
 import com.example.java_service.Dto.Response.BookingServiceResponse;
 import com.example.java_service.Dto.Response.PaymentResponse;
@@ -14,6 +11,7 @@ import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingMapper;
 import com.example.java_service.Models.Booking;
+import com.example.java_service.Models.Payment;
 import com.example.java_service.Models.Room;
 import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.*;
@@ -108,7 +106,7 @@ public class BookingService
     public ResponseEntity<String> updateBooking(BookingUpdateRequest bookingUpdateRequest, UUID idBooking)
     {
         // Kiểm tra đã thanh toán chưa
-        if (paymentRepository.existsByBooking_IdBookingAndStatus(idBooking, "Success")){
+        if (paymentRepository.existsByBooking_IdBookingAndStatus(idBooking, PredefinedStatusPayment.STATUS_PAYMENT_SUCCESS)){
             throw new ApiException(ErrorCode.PAID);
         }
         Booking booking = bookingRepository.findById(idBooking).orElseThrow(
@@ -166,8 +164,70 @@ public class BookingService
     }
 
     // Hàm cập nhật status đặt phòng cho (company)
+    public ResponseEntity<String> updateStatusBooking(BookingUpdateStatusRequest request, UUID idBooking)
+    {
+        // Kiểm tra người dùng đã thanh toán chưa
+        if (paymentRepository.existsByBooking_IdBookingAndStatus(idBooking, PredefinedStatusPayment.STATUS_PAYMENT_DEFAULT)){
+            throw new ApiException(ErrorCode.USER_UNPAID);
+        }
 
-    // Hàm xóa đặt phòng cho (company)
+        Booking booking = bookingRepository.findById(idBooking).orElseThrow(
+                () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
+        );
+
+        booking.setStatus(request.getStatus());
+        bookingRepository.save(booking);
+
+        return ResponseEntity.ok("Cập nhật trạng thái thành công!");
+    }
+
+    // Hàm xóa đặt phòng
+    @Transactional
+    public ResponseEntity<String> deleteBookingRoom(UUID idBooking)
+    {
+        Booking booking = bookingRepository.findById(idBooking)
+                .orElseThrow(() -> new ApiException(ErrorCode.BOOKING_NOT_FOUND));
+
+        // Lấy danh idRoom sách tất cả BookingRoom của Booking
+        List<UUID> roomIds = bookingRoomRepository.findRoomIdsByBookingId(idBooking);
+        if (!roomIds.isEmpty()) {
+            roomRepository.updateStatusForRoomIds(roomIds, PredefinedStatusRoom.STATUS_ROOM_DEFAULT);
+        }
+
+        bookingRepository.delete(booking);
+
+        return ResponseEntity.ok("Xóa đặt phòng thành công!");
+    }
+
 
     // Hàm hủy đặt phòng cho (user) khi status đặt phòng còn pending
+    @Transactional
+    public ResponseEntity<String> cancelBookingWhenStatusPending(UUID idBooking)
+    {
+
+        Booking booking = bookingRepository.findById(idBooking)
+                .orElseThrow(() -> new ApiException(ErrorCode.BOOKING_NOT_FOUND));
+
+        if (!PredefinedStatusBooking.STATUS_BOOKING_DEFAULT.equals(booking.getStatus())) {
+            throw new ApiException(ErrorCode.BOOKING_NOT_CANCEL);
+        }
+
+        List<UUID> roomIds = bookingRoomRepository.findRoomIdsByBookingId(idBooking);
+        if (!roomIds.isEmpty()) {
+            roomRepository.updateStatusForRoomIds(roomIds, PredefinedStatusRoom.STATUS_ROOM_DEFAULT);
+        }
+        booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_FAILED);
+
+        // Cập nhật trạng thái Payment
+        Payment payment = paymentRepository.findByBooking_IdBooking(idBooking);
+        if (payment == null) {
+            throw new ApiException(ErrorCode.PAYMENT_NOT_FOUND);
+        }
+
+        payment.setStatus(PredefinedStatusPayment.STATUS_PAYMENT_FAILED);
+
+        bookingRepository.save(booking);
+
+        return ResponseEntity.ok("Hủy đặt phòng thành công!");
+    }
 }

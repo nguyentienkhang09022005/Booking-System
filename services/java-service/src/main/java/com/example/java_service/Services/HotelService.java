@@ -13,6 +13,7 @@ import com.example.java_service.Repositories.Jpa.*;
 import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -184,6 +185,7 @@ public class HotelService
     }
 
     // Thêm khách sạn mới
+    @Transactional
     public ResponseEntity<String> saveHotel(HotelCreationRequest request)
     {
         Users user = userRepository.findById(request.getIdUser()).orElseThrow(
@@ -249,6 +251,7 @@ public class HotelService
     }
 
     // Sửa thông tin khách sạn
+    @Transactional
     public ResponseEntity<String> updateHotel(UUID idHotel, HotelUpdateRequest request)
     {
         Hotel hotel = hotelRepository.findById(idHotel).orElseThrow(

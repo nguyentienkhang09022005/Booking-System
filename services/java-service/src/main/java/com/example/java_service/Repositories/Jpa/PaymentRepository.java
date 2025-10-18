@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface PaymentRepository extends JpaRepository<Payment, UUID>
 {
     Boolean existsByBooking_IdBookingAndStatus(UUID idBooking, String status);
+
+    Payment findByBooking_IdBooking(UUID idBooking);
 }

@@ -15,6 +15,7 @@ import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -115,6 +116,7 @@ public class UserService
     }
 
     // Hàm thêm thông tin người dùng
+    @Transactional
     public UserResponse saveUser(UserCreationRequest request) {
         // Kiểm tra email hoặc phone đã tồn tại
         Optional<Users> existingUser = userRepository.findByEmailOrPhone(request.getEmail(), request.getPhone());
@@ -164,6 +166,7 @@ public class UserService
     }
 
     // Hàm sửa thông tin người dùng
+    @Transactional
     public UserResponse updateUser(UserUpdateRequest request, UUID idUser)
     {
         Users user = userRepository.findById(idUser).orElseThrow(

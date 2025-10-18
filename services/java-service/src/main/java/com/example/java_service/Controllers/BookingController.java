@@ -2,6 +2,7 @@ package com.example.java_service.Controllers;
 
 import com.example.java_service.Dto.Request.BookingRequest;
 import com.example.java_service.Dto.Request.BookingUpdateRequest;
+import com.example.java_service.Dto.Request.BookingUpdateStatusRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.PaymentResponse;
 import com.example.java_service.Services.BookingService;
@@ -34,10 +35,39 @@ public class BookingController
                 .build();
     }
 
-    @PatchMapping("/update")
-    public ApiResponse<ResponseEntity<String>> updateBooking(@RequestParam UUID idBooking, @RequestBody BookingUpdateRequest request)
+    @PatchMapping("/update-information")
+    public ApiResponse<ResponseEntity<String>> updateBooking(@RequestParam UUID idBooking,
+                                                             @RequestBody BookingUpdateRequest request)
     {
         var response = bookingService.updateBooking(request, idBooking);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+
+    @PatchMapping("/update-status")
+    public ApiResponse<ResponseEntity<String>> updateStatusBooking(@RequestParam UUID idBooking,
+                                                                       @RequestBody BookingUpdateStatusRequest request)
+    {
+        var response = bookingService.updateStatusBooking(request, idBooking);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+
+    @PatchMapping("/cancel-booking")
+    public ApiResponse<ResponseEntity<String>> cancelBooking(@RequestParam UUID idBooking)
+    {
+        var response = bookingService.cancelBookingWhenStatusPending(idBooking);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+
+    @DeleteMapping("/delete")
+    public ApiResponse<ResponseEntity<String>> deleteBooking(@RequestParam UUID idBooking)
+    {
+        var response = bookingService.deleteBookingRoom(idBooking);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();

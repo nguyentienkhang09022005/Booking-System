@@ -20,4 +20,9 @@ public interface RoomRepository extends JpaRepository<Room, UUID>
     int updateStatus(@Param("idRoom") UUID idRoom,
                      @Param("expectedStatus") String expectedStatus,
                      @Param("newStatus") String newStatus);
+
+    @Modifying
+    @Query("UPDATE Room r SET r.status = :status WHERE r.idRoom IN :roomIds")
+    void updateStatusForRoomIds(@Param("roomIds") List<UUID> roomIds, @Param("status") String status);
+
 }
