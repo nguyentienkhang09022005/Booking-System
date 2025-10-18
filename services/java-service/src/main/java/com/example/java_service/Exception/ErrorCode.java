@@ -48,6 +48,7 @@ public enum ErrorCode
     // Lỗi phòng
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
     ROOM_ALREADY_BOOKED("ROOM_ALREADY_BOOKED", "Phòng đã được đặt!", HttpStatus.CONFLICT),
+
     // Lỗi dịch vụ
     SERVICE_NOT_FOUND("SERVICE_NOT_FOUND", "Không tìm thấy dịch vụ!", HttpStatus.NOT_FOUND),
 
@@ -66,6 +67,7 @@ public enum ErrorCode
 
     // Lỗi thanh toán
     PAYMENT_FAILED("PAYMENT_FAILED", "Thanh toán thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
+    PAID("PAYMENTED", "Đã thanh toán không thể thay đổi thông tin!", HttpStatus.CONFLICT),
     ;
 
     private final String code;
