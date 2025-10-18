@@ -15,6 +15,7 @@ import java.util.UUID;
 public class BookingRequest
 {
     UUID idUser;
+    UUID idHotel;
     Date checkinDate;
     Date checkoutDate;
     List<BookingRoomRequest> bookingRooms;

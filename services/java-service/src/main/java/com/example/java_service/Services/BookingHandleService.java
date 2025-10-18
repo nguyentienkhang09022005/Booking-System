@@ -4,16 +4,13 @@ import com.example.java_service.Constant.PredefinedStatusBooking;
 import com.example.java_service.Constant.PredefinedStatusPayment;
 import com.example.java_service.Constant.PredefinedStatusRoom;
 import com.example.java_service.Dto.Request.*;
-import com.example.java_service.Dto.Response.BookingRoomResponse;
-import com.example.java_service.Dto.Response.BookingServiceResponse;
-import com.example.java_service.Dto.Response.PaymentResponse;
+import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingMapper;
-import com.example.java_service.Models.Booking;
-import com.example.java_service.Models.Payment;
-import com.example.java_service.Models.Room;
-import com.example.java_service.Models.Users;
+import com.example.java_service.Mappers.RoomMapper;
+import com.example.java_service.Mappers.ServiceMapper;
+import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.*;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -25,13 +22,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class BookingService
+public class BookingHandleService
 {
     BookingRepository bookingRepository;
     BookingRoomRepository bookingRoomRepository;
@@ -39,16 +38,135 @@ public class BookingService
     PaymentRepository paymentRepository;
     RoomRepository roomRepository;
     UserRepository userRepository;
+    HotelRepository hotelRepository;
     BookingMapper bookingMapper;
+    RoomMapper roomMapper;
+    ServiceMapper serviceMapper;
     BookingRoomService bookingRoomService;
     BookingServiceService bookingServiceService;
     WebClient webClient;
 
     // Hàm lấy danh sách đặt phòng của khách sạn (cho company)
+    public List<BookingListResponse> getListBooking(UUID idHotel)
+    {
+        hotelRepository.findById(idHotel).orElseThrow(
+                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+
+        // Lấy tất cả danh sách booking
+        List<Booking> bookingList = bookingRepository.findByHotel_IdHotel(idHotel);
+        if (bookingList.isEmpty()) {
+            return List.of();
+        }
+
+        return bookingList.stream()
+                .map(booking -> {
+                    BookingListResponse response = bookingMapper.toBookingListResponse(booking);
+                    return response;
+                })
+                .toList();
+    }
 
     // Hàm lấy lịch sử đặt phòng của người dùng (cho user)
+    public List<BookingListResponse> getHistoryListBooking(UUID idUser)
+    {
+        userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        // Lấy tất cả danh sách booking
+        List<Booking> bookingList = bookingRepository.findByUsers_IdUser(idUser);
+        if (bookingList.isEmpty()) {
+            return List.of();
+        }
+
+        return bookingList.stream()
+                .map(booking -> {
+                    BookingListResponse response = bookingMapper.toBookingListResponse(booking);
+                    return response;
+                })
+                .toList();
+    }
 
     // Hàm lấy chi tiết thông tin đặt phòng
+    @Transactional
+    public BookingResponse getInfBooking(UUID idBooking)
+    {
+        Booking booking = bookingRepository.findById(idBooking)
+                .orElseThrow(() -> new ApiException(ErrorCode.BOOKING_NOT_FOUND));
+
+        // Lấy toàn bộ dữ liệu liên quan
+        List<BookingRoom> bookingRooms = bookingRoomRepository.findAllByBookingIds(List.of(idBooking));
+        List<BookingService> bookingServices = bookingServiceRepository.findAllByBookingIds(List.of(idBooking));
+        List<Payment> payments = paymentRepository.findByBooking_IdBookingIn(List.of(idBooking));
+
+        // Gom nhóm dữ liệu
+        Map<UUID, List<BookingRoom>> bookingRoomMap = bookingRooms.stream()
+                .collect(Collectors.groupingBy(br -> br.getBooking().getIdBooking()));
+
+        Map<UUID, List<BookingService>> bookingServiceMap = bookingServices.stream()
+                .collect(Collectors.groupingBy(bs -> bs.getBooking().getIdBooking()));
+
+        Map<UUID, Payment> paymentMap = payments.stream()
+                .collect(Collectors.toMap(p -> p.getBooking().getIdBooking(), p -> p));
+
+        BookingResponse response = bookingMapper.toBookingResponse(booking);
+
+        // Payment Response
+        Payment payment = paymentMap.get(booking.getIdBooking());
+        if (payment != null) {
+            response.setPaymentInBookingResponse(bookingMapper.toPaymentInBookingResponse(payment));
+        }
+
+        // Booking Room Response
+        List<BookingRoom> bookingRoomsOfBooking = bookingRoomMap.getOrDefault(booking.getIdBooking(), List.of());
+        List<BookingRoomInBookingResponse> bookingRoomResponses = bookingRoomsOfBooking.stream()
+                .map(bookingMapper::toBookingRoomInBookingResponse)
+                .toList();
+        response.setBookingRoomInBookingResponses(bookingRoomResponses);
+
+        // Booking Service Response
+        List<BookingService> bookingServicesOfBooking = bookingServiceMap.getOrDefault(booking.getIdBooking(), List.of());
+        List<BookingServiceInBookingResponse> bookingServiceResponses = bookingServicesOfBooking.stream()
+                .map(bookingMapper::toBookingServiceInBookingResponse)
+                .toList();
+        response.setBookingServiceInBookingResponses(bookingServiceResponses);
+
+        // Room Response
+        List<BookingRoom> roomsOfBooking = bookingRoomMap.getOrDefault(booking.getIdBooking(), List.of());
+        List<BookingRoomInBookingResponse> roomResponses = roomsOfBooking.stream()
+                .map(br -> {
+                    BookingRoomInBookingResponse responses = bookingMapper.toBookingRoomInBookingResponse(br);
+                    if (br.getRoom() != null) {
+                        RoomResponse roomResponse = roomMapper.toRoomResponse(br.getRoom());
+                        responses.setRoomResponses(List.of(roomResponse));
+                    } else {
+                        responses.setRoomResponses(List.of());
+                    }
+                    return responses;
+                })
+                .toList();
+        response.setBookingRoomInBookingResponses(roomResponses);
+
+        // Service Response
+        List<BookingService> servicesOfBooking = bookingServiceMap.getOrDefault(booking.getIdBooking(), List.of());
+        List<BookingServiceInBookingResponse> serviceResponses = servicesOfBooking.stream()
+                .map(bs -> {
+                    BookingServiceInBookingResponse responses = bookingMapper.toBookingServiceInBookingResponse(bs);
+                    if (bs.getService() != null) {
+                        ServiceResponse serviceResponse = serviceMapper.toServiceResponse(bs.getService());
+                        responses.setServiceResponses(List.of(serviceResponse));
+                    } else {
+                        responses.setServiceResponses(List.of());
+                    }
+                    return responses;
+                })
+                .toList();
+        response.setBookingServiceInBookingResponses(serviceResponses);
+
+        return response;
+    }
+
 
     // Hàm tạo đặt phòng
     public PaymentResponse saveBooking(BookingRequest bookingRequest)
@@ -57,9 +175,14 @@ public class BookingService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
+        Hotel hotel = hotelRepository.findById(bookingRequest.getIdHotel()).orElseThrow(
+                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+
         Booking booking = bookingMapper.toBooking(bookingRequest);
         booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_DEFAULT);
         booking.setUsers(user);
+        booking.setHotel(hotel);
         Booking savedBooking = bookingRepository.save(booking);
 
         BookingRoomResponse bookingRoomResponse = bookingRoomService.saveBookingRoom(bookingRequest.getBookingRooms(),

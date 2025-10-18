@@ -22,22 +22,7 @@ public class BookingResponse
     Date checkoutDate;
     String status;
     BigDecimal totalPrice;
+    PaymentInBookingResponse paymentInBookingResponse;
     List<BookingRoomInBookingResponse> bookingRoomInBookingResponses;
     List<BookingServiceInBookingResponse> bookingServiceInBookingResponses;
-}
-
-class BookingRoomInBookingResponse
-{
-    UUID idBookingRoom;
-    BigDecimal priceBookingRoom;
-    Integer quantity;
-    List<RoomResponse> roomResponses;
-}
-
-class BookingServiceInBookingResponse
-{
-    UUID idBookingService;
-    Integer quantity;
-    BigDecimal priceBookingService;
-    List<ServiceResponse> serviceResponses;
 }

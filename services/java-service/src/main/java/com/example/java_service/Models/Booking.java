@@ -45,4 +45,12 @@ public class Booking {
             foreignKey = @ForeignKey(name = "FK_BOOKING_USER")
     )
     private Users users;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "id_hotel",
+            referencedColumnName = "id_hotel",
+            foreignKey = @ForeignKey(name = "FK_BOOKING_HOTEL")
+    )
+    private Hotel hotel;
 }

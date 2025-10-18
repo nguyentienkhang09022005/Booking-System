@@ -16,4 +16,8 @@ public interface BookingRoomRepository extends JpaRepository<BookingRoom, UUID>
     List<UUID> findRoomIdsByBookingId(@Param("idBooking") UUID idBooking);
 
     void deleteByBooking_IdBooking(UUID idBooking);
+
+    @Query("SELECT br FROM BookingRoom br JOIN FETCH br.room WHERE br.booking.idBooking IN :bookingIds")
+    List<BookingRoom> findAllByBookingIds(@Param("bookingIds") List<UUID> bookingIds);
+
 }
