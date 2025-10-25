@@ -38,7 +38,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         if (path.contains("/api/authen/login")
                 || path.contains("/api/authen/register")
                 || path.contains("/api/authen/introspect")
-                || path.contains("/oauth2/authorization/google")
+                || path.contains("/login/oauth2/code/google")
                 || path.contains("/api/otp/")
                 || path.contains("/api/authen/refresh")
                 || path.contains("/api/authen/logout")
