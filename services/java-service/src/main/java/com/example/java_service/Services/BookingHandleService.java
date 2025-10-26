@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -191,7 +192,18 @@ public class BookingHandleService
                                                                                                     savedBooking.getIdBooking());
 
         // Lưu tổng tiền của lần booking
-        booking.setTotalPrice(bookingServiceResponse.getPriceBookingService().add(bookingRoomResponse.getPriceBookingRoom()));
+        BigDecimal totalRoom = BigDecimal.ZERO;
+        BigDecimal totalService = BigDecimal.ZERO;
+
+        if (bookingRoomResponse != null && bookingRoomResponse.getPriceBookingRoom() != null) {
+            totalRoom = bookingRoomResponse.getPriceBookingRoom();
+        }
+
+        if (bookingServiceResponse != null && bookingServiceResponse.getPriceBookingService() != null) {
+            totalService = bookingServiceResponse.getPriceBookingService();
+        }
+
+        booking.setTotalPrice(totalRoom.add(totalService));
         bookingRepository.save(booking);
 
         // Call api thanh toán
