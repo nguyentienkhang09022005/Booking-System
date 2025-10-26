@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
         return webClientBuilder.build()
                 .post()
-                .uri("https://booking-hotel-be-spf2.onrender.com/api/authen/introspect") // gọi sang Authen Service
+                .uri("https://authen-service-production-3610.up.railway.app/api/authen/introspect") // gọi sang Authen Service
                 .bodyValue(new IntrospectRequest(token))
                 .retrieve()
                 .bodyToMono(ApiResponse.class)
