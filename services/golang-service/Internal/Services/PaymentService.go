@@ -61,7 +61,9 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 
 	// Chuẩn bị và gọi ZaloPay API
 	appTime := time.Now().UnixNano() / int64(time.Millisecond)
-	embedData, _ := json.Marshal(map[string]string{})
+	embedData, _ := json.Marshal(map[string]string{
+		"redirecturl": "http://localhost:3000/booking",
+	})
 	items, _ := json.Marshal([]map[string]interface{}{})
 
 	appUser := paymentRequest.IDUser.String()
