@@ -26,5 +26,6 @@ public class RoomResponse
     String regulations;
     String status;
     String description;
+    Integer quantity;
     List<String> imageRoomUrl;
 }

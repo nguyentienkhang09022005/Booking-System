@@ -184,6 +184,63 @@ public class HotelService
         return hotelResponse;
     }
 
+    public List<GetListHotelResponse> getListHotelCreatedByUser(UUID idUser) {
+        List<Hotel> hotelList = hotelRepository.findByUsers_IdUser(idUser);
+        if (hotelList.isEmpty()) {
+            return List.of();
+        }
+
+        final Set<String> favoriteHotelIds;
+        if (idUser != null) {
+            Users user = userRepository.findById(idUser).orElseThrow(
+                    () -> new ApiException(ErrorCode.USER_NOT_FOUND));
+            favoriteHotelIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
+                    .stream()
+                    .map(Favorite::getIdHotel)
+                    .collect(Collectors.toSet());
+        } else {
+            favoriteHotelIds = Set.of();
+        }
+
+        // Lấy ID của tất cả khách sạn
+        List<String> hotelIds = hotelList.stream()
+                .map(hotel -> hotel.getIdHotel().toString())
+                .toList();
+
+        // Lấy tất cả ảnh
+        List<Images> images = imagesRepository.findByRefIdIn(hotelIds);
+        Map<String, List<String>> hotelImagesMap = images.stream()
+                .collect(Collectors.groupingBy(
+                        Images::getRefId,
+                        Collectors.mapping(Images::getUrl, Collectors.toList())
+                ));
+
+        // Lấy thống kê
+        Map<String, HotelStatsResponse> statsMap = evaluatesRepository.findHotelStatsByHotelIds(hotelIds)
+                .stream()
+                .collect(Collectors.toMap(HotelStatsResponse::getIdHotel, dto -> dto));
+
+        return hotelList.stream()
+                .map(hotel -> {
+                    GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
+                    String hotelIdStr = hotel.getIdHotel().toString();
+
+                    HotelStatsResponse stats = statsMap.get(hotelIdStr);
+
+                    response.setFavorite(favoriteHotelIds.contains(hotelIdStr));
+                    response.setImageHotelUrl(hotelImagesMap.get(hotelIdStr));
+
+                    if (stats != null) {
+                        response.setAllEvaluates(stats.getAllEvaluates().intValue());
+                        response.setAverageStar(stats.getAverageStar());
+                    } else {
+                        response.setAllEvaluates(0);
+                        response.setAverageStar(0.0);
+                    }
+                    return response;
+                })
+                .toList();
+    }
     // Thêm khách sạn mới
     @Transactional
     public ResponseEntity<String> saveHotel(HotelCreationRequest request)

@@ -64,7 +64,7 @@ public class ServiceService
         service.setTypeService(typeServiceRepository.findById(request.getTypeService()).orElseThrow(
                 () -> new ApiException(ErrorCode.TYPE_SERVICE_NOT_FOUND)
         ));
-        service.setStatus(PredefinedStatusService.STATUS_SERVICE_DEFAULT);
+        service.setStatus(PredefinedStatusService.STATUS_SERVICE_AVAILABLE);
         Service savedService = serviceRepository.save(service);
 
         return serviceMapper.toServiceResponse(savedService);

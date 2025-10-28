@@ -54,4 +54,7 @@ public class Room
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "quantity")
+    private Integer quantity;
 }

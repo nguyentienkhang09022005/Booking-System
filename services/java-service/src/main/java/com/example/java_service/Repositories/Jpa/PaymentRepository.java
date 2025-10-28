@@ -15,4 +15,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID>
     Payment findByBooking_IdBooking(UUID idBooking);
 
     List<Payment> findByBooking_IdBookingIn(List<UUID> bookingIds);
+
+    void deleteByBooking_IdBooking(UUID idBooking);
 }

@@ -3,6 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Constant.PredefinedStatusBooking;
 import com.example.java_service.Constant.PredefinedStatusPayment;
 import com.example.java_service.Constant.PredefinedStatusRoom;
+import com.example.java_service.Constant.PredefinedStatusService;
 import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
@@ -38,6 +39,7 @@ public class BookingHandleService
     BookingServiceRepository bookingServiceRepository;
     PaymentRepository paymentRepository;
     RoomRepository roomRepository;
+    ServiceRepository serviceRepository;
     UserRepository userRepository;
     HotelRepository hotelRepository;
     BookingMapper bookingMapper;
@@ -97,8 +99,8 @@ public class BookingHandleService
                 .orElseThrow(() -> new ApiException(ErrorCode.BOOKING_NOT_FOUND));
 
         // Lấy toàn bộ dữ liệu liên quan
-        List<BookingRoom> bookingRooms = bookingRoomRepository.findAllByBookingIds(List.of(idBooking));
-        List<BookingService> bookingServices = bookingServiceRepository.findAllByBookingIds(List.of(idBooking));
+        List<BookingRoom> bookingRooms = bookingRoomRepository.findAllBookingRoomByBookingIds(List.of(idBooking));
+        List<BookingService> bookingServices = bookingServiceRepository.findAllBookingServiceByBookingIds(List.of(idBooking));
         List<Payment> payments = paymentRepository.findByBooking_IdBookingIn(List.of(idBooking));
 
         // Gom nhóm dữ liệu
@@ -181,7 +183,7 @@ public class BookingHandleService
         );
 
         Booking booking = bookingMapper.toBooking(bookingRequest);
-        booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_DEFAULT);
+        booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_PENDING);
         booking.setUsers(user);
         booking.setHotel(hotel);
         Booking savedBooking = bookingRepository.save(booking);
@@ -238,7 +240,7 @@ public class BookingHandleService
 
     @Transactional
     // Hàm cập nhật lại thông tin đặt phòng khi chưa thanh toán cho (user)
-    public ResponseEntity<String> updateBooking(BookingUpdateRequest bookingUpdateRequest, UUID idBooking)
+    public PaymentResponse updateBooking(BookingUpdateRequest bookingUpdateRequest, UUID idBooking)
     {
         // Kiểm tra đã thanh toán chưa
         if (paymentRepository.existsByBooking_IdBookingAndStatus(idBooking, PredefinedStatusPayment.STATUS_PAYMENT_SUCCESS)){
@@ -254,48 +256,99 @@ public class BookingHandleService
         BookingRoomResponse bookingRoomResponse = null;
         if (bookingUpdateRequest.getBookingRooms() != null && !bookingUpdateRequest.getBookingRooms().isEmpty())
         {
-            bookingRoomRepository.deleteByBooking_IdBooking(idBooking);
-            // Lấy tất cả idRoom từ request
-            List<UUID> idRooms = bookingUpdateRequest.getBookingRooms().stream()
-                    .map(BookingRoomRequest::getIdRoom)
-                    .toList();
-            List<Room> rooms = roomRepository.findAllById(idRooms);
-            if (rooms.size() != idRooms.size()){
-                throw new ApiException(ErrorCode.ROOM_NOT_FOUND);
-            }
+            List<BookingRoom> oldListBookingRoom = bookingRoomRepository.findByBooking_IdBooking(idBooking);
 
-            for (UUID idRoom : idRooms)
+            if (!oldListBookingRoom.isEmpty())
             {
-                int updateStatusRoom = roomRepository.updateStatus(
-                        idRoom,
-                        PredefinedStatusRoom.STATUS_ROOM_BOOKED,
-                        PredefinedStatusRoom.STATUS_ROOM_DEFAULT
-                );
-                if (updateStatusRoom == 0) {
-                    throw new ApiException(ErrorCode.ROOM_ALREADY_BOOKED);
-                }
+                // Gom nhóm số lượng room đặt theo từng booking room
+                Map<UUID, Integer> restoreQuantityRooms = oldListBookingRoom.stream()
+                        .collect(Collectors.groupingBy(
+                                br -> br.getRoom().getIdRoom(),
+                                Collectors.summingInt(BookingRoom::getQuantity)
+                        ));
+
+                // Hoàn lại số lượng cho room và cập nhật status nếu số lượng lớn hơn 0
+                restoreQuantityRooms.forEach((idRoom, quantity) -> {
+                    roomRepository.restoreRoomQuantity(idRoom, quantity);
+                    roomRepository.updateStatusIfAvailable(idRoom, PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
+                });
+
+                bookingRoomRepository.deleteByBooking_IdBooking(idBooking);
             }
-            // Cập nhật trạng thái cho toàn bộ room
-            rooms.forEach(room -> room.setStatus(PredefinedStatusRoom.STATUS_ROOM_BOOKED));
-            roomRepository.saveAll(rooms);
-            bookingRoomResponse = bookingRoomService.saveBookingRoom(bookingUpdateRequest.getBookingRooms(),
-                                                                                         idBooking);
+            bookingRoomResponse = bookingRoomService.saveBookingRoom(bookingUpdateRequest.getBookingRooms(), idBooking);
         }
 
         // Nếu có thay đổi thông tin đặt dịch vụ
         BookingServiceResponse bookingServiceResponse = null;
         if (bookingUpdateRequest.getBookingServices() != null && !bookingUpdateRequest.getBookingServices().isEmpty())
         {
-            bookingServiceRepository.deleteByBooking_IdBooking(idBooking);
+            List<BookingService> oldListBookingService = bookingServiceRepository.findByBooking_IdBooking(idBooking);
+
+            if (!oldListBookingService.isEmpty())
+            {
+                // Gom nhóm số lượng service đặt theo từng booking service
+                Map<UUID, Integer> restoreQuantityServices = oldListBookingService.stream()
+                        .collect(Collectors.groupingBy(
+                                bs -> bs.getService().getIdService(),
+                                Collectors.summingInt(BookingService::getQuantity)
+                        ));
+
+                // Hoàn lại số lượng cho service và cập nhật status nếu số lượng lớn hơn 0
+                restoreQuantityServices.forEach((idService, quantity) -> {
+                    serviceRepository.restoreServiceQuantity(idService, quantity);
+                    serviceRepository.updateStatusIfAvailable(idService, PredefinedStatusService.STATUS_SERVICE_AVAILABLE);
+                });
+
+                bookingServiceRepository.deleteByBooking_IdBooking(idBooking);
+            }
             bookingServiceResponse = bookingServiceService.saveBookingService(bookingUpdateRequest.getBookingServices(),
                                                                                                      idBooking);
         }
 
-        // Lưu lại tổng tiền của lần booking
-        booking.setTotalPrice(bookingServiceResponse.getPriceBookingService().add(bookingRoomResponse.getPriceBookingRoom()));
+        // Lưu tổng tiền của lần booking
+        BigDecimal totalRoom = BigDecimal.ZERO;
+        BigDecimal totalService = BigDecimal.ZERO;
+        if (bookingRoomResponse != null && bookingRoomResponse.getPriceBookingRoom() != null) {
+            totalRoom = bookingRoomResponse.getPriceBookingRoom();
+        }
+
+        if (bookingServiceResponse != null && bookingServiceResponse.getPriceBookingService() != null) {
+            totalService = bookingServiceResponse.getPriceBookingService();
+        }
+
+        booking.setTotalPrice(totalRoom.add(totalService));
         bookingRepository.save(booking);
 
-        return ResponseEntity.ok("Thay đổi thông tin đặt phòng thành công!");
+        paymentRepository.deleteByBooking_IdBooking(idBooking); // Xóa payment cũ
+
+        // Call api thanh toán
+        PaymentRequest paymentRequest = new PaymentRequest(
+                booking.getUsers().getIdUser(),
+                booking.getIdBooking(),
+                booking.getTotalPrice().doubleValue()
+        );
+        try
+        {
+            PaymentResponse paymentResponse = webClient
+                    .post()
+                    .uri("/api/v1/payments/")
+                    .header("Content-Type", "application/json")
+                    .bodyValue(paymentRequest)
+                    .retrieve()
+                    .bodyToMono(PaymentResponse.class)
+                    .block();
+
+            if (paymentResponse == null) {
+                throw new ApiException(ErrorCode.PAYMENT_FAILED);
+            }
+
+            return paymentResponse;
+        }
+        catch (Exception e) {
+            booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_FAILED);
+            bookingRepository.save(booking);
+            throw new ApiException(ErrorCode.BOOKING_FAILED);
+        }
     }
 
     // Hàm cập nhật status đặt phòng cho (company)
@@ -323,42 +376,119 @@ public class BookingHandleService
         Booking booking = bookingRepository.findById(idBooking)
                 .orElseThrow(() -> new ApiException(ErrorCode.BOOKING_NOT_FOUND));
 
-        // Lấy danh idRoom sách tất cả BookingRoom của Booking
-        List<UUID> roomIds = bookingRoomRepository.findRoomIdsByBookingId(idBooking);
-        if (!roomIds.isEmpty()) {
-            roomRepository.updateStatusForRoomIds(roomIds, PredefinedStatusRoom.STATUS_ROOM_DEFAULT);
+        // Kiểm tra nếu Booking đã bị user hủy rồi thì không hoàn số lượng service và room lại nữa
+        if (PredefinedStatusBooking.STATUS_BOOKING_FAILED.equals(booking.getStatus())) {
+            bookingRepository.delete(booking);
+            return ResponseEntity.ok("Xóa đặt phòng thành công!");
         }
 
+        // Lấy danh sách booking room và booking service tương ứng
+        List<BookingRoom> listBookingRoom = bookingRoomRepository.findByBooking_IdBooking(idBooking);
+        List<BookingService> listBookingService = bookingServiceRepository.findByBooking_IdBooking(idBooking);
+
+        if (!listBookingRoom.isEmpty())
+        {
+            // Gom nhóm số lượng room đặt theo từng booking room
+            Map<UUID, Integer> restoreQuantityRooms = listBookingRoom.stream()
+                    .collect(Collectors.groupingBy(
+                            br -> br.getRoom().getIdRoom(),
+                            Collectors.summingInt(BookingRoom::getQuantity)
+                    ));
+
+            // Hoàn lại số lượng cho room và cập nhật status nếu số lượng lớn hơn 0
+            restoreQuantityRooms.forEach((idRoom, quantity) -> {
+                roomRepository.restoreRoomQuantity(idRoom, quantity);
+                roomRepository.updateStatusIfAvailable(idRoom, PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
+            });
+        }
+
+        if (!listBookingService.isEmpty())
+        {
+            // Gom nhóm số lượng service đặt theo từng booking service
+            Map<UUID, Integer> restoreQuantityServices = listBookingService.stream()
+                    .collect(Collectors.groupingBy(
+                            bs -> bs.getService().getIdService(),
+                            Collectors.summingInt(BookingService::getQuantity)
+                    ));
+
+            // Hoàn lại số lượng cho service và cập nhật status nếu số lượng lớn hơn 0
+            restoreQuantityServices.forEach((idService, quantity) -> {
+                serviceRepository.restoreServiceQuantity(idService, quantity);
+                serviceRepository.updateStatusIfAvailable(idService, PredefinedStatusService.STATUS_SERVICE_AVAILABLE);
+            });
+        }
         bookingRepository.delete(booking);
 
         return ResponseEntity.ok("Xóa đặt phòng thành công!");
     }
 
-
     // Hàm hủy đặt phòng cho (user) khi status đặt phòng còn pending
     @Transactional
     public ResponseEntity<String> cancelBookingWhenStatusPending(UUID idBooking)
     {
-
         Booking booking = bookingRepository.findById(idBooking)
                 .orElseThrow(() -> new ApiException(ErrorCode.BOOKING_NOT_FOUND));
 
-        if (!PredefinedStatusBooking.STATUS_BOOKING_DEFAULT.equals(booking.getStatus())) {
+        // Kiểm tra status booking còn Pending ko
+        if (!PredefinedStatusBooking.STATUS_BOOKING_PENDING.equals(booking.getStatus())) {
             throw new ApiException(ErrorCode.BOOKING_NOT_CANCEL);
         }
 
-        List<UUID> roomIds = bookingRoomRepository.findRoomIdsByBookingId(idBooking);
-        if (!roomIds.isEmpty()) {
-            roomRepository.updateStatusForRoomIds(roomIds, PredefinedStatusRoom.STATUS_ROOM_DEFAULT);
-        }
-        booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_FAILED);
+        // Lấy danh sách booking room và booking service tương ứng
+        List<BookingRoom> listBookingRoom = bookingRoomRepository.findByBooking_IdBooking(idBooking);
+        List<BookingService> listBookingService = bookingServiceRepository.findByBooking_IdBooking(idBooking);
 
-        // Cập nhật trạng thái Payment
+        if (!listBookingRoom.isEmpty())
+        {
+            // Gom nhóm số lượng room đặt theo từng booking room
+            Map<UUID, Integer> restoreQuantityRooms = listBookingRoom.stream()
+                    .collect(Collectors.groupingBy(
+                            br -> br.getRoom().getIdRoom(),
+                            Collectors.summingInt(BookingRoom::getQuantity)
+                    ));
+
+            // Hoàn lại số lượng cho room và cập nhật status nếu số lượng lớn hơn 0
+            restoreQuantityRooms.forEach((idRoom, quantity) -> {
+                roomRepository.restoreRoomQuantity(idRoom, quantity);
+                roomRepository.updateStatusIfAvailable(idRoom, PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
+            });
+        }
+
+        if (!listBookingService.isEmpty())
+        {
+            // Gom nhóm số lượng service đặt theo từng booking service
+            Map<UUID, Integer> restoreQuantityServices = listBookingService.stream()
+                    .collect(Collectors.groupingBy(
+                            bs -> bs.getService().getIdService(),
+                            Collectors.summingInt(BookingService::getQuantity)
+                    ));
+
+            // Hoàn lại số lượng cho service và cập nhật status nếu số lượng lớn hơn 0
+            restoreQuantityServices.forEach((idService, quantity) -> {
+                serviceRepository.restoreServiceQuantity(idService, quantity);
+                serviceRepository.updateStatusIfAvailable(idService, PredefinedStatusService.STATUS_SERVICE_AVAILABLE);
+            });
+        }
+
+        // Cập nhật trạng thái booking room thành Failed
+        List<UUID> idRooms = bookingRoomRepository.findRoomIdsByBookingId(idBooking);
+        if (!idRooms.isEmpty()) {
+            roomRepository.updateStatusForRoomIds(idRooms, PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
+        }
+
+        // Cập nhật trạng thái booking service thành Failed
+        List<UUID> idServices = bookingServiceRepository.findServiceIdsByBookingId(idBooking);
+        if (!idServices.isEmpty()) {
+            serviceRepository.updateStatusForServiceIds(idServices, PredefinedStatusService.STATUS_SERVICE_AVAILABLE);
+        }
+
+        booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_FAILED); // Cập nhật trạng thái booking thành Failed
+
+        // Cập nhật trạng thái Payment thành Failed
         Payment payment = paymentRepository.findByBooking_IdBooking(idBooking);
         if (payment == null) {
             throw new ApiException(ErrorCode.PAYMENT_NOT_FOUND);
         }
-
         payment.setStatus(PredefinedStatusPayment.STATUS_PAYMENT_FAILED);
 
         bookingRepository.save(booking);

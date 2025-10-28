@@ -55,22 +55,22 @@ public class BookingRoomService
             throw new ApiException(ErrorCode.ROOM_NOT_FOUND);
         }
 
-        for (UUID idRoom : idRooms)
+        // Xữ lý Race Condition bằng Atomistic
+        for (BookingRoomRequest request : bookingRoomRequest)
         {
-            int updateStatusRoom = roomRepository.updateStatus(
-                    idRoom,
-                    PredefinedStatusRoom.STATUS_ROOM_DEFAULT,
-                    PredefinedStatusRoom.STATUS_ROOM_BOOKED
-            );
-            if (updateStatusRoom == 0) {
-                throw new ApiException(ErrorCode.ROOM_ALREADY_BOOKED);
-            }
-        }
-        // Cập nhật trạng thái cho toàn bộ room
-        rooms.forEach(room -> room.setStatus(PredefinedStatusRoom.STATUS_ROOM_BOOKED));
-        roomRepository.saveAll(rooms);
+            UUID idRoom = request.getIdRoom();
+            int quantity = request.getQuantity();
 
-        List<BookingRoom> bookingRooms = bookingRoomRequest.stream()
+            int roomUpdated = roomRepository.decreaseRoomQuantity(idRoom, quantity);
+            if (roomUpdated == 0)
+                throw new ApiException(ErrorCode.ROOM_NOT_ENOUGH_QUANTITY);
+
+            // Cập nhật tự động trạng thái phòng
+            roomRepository.updateStatusIfOutOfRoom(idRoom, PredefinedStatusRoom.STATUS_ROOM_FULL);
+        }
+
+        List<BookingRoom> bookingRooms = bookingRoomRequest
+                .stream()
                 .map(request -> {
                     BookingRoom bookingRoomMapping = bookingRoomMapper.toBookingRoom(request);
                     bookingRoomMapping.setBooking(booking);
@@ -94,7 +94,8 @@ public class BookingRoomService
         bookingRoomRepository.saveAll(bookingRooms);
 
         // Tính tổng giá phòng
-        BigDecimal totalPrice = bookingRooms.stream()
+        BigDecimal totalPrice = bookingRooms
+                .stream()
                 .map(BookingRoom::getPriceBookingRoom)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 

@@ -15,14 +15,46 @@ public interface RoomRepository extends JpaRepository<Room, UUID>
 {
     List<Room> findByHotel_IdHotel(UUID idHotel);
 
+    // Update status nếu số lượng bằng 0
     @Modifying
-    @Query("UPDATE Room room SET room.status = :newStatus WHERE room.idRoom = :idRoom AND room.status = :expectedStatus")
-    int updateStatus(@Param("idRoom") UUID idRoom,
-                     @Param("expectedStatus") String expectedStatus,
-                     @Param("newStatus") String newStatus);
+    @Query(""" 
+    UPDATE Room r
+    SET r.status = :updateStatus
+    WHERE r.idRoom = :idRoom AND r.quantity = 0""")
+    int updateStatusIfOutOfRoom(@Param("idRoom") UUID idRoom,
+                                @Param("updateStatus") String updateStatus);
 
+    // Giảm số lượng room khi bookingroom
     @Modifying
-    @Query("UPDATE Room r SET r.status = :status WHERE r.idRoom IN :roomIds")
-    void updateStatusForRoomIds(@Param("roomIds") List<UUID> roomIds, @Param("status") String status);
+    @Query("""
+    UPDATE Room r
+    SET r.quantity = r.quantity - :bookedQuantity
+    WHERE r.idRoom = :idRoom AND r.quantity >= :bookedQuantity""")
+    int decreaseRoomQuantity(@Param("idRoom") UUID idRoom,
+                             @Param("bookedQuantity") int bookedQuantity);
+
+    // Tăng số lượng khi cập nhật, xóa, hủy booking
+    @Modifying
+    @Query("""
+    UPDATE Room r
+    SET r.quantity = r.quantity + :quantity
+    WHERE r.idRoom = :idRoom""")
+    int restoreRoomQuantity(@Param("idRoom") UUID idRoom, @Param("quantity") int quantity);
+
+    // Update status nếu số lượng lớn hơn 0
+    @Modifying
+    @Query("""
+    UPDATE Room r
+    SET r.status = :status
+    WHERE r.idRoom = :idRoom AND r.quantity > 0""")
+    int updateStatusIfAvailable(@Param("idRoom") UUID idRoom, @Param("status") String status);
+
+    // Cập nhật trạng thái cho Room
+    @Modifying
+    @Query("""
+    UPDATE Room r
+    SET r.status = :status
+    WHERE r.idRoom IN :roomIds""")
+    void updateStatusForRoomIds(@Param("roomIds") List<UUID> idRoom, @Param("status") String status);
 
 }

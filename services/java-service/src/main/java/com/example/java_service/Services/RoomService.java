@@ -103,7 +103,7 @@ public class RoomService
         Room room = roomMapper.toRoom(request);
         room.setHotel(hotel);
         room.setTypeRoom(typeRoomRepository.getReferenceById(request.getTypeRoom()));
-        room.setStatus(PredefinedStatusRoom.STATUS_ROOM_DEFAULT);
+        room.setStatus(PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
         Room savedRoom = roomRepository.save(room);
 
         // Lưu ảnh từ URL đã upload
@@ -121,16 +121,21 @@ public class RoomService
 
     // Hàm sửa thông tin phòng
     @Transactional
-    public RoomResponse updateRoom(RoomUpdateRequest request, UUID idRoom)
+    public RoomResponse updateRoom(UUID idRoom, RoomUpdateRequest request)
     {
         Room room = roomRepository.findById(idRoom).orElseThrow(
                 () -> new ApiException(ErrorCode.ROOM_NOT_FOUND)
         );
 
+        // Kiểm tra TypeRoom
+        if (request.getTypeRoom() != null) {
+            TypeRoom typeRoom = typeRoomRepository.findById(request.getTypeRoom()).orElseThrow(
+                    () -> new ApiException(ErrorCode.TYPE_ROOM_NOT_FOUND)
+            );
+            room.setTypeRoom(typeRoom);
+        }
         roomMapper.updateRoomFromRequest(request, room);
-        room.setTypeRoom(typeRoomRepository.findById(request.getTypeRoom()).orElseThrow(
-                () -> new ApiException(ErrorCode.TYPE_ROOM_NOT_FOUND)
-        ));
+
         Room updatedRoom = roomRepository.save(room);
 
         // Nếu có upload ảnh mới

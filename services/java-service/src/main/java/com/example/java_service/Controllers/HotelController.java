@@ -5,7 +5,6 @@ import com.example.java_service.Dto.Request.HotelUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.GetDetailHotelResponse;
 import com.example.java_service.Dto.Response.GetListHotelResponse;
-import com.example.java_service.Dto.Response.HotelResponse;
 import com.example.java_service.Services.HotelService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +42,16 @@ public class HotelController
         return ApiResponse.<List<GetListHotelResponse>>builder()
                 .message("Lấy danh sách khách sạn thành công!")
                 .data(hotelService.getListHotel(idUser))
+                .build();
+    }
+
+    // Endpoint lấy danh sách khách sạn
+    @GetMapping("/list-hotel-of-user")
+    public ApiResponse<List<GetListHotelResponse>> getHotelsCreatedByUser(@RequestParam UUID idUser)
+    {
+        return ApiResponse.<List<GetListHotelResponse>>builder()
+                .message("Lấy danh sách khách sạn đã tạo thành công!")
+                .data(hotelService.getListHotelCreatedByUser(idUser))
                 .build();
     }
 

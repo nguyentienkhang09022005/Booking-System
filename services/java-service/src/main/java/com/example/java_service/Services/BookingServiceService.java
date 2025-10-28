@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Constant.PredefinedStatusService;
 import com.example.java_service.Dto.Request.BookingServiceRequest;
 import com.example.java_service.Dto.Response.BookingServiceResponse;
 import com.example.java_service.Exception.ApiException;
@@ -45,12 +46,25 @@ public class BookingServiceService
         );
 
         // Lấy tất cả idService từ request
-        List<UUID> idService = bookingServiceRequest.stream()
+        List<UUID> idServices = bookingServiceRequest.stream()
                 .map(BookingServiceRequest::getIdService)
                 .toList();
-        List<Service> services = serviceRepository.findAllById(idService);
-        if (services.size() != idService.size()){
+        List<Service> services = serviceRepository.findAllById(idServices);
+        if (services.size() != idServices.size()){
             throw new ApiException(ErrorCode.SERVICE_NOT_FOUND);
+        }
+
+        // Xữ lý Race Condition bằng Atomistic
+        for (BookingServiceRequest request : bookingServiceRequest)
+        {
+            UUID idService = request.getIdService();
+            int quantity = request.getQuantity();
+
+            int serviceUpdated = serviceRepository.decreaseServiceQuantity(idService, quantity);
+            if (serviceUpdated == 0)
+                throw new ApiException(ErrorCode.SERVICE_NOT_ENOUGH_QUANTITY);
+
+            serviceRepository.updateStatusIfOutOfService(idService, PredefinedStatusService.STATUS_SERVICE_FULL);
         }
 
         List<BookingService> bookingServices = bookingServiceRequest.stream()

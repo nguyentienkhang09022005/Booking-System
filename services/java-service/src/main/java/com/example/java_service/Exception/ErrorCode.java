@@ -48,9 +48,11 @@ public enum ErrorCode
     // Lỗi phòng
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
     ROOM_ALREADY_BOOKED("ROOM_ALREADY_BOOKED", "Phòng đã được đặt!", HttpStatus.CONFLICT),
+    ROOM_NOT_ENOUGH_QUANTITY("ROOM_NOT_ENOUGH_QUANTITY", "Không đủ số lượng phòng!", HttpStatus.BAD_REQUEST),
 
     // Lỗi dịch vụ
     SERVICE_NOT_FOUND("SERVICE_NOT_FOUND", "Không tìm thấy dịch vụ!", HttpStatus.NOT_FOUND),
+    SERVICE_NOT_ENOUGH_QUANTITY("SERVICE_NOT_ENOUGH_QUANTITY", "Không đủ số lượng dịch vụ!", HttpStatus.BAD_REQUEST),
 
     // Lỗi yêu thích
     FAVORITE_NOT_FOUND("FAVORITE_NOT_FOUND", "Lỗi không tìm thấy khách sạn yêu thích!", HttpStatus.NOT_FOUND),

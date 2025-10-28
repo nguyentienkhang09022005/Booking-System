@@ -12,9 +12,13 @@ import java.util.UUID;
 @Repository
 public interface BookingServiceRepository extends JpaRepository<BookingService, UUID>
 {
+    @Query("SELECT bs.service.idService FROM BookingService bs WHERE bs.booking.idBooking = :idBooking")
+    List<UUID> findServiceIdsByBookingId(@Param("idBooking") UUID idBooking);
+
     void deleteByBooking_IdBooking(UUID idBooking);
 
     @Query("SELECT bs FROM BookingService bs JOIN FETCH bs.service WHERE bs.booking.idBooking IN :bookingIds")
-    List<BookingService> findAllByBookingIds(@Param("bookingIds") List<UUID> bookingIds);
+    List<BookingService> findAllBookingServiceByBookingIds(@Param("bookingIds") List<UUID> bookingIds);
 
+    List<BookingService> findByBooking_IdBooking(UUID idBooking);
 }

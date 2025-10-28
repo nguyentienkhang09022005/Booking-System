@@ -21,5 +21,6 @@ public class RoomUpdateRequest
     String regulations;
     String status;
     String description;
+    Integer quantity;
     List<String> listImageRoom;
 }

@@ -22,5 +22,6 @@ public class RoomCreationRequest
     String view;
     String regulations;
     String description;
+    Integer quantity;
     List<String> listImageRoom;
 }

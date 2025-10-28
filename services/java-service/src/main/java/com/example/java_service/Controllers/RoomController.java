@@ -60,7 +60,7 @@ public class RoomController
     {
         return ApiResponse.<RoomResponse>builder()
                 .message("Thay đổi thông tin phòng thành công!")
-                .data(roomService.updateRoom(request, idRoom))
+                .data(roomService.updateRoom(idRoom, request))
                 .build();
     }
 

@@ -70,12 +70,13 @@ public class BookingController
 
     // Endpoint cập nhật thông tin booking
     @PatchMapping("/update-information")
-    public ApiResponse<ResponseEntity<String>> updateBooking(@RequestParam UUID idBooking,
+    public ApiResponse<PaymentResponse> updateBooking(@RequestParam UUID idBooking,
                                                              @RequestBody BookingUpdateRequest request)
     {
         var response = bookingHandleService.updateBooking(request, idBooking);
-        return ApiResponse.<ResponseEntity<String>>builder()
-                .message(response.getBody())
+        return ApiResponse.<PaymentResponse>builder()
+                .message("Cập nhật thông tin thành công vui lòng thanh toán!!")
+                .data(response)
                 .build();
     }
 
