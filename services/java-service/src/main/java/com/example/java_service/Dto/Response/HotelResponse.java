@@ -20,6 +20,7 @@ public class HotelResponse
     String ward;
     String city;
     String description;
+    Boolean approved;
     List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses;
     List<GetDetailHotelResponse.GeneralRegulationResponse> generalRegulationResponses;
 }

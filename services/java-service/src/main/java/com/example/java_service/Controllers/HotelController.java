@@ -35,13 +35,23 @@ public class HotelController
                 .build();
     }
 
-    // Endpoint lấy danh sách khách sạn
-    @GetMapping("/getListHotel")
-    public ApiResponse<List<GetListHotelResponse>> getHotels(@RequestParam(required = false) UUID idUser)
+    // Endpoint lấy danh sách khách sạn đã được phê duyệt
+    @GetMapping("/get-list-hotel-approved")
+    public ApiResponse<List<GetListHotelResponse>> getHotelsApproved(@RequestParam(required = false) UUID idUser)
     {
         return ApiResponse.<List<GetListHotelResponse>>builder()
                 .message("Lấy danh sách khách sạn thành công!")
-                .data(hotelService.getListHotel(idUser))
+                .data(hotelService.getListHotelApproved(idUser))
+                .build();
+    }
+
+    // Endpoint lấy danh sách khách sạn đã được phê duyệt
+    @GetMapping("/get-list-hotel-not-approved")
+    public ApiResponse<List<GetListHotelResponse>> getHotelsNotApproved()
+    {
+        return ApiResponse.<List<GetListHotelResponse>>builder()
+                .message("Lấy danh sách khách sạn thành công!")
+                .data(hotelService.getListHotelNotApproved())
                 .build();
     }
 

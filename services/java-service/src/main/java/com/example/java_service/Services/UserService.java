@@ -128,6 +128,7 @@ public class UserService
                 throw new ApiException(ErrorCode.PHONE_EXISTS);
             }
         }
+        // -------Validate phone number-----
         // Bắt buộc nhập sđt
         if (request.getPhone() == null) {
             throw new ApiException(ErrorCode.PHONE_REQUIRED);
@@ -141,6 +142,17 @@ public class UserService
         // Kiểm tra có chữ trong sđt không
         if (!request.getPhone().matches("\\d+")) {
             throw new ApiException(ErrorCode.INVALID_PHONE_FORMAT);
+        }
+
+        // --------Validate Email----------
+        if (request.getEmail() == null || request.getEmail().isEmpty()) {
+            throw new ApiException(ErrorCode.EMAIL_REQUIRED);
+        }
+
+        // Kiểm tra email hợp lệ (theo RFC 5322)
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        if (!request.getEmail().matches(emailRegex)) {
+            throw new ApiException(ErrorCode.INVALID_EMAIL_FORMAT);
         }
 
         // Kiểm tra role
@@ -162,6 +174,7 @@ public class UserService
         var userResponse = userMapper.toUserResponse(savedUser);
         userResponse.setRole(savedUser.getRole());
         userResponse.setTypeUser(getDefaultTypeUser());
+        userResponse.setAvatar(request.getAvatar());
         return userResponse;
     }
 
@@ -192,6 +205,12 @@ public class UserService
 
         if (request.getEmail() != null && !request.getEmail().isEmpty())
         {
+            // Kiểm tra email hợp lệ (theo RFC 5322)
+            String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+            if (!request.getEmail().matches(emailRegex)) {
+                throw new ApiException(ErrorCode.INVALID_EMAIL_FORMAT);
+            }
+
             userRepository.findByEmail(request.getEmail()).ifPresent(existing -> {
                 if (!existing.getIdUser().equals(idUser)) {
                     throw new ApiException(ErrorCode.EMAIL_EXISTS);
@@ -226,6 +245,7 @@ public class UserService
         var userResponse = userMapper.toUserResponse(updateUser);
         userResponse.setRole(updateUser.getRole());
         userResponse.setTypeUser(updateUser.getTypeUser());
+        userResponse.setAvatar(request.getAvatar());
         return userResponse;
     }
 

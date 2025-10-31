@@ -41,4 +41,7 @@ public class Hotel
 
     @Column(name = "description",columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "is_approved", nullable = false)
+    private Boolean approved = false;
 }

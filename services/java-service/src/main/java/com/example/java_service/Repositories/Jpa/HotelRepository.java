@@ -12,5 +12,11 @@ public interface HotelRepository extends JpaRepository<Hotel, UUID>
 {
     Boolean existsByUsers_IdUser(UUID idUser);
 
+    Boolean existsByIdHotel(UUID idHotel);
+
     List<Hotel> findByUsers_IdUser(UUID idUser);
+
+    List<Hotel> findAllByApprovedTrue();
+
+    List<Hotel> findAllByApprovedFalse();
 }

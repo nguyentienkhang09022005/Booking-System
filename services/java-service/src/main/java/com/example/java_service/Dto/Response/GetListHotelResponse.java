@@ -21,5 +21,6 @@ public class GetListHotelResponse
     Boolean favorite;
     Integer allEvaluates;
     Double averageStar;
+    Boolean approved;
     List<String> imageHotelUrl;
 }

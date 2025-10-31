@@ -43,9 +43,10 @@ public class HotelService
     UserMapper userMapper;
     EvaluateMapper evaluateMapper;
 
-    // Hàm lấy danh sách khách sạn
-    public List<GetListHotelResponse> getListHotel(UUID idUser) {
-        List<Hotel> hotelList = hotelRepository.findAll();
+    // Hàm lấy danh sách khách sạn đã được phê duyệt
+    public List<GetListHotelResponse> getListHotelApproved(UUID idUser) {
+        List<Hotel> hotelList = hotelRepository.findAllByApprovedTrue();
+
         if (hotelList.isEmpty()) {
             return List.of();
         }
@@ -97,6 +98,55 @@ public class HotelService
                         response.setAllEvaluates(0);
                         response.setAverageStar(0.0);
                     }
+
+                    return response;
+                })
+                .toList();
+    }
+
+    // Hàm lấy danh sách khách sạn chưa phê duyệt
+    public List<GetListHotelResponse> getListHotelNotApproved() {
+        List<Hotel> hotelList = hotelRepository.findAllByApprovedFalse();
+
+        if (hotelList.isEmpty()) {
+            return List.of();
+        }
+
+        // Lấy ID của tất cả khách sạn
+        List<String> hotelIds = hotelList.stream()
+                .map(hotel -> hotel.getIdHotel().toString())
+                .toList();
+
+        // Lấy tất cả ảnh
+        List<Images> images = imagesRepository.findByRefIdIn(hotelIds);
+        Map<String, List<String>> hotelImagesMap = images.stream()
+                .collect(Collectors.groupingBy(
+                        Images::getRefId,
+                        Collectors.mapping(Images::getUrl, Collectors.toList())
+                ));
+
+        // Lấy thống kê
+        Map<String, HotelStatsResponse> statsMap = evaluatesRepository.findHotelStatsByHotelIds(hotelIds)
+                .stream()
+                .collect(Collectors.toMap(HotelStatsResponse::getIdHotel, dto -> dto));
+
+        return hotelList.stream()
+                .map(hotel -> {
+                    GetListHotelResponse response = hotelMapper.toGetListHotelResponse(hotel);
+                    String hotelIdStr = hotel.getIdHotel().toString();
+
+                    HotelStatsResponse stats = statsMap.get(hotelIdStr);
+
+                    response.setImageHotelUrl(hotelImagesMap.get(hotelIdStr));
+
+                    if (stats != null) {
+                        response.setAllEvaluates(stats.getAllEvaluates().intValue());
+                        response.setAverageStar(stats.getAverageStar());
+                    } else {
+                        response.setAllEvaluates(0);
+                        response.setAverageStar(0.0);
+                    }
+
                     return response;
                 })
                 .toList();
@@ -255,6 +305,7 @@ public class HotelService
 
         Hotel hotel = hotelMapper.toHotel(request);
         hotel.setUsers(user);
+        hotel.setApproved(false);
         Hotel savedHotel = hotelRepository.save(hotel);
 
         // Lưu ảnh từ URL đã upload

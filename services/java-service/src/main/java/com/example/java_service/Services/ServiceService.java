@@ -59,6 +59,12 @@ public class ServiceService
         Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
+
+        // Kiểm tra số lượng
+        if (request.getQuantity() < 0){
+            throw new ApiException(ErrorCode.QUANTITY_NOT_ENOUGH);
+        }
+
         Service service = serviceMapper.toService(request);
         service.setHotel(hotel);
         service.setTypeService(typeServiceRepository.findById(request.getTypeService()).orElseThrow(

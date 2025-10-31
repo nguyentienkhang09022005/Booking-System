@@ -182,6 +182,10 @@ public class BookingHandleService
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
 
+        if (bookingRequest.getCheckoutDate().before(bookingRequest.getCheckinDate())){
+            throw new ApiException(ErrorCode.CHECKOUT_DATE_BEFORE_CHECKIN_DATE);
+        }
+
         Booking booking = bookingMapper.toBooking(bookingRequest);
         booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_PENDING);
         booking.setUsers(user);

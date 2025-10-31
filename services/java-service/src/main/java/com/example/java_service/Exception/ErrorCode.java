@@ -6,6 +6,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode
 {
+    // Lỗi chung
+    QUANTITY_NOT_ENOUGH("QUANTITY_NOT_ENOUGH", "Số lượng không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
+    PERCENT_NOT_NEGATIVE("PERCENT_NOT_NEGATIVE", "Phần trăm không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
+
     // Lỗi xác thực người dùng
     UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực!", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("UNAUTHORIZED", "Không có quyền truy cập!", HttpStatus.FORBIDDEN),
@@ -17,7 +21,9 @@ public enum ErrorCode
     PHONE_EXISTS("PHONE_EXISTS", "Số điện thoại dùng đã tồn tại!", HttpStatus.CONFLICT),
     INVALID_PHONE_LENGTH("INVALID_PHONE_LENGTH", "Số điện thoại phải từ 8 đến 12 số! ", HttpStatus.BAD_REQUEST),
     INVALID_PHONE_FORMAT("INVALID_PHONE_FORMAT", "Số điện thoại chỉ chứa số!", HttpStatus.BAD_REQUEST),
-    PHONE_REQUIRED("PHONE_REQUIRED", "Vui lòng nhập số đện thoại", HttpStatus.BAD_REQUEST),
+    PHONE_REQUIRED("PHONE_REQUIRED", "Vui lòng nhập số đện thoại!", HttpStatus.BAD_REQUEST),
+    INVALID_EMAIL_FORMAT("INVALID_EMAIL_FORMAT", "Lỗi format email (example@gmail.com)!", HttpStatus.BAD_REQUEST),
+    EMAIL_REQUIRED("EMAIL_REQUIRED", "Vui lòng nhập email!", HttpStatus.BAD_REQUEST),
 
     // Lỗi Role
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Không tìm thấy vai trò!", HttpStatus.NOT_FOUND),
@@ -67,12 +73,20 @@ public enum ErrorCode
     BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
     BOOKING_FAILED("BOOKING_FAILED", "Đặt phòng thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
     BOOKING_NOT_CANCEL("BOOKING_NOT_CANCEL", "Không thể hủy đặt phòng!", HttpStatus.BAD_REQUEST),
+    CHECKOUT_DATE_BEFORE_CHECKIN_DATE("CHECKOUT_DATE_BEFORE_CHECKIN_DATE", "Lỗi: Ngày checkout không được trước ngày checkin!", HttpStatus.BAD_REQUEST),
 
     // Lỗi thanh toán
     PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", "Không tìm thấy thông tin thanh toán!", HttpStatus.NOT_FOUND),
     PAYMENT_FAILED("PAYMENT_FAILED", "Thanh toán thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
     PAID("PAYMENTED", "Đã thanh toán không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),
     USER_UNPAID("USER_UNPAID", "Người dùng chưa thanh toán không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi voucher
+    CODE_EXISTED("CODE_EXISTED", "Mã voucher đã tồn tại!", HttpStatus.CONFLICT),
+    END_DATE_BEFORE_STAR_DATE("END_DATE_BEFORE_STAR_DATE", "Ngày kết thúc không được trước ngày bắt đầu", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_FOUND("VOUCHER_NOT_FOUND", "Không tìm thấy voucher!", HttpStatus.NOT_FOUND),
+    CODE_REQUIRED("CODE_REQUIRED", "Vui lòng nhập code!", HttpStatus.BAD_REQUEST),
+
     ;
 
     private final String code;

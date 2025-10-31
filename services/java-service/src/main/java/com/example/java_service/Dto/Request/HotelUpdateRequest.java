@@ -17,6 +17,7 @@ public class HotelUpdateRequest
     String ward;
     String city;
     String description;
+    Boolean approved;
     List<String> listImageHotel;
     List<HotelCreationRequest.FacilityCategoryRequest> facilityCategories;
     List<HotelCreationRequest.GeneralRegulationRequest> generalRegulations;
