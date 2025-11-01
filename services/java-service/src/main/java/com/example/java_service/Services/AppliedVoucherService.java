@@ -54,4 +54,13 @@ public class AppliedVoucherService
 
         return appliedVoucherMapper.toAppliedVoucherResponse(appliedVoucher);
     }
+
+    public void deleteAppliedVoucher(UUID idBooking)
+    {
+        bookingRepository.findById(idBooking).orElseThrow(
+                () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
+        );
+
+        appliedVoucherRepository.deleteAppliedVoucherByBooking_IdBooking(idBooking);
+    }
 }

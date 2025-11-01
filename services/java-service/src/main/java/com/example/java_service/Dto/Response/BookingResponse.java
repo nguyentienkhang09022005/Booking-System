@@ -25,4 +25,5 @@ public class BookingResponse
     PaymentInBookingResponse paymentInBookingResponse;
     List<BookingRoomInBookingResponse> bookingRoomInBookingResponses;
     List<BookingServiceInBookingResponse> bookingServiceInBookingResponses;
+    List<VoucherViewResponse> voucherViewResponses;
 }

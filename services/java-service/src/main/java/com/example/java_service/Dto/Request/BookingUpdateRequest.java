@@ -18,4 +18,5 @@ public class BookingUpdateRequest
     Date checkoutDate;
     List<BookingRoomRequest> bookingRooms;
     List<BookingServiceRequest> bookingServices;
+    List<UserVoucherRequest> userVoucherRequests;
 }

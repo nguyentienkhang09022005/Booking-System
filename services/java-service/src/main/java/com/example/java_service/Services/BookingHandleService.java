@@ -11,8 +11,10 @@ import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingMapper;
 import com.example.java_service.Mappers.RoomMapper;
 import com.example.java_service.Mappers.ServiceMapper;
+import com.example.java_service.Mappers.VoucherMapper;
 import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.*;
+import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +46,13 @@ public class BookingHandleService
     UserRepository userRepository;
     HotelRepository hotelRepository;
     VoucherRepository voucherRepository;
+    UserVoucherRepository userVoucherRepository;
+    AppliedVoucherRepository appliedVoucherRepository;
+    ImagesRepository imagesRepository;
     BookingMapper bookingMapper;
     RoomMapper roomMapper;
     ServiceMapper serviceMapper;
+    VoucherMapper voucherMapper;
     BookingRoomService bookingRoomService;
     BookingServiceService bookingServiceService;
     UserVoucherService userVoucherService;
@@ -171,9 +177,34 @@ public class BookingHandleService
                 .toList();
         response.setBookingServiceInBookingResponses(serviceResponses);
 
+        // Voucher Used Response
+        List<AppliedVoucher> appliedVouchers = appliedVoucherRepository.findAppliedVouchersWithVoucherByBookingId(booking.getIdBooking());
+
+        // Lấy ID của tất cả voucher
+        List<String> voucherIds = appliedVouchers.stream()
+                .map(appliedVoucher -> appliedVoucher.getVoucher().getIdVoucher().toString())
+                .toList();
+
+        // Lấy tất cả ảnh
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        Map<String, String> voucherImagesMap = images.stream()
+                .collect(Collectors.toMap(
+                        Images::getRefId,
+                        Images::getUrl
+                ));
+
+        List<VoucherViewResponse> voucherViewResponses = appliedVouchers.stream()
+                .map(av -> {
+                    VoucherViewResponse voucherViewResponse = voucherMapper.toVoucherViewResponse(av.getVoucher());
+                    String idVoucherStr = av.getVoucher().getIdVoucher().toString();
+                    voucherViewResponse.setUrlImage(voucherImagesMap.get(idVoucherStr));
+                    return voucherViewResponse;
+                })
+                .toList();
+        response.setVoucherViewResponses(voucherViewResponses);
+
         return response;
     }
-
 
     // Hàm tạo đặt phòng
     public PaymentResponse saveBooking(BookingRequest bookingRequest)
@@ -356,7 +387,53 @@ public class BookingHandleService
             totalService = bookingServiceResponse.getPriceBookingService();
         }
 
-        booking.setTotalPrice(totalRoom.add(totalService));
+        BigDecimal totalPrice = totalRoom.add(totalService);
+
+        // Nếu có cập nhật voucher
+        if (bookingUpdateRequest.getUserVoucherRequests() != null && !bookingUpdateRequest.getUserVoucherRequests().isEmpty()) {
+            //----------Xữ lý voucher đã tạo trước đó---------------
+            // Xóa danh sách voucher đã apply
+            appliedVoucherService.deleteAppliedVoucher(booking.getIdBooking());
+
+            // Reset lại is_used và usedAt của voucher còn hạn
+            List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingId(booking.getIdBooking());
+            usedVouchers.forEach(uv -> {
+                uv.setIsUsed(false);
+                uv.setUsedAt(null);
+            });
+            userVoucherRepository.saveAll(usedVouchers);
+
+            for (UserVoucherRequest userVoucherRequest : bookingUpdateRequest.getUserVoucherRequests())
+            {
+                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                // Kiểm tra voucher có thuộc hotel của booking
+                if (voucher.getHotel() == null || !voucher.getHotel().getIdHotel().equals(booking.getHotel().getIdHotel())) {
+                    throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_HOTEL);
+                }
+
+                //----------Xữ lý lưu danh sách voucher mới-----------------
+                // Lưu voucher
+                userVoucherService.saveUserVoucherForBooking(userVoucherRequest);
+
+                // Lưu voucher đã sử dụng
+                AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
+                        .idUser(userVoucherRequest.getIdUser())
+                        .idVoucher(userVoucherRequest.getIdVoucher())
+                        .build();
+                appliedVoucherService.saveAppliedVoucher(appliedVoucherRequest, booking.getIdBooking());
+
+                if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal discount = totalPrice
+                            .multiply(voucher.getDiscountPercent())
+                            .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
+                    totalPrice = totalPrice.subtract(discount);
+                }
+            }
+        }
+
+        booking.setTotalPrice(totalPrice);
         bookingRepository.save(booking);
 
         paymentRepository.deleteByBooking_IdBooking(idBooking); // Xóa payment cũ
@@ -530,6 +607,17 @@ public class BookingHandleService
             throw new ApiException(ErrorCode.PAYMENT_NOT_FOUND);
         }
         payment.setStatus(PredefinedStatusPayment.STATUS_PAYMENT_FAILED);
+
+        // Xóa danh sách voucher đã apply
+        appliedVoucherService.deleteAppliedVoucher(booking.getIdBooking());
+
+        // Reset lại is_used và usedAt của voucher còn hạn
+        List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingId(booking.getIdBooking());
+        usedVouchers.forEach(uv -> {
+            uv.setIsUsed(false);
+            uv.setUsedAt(null);
+        });
+        userVoucherRepository.saveAll(usedVouchers);
 
         bookingRepository.save(booking);
 
