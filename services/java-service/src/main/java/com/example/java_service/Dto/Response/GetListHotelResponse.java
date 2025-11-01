@@ -18,6 +18,7 @@ public class GetListHotelResponse
     String street;
     String ward;
     String city;
+    String description;
     Boolean favorite;
     Integer allEvaluates;
     Double averageStar;

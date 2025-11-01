@@ -87,10 +87,12 @@ public enum ErrorCode
     VOUCHER_NOT_FOUND("VOUCHER_NOT_FOUND", "Không tìm thấy voucher!", HttpStatus.NOT_FOUND),
     CODE_REQUIRED("CODE_REQUIRED", "Vui lòng nhập code!", HttpStatus.BAD_REQUEST),
     VOUCHER_NOT_ENOUGH_QUANTITY("VOUCHER_NOT_ENOUGH_QUANTITY", "Không đủ số lượng voucher!", HttpStatus.BAD_REQUEST),
+    VOUCHER_EXPIRED("VOUCHER_EXPIRED", "Voucher đã hết hạn!", HttpStatus.BAD_REQUEST),
+
 
     // Lỗi UserVoucher
     VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),
-
+    VOUCHER_ALREADY_USED("VOUCHER_ALREADY_USED", "Voucher đã được sử dụng", HttpStatus.CONFLICT),
 
     ;
 

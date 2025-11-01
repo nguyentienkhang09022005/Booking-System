@@ -60,7 +60,7 @@ public class VoucherService
     }
 
 
-    // Lấy danh sách voucher của khách sạn đã được phê duyệt (cho user)
+    // Lấy danh sách voucher của khách sạn đã được phê duyệt và còn hạn (cho user)
     public List<VoucherViewResponse> listVouchersApproved(UUID idHotel)
     {
         if (!hotelRepository.existsByIdHotel(idHotel)){

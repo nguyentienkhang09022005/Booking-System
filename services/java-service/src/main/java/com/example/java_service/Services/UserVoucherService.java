@@ -19,8 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -87,10 +89,26 @@ public class UserVoucherService
                 () -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND)
         );
 
+        // Kiểm tra hạn voucher
+        if (voucher.getEndDate().isBefore(LocalDate.now())) {
+            throw new ApiException(ErrorCode.VOUCHER_EXPIRED);
+        }
+
         UserVoucherId userVoucherId = new UserVoucherId(user.getIdUser(), voucher.getIdVoucher());
 
         // Kiểm tra voucher đã được lưu chưa
-        if (userVoucherRepository.existsById(userVoucherId)) {
+        Optional<UserVoucher> existUserVoucherOtp = userVoucherRepository.findById(userVoucherId);
+
+        if (existUserVoucherOtp.isPresent())
+        {
+            UserVoucher existUserVoucher = existUserVoucherOtp.get();
+
+            // Kiểm tra nếu dùng rồi không cho lưu
+            if (Boolean.TRUE.equals(existUserVoucher.getIsUsed())){
+                throw new ApiException(ErrorCode.VOUCHER_ALREADY_USED);
+            }
+
+            // Kiểm tra nếu lưu rồi không cho lưu
             throw new ApiException(ErrorCode.VOUCHER_ALREADY_SAVED);
         }
 
@@ -106,6 +124,63 @@ public class UserVoucherService
                 .voucher(voucher)
                 .isUsed(false)
                 .usedAt(null)
+                .build();
+
+        userVoucherRepository.save(userVoucher);
+
+        return ResponseEntity.ok("Lưu voucher thành công!");
+    }
+
+    // Hàm lưu voucher cho booking
+    public ResponseEntity<String> saveUserVoucherForBooking(UserVoucherRequest userVoucherRequest)
+    {
+        Users user = userRepository.findById(userVoucherRequest.getIdUser()).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher()).orElseThrow(
+                () -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND)
+        );
+
+        // Kiểm tra hạn voucher
+        if (voucher.getEndDate().isBefore(LocalDate.now())) {
+            throw new ApiException(ErrorCode.VOUCHER_EXPIRED);
+        }
+
+        UserVoucherId userVoucherId = new UserVoucherId(user.getIdUser(), voucher.getIdVoucher());
+
+        // Kiểm tra voucher đã được lưu chưa
+        Optional<UserVoucher> existUserVoucherOtp = userVoucherRepository.findById(userVoucherId);
+
+        if (existUserVoucherOtp.isPresent())
+        {
+            UserVoucher existUserVoucher = existUserVoucherOtp.get();
+
+            // Kiểm tra nếu dùng rồi không cho lưu
+            if (Boolean.TRUE.equals(existUserVoucher.getIsUsed())){
+                throw new ApiException(ErrorCode.VOUCHER_ALREADY_USED);
+            }
+
+            // Nếu lưu rồi thì update thông tin
+            existUserVoucher.setIsUsed(true);
+            existUserVoucher.setUsedAt(LocalDateTime.now());
+            userVoucherRepository.save(existUserVoucher);
+        }
+
+        // Xữ lý race condition bằng Atomistic
+        UUID idVoucher = userVoucherRequest.getIdVoucher();
+
+        int voucherUpdated = voucherRepository.decreaseVoucherQuantity(idVoucher, DEFAULT_VOUCHER_QUANTITY_SAVED);
+        if (voucherUpdated == 0)
+            throw new ApiException(ErrorCode.VOUCHER_NOT_ENOUGH_QUANTITY);
+
+        // Tạo mới UserVoucher và đánh dấu là dùng rồi
+        UserVoucher userVoucher = UserVoucher.builder()
+                .user(user)
+                .voucher(voucher)
+                .isUsed(true)
+                .usedAt(LocalDateTime.now())
+                .savedAt(LocalDateTime.now())
                 .build();
 
         userVoucherRepository.save(userVoucher);

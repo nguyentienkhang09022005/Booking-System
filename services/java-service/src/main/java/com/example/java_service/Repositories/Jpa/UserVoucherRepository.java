@@ -23,4 +23,5 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, UserVo
            WHERE u.idUser = :idUser AND v.endDate >= :toDay""")
     List<UserVoucher> findValidByUserIdAndVoucherEndDateAfterOrEqual(@Param("idUser") UUID idUser,
                                                                      @Param("toDay") LocalDate toDay);
+
 }

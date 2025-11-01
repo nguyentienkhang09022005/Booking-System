@@ -20,4 +20,5 @@ public class BookingRequest
     Date checkoutDate;
     List<BookingRoomRequest> bookingRooms;
     List<BookingServiceRequest> bookingServices;
+    List<UserVoucherRequest> userVoucherRequests;
 }

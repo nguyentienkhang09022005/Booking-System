@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,11 +43,14 @@ public class BookingHandleService
     ServiceRepository serviceRepository;
     UserRepository userRepository;
     HotelRepository hotelRepository;
+    VoucherRepository voucherRepository;
     BookingMapper bookingMapper;
     RoomMapper roomMapper;
     ServiceMapper serviceMapper;
     BookingRoomService bookingRoomService;
     BookingServiceService bookingServiceService;
+    UserVoucherService userVoucherService;
+    AppliedVoucherService appliedVoucherService;
     WebClient webClient;
 
     // Hàm lấy danh sách đặt phòng của khách sạn (cho company)
@@ -197,10 +201,9 @@ public class BookingHandleService
         BookingServiceResponse bookingServiceResponse = bookingServiceService.saveBookingService(bookingRequest.getBookingServices(),
                                                                                                     savedBooking.getIdBooking());
 
-        // Lưu tổng tiền của lần booking
+        // Lưu tổng tiền của lần booking khi chưa có voucher
         BigDecimal totalRoom = BigDecimal.ZERO;
         BigDecimal totalService = BigDecimal.ZERO;
-
         if (bookingRoomResponse != null && bookingRoomResponse.getPriceBookingRoom() != null) {
             totalRoom = bookingRoomResponse.getPriceBookingRoom();
         }
@@ -209,7 +212,35 @@ public class BookingHandleService
             totalService = bookingServiceResponse.getPriceBookingService();
         }
 
-        booking.setTotalPrice(totalRoom.add(totalService));
+        BigDecimal totalPrice = totalRoom.add(totalService);
+
+        // Xữ lý nếu có voucher
+        if (bookingRequest.getUserVoucherRequests() != null && !bookingRequest.getUserVoucherRequests().isEmpty()) {
+            for (UserVoucherRequest userVoucherRequest : bookingRequest.getUserVoucherRequests())
+            {
+                // Lưu voucher
+                userVoucherService.saveUserVoucherForBooking(userVoucherRequest);
+
+                // Lưu voucher đã sử dụng
+                AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
+                        .idUser(userVoucherRequest.getIdUser())
+                        .idVoucher(userVoucherRequest.getIdVoucher())
+                        .build();
+                appliedVoucherService.saveAppliedVoucher(appliedVoucherRequest, savedBooking.getIdBooking());
+
+                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal discount = totalPrice
+                            .multiply(voucher.getDiscountPercent())
+                            .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
+                    totalPrice = totalPrice.subtract(discount);
+                }
+            }
+        }
+
+        booking.setTotalPrice(totalPrice);
         bookingRepository.save(booking);
 
         // Call api thanh toán

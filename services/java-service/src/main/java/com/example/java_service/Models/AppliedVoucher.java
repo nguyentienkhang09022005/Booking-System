@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -37,4 +40,8 @@ public class AppliedVoucher
             referencedColumnName = "id_booking",
             foreignKey = @ForeignKey(name = "FK_APPLIED_BOOKING"))
     private Booking booking;
+
+    @CreationTimestamp
+    @Column(name = "applied_at")
+    private LocalDateTime appliedAt;
 }
