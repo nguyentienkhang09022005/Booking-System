@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,6 +38,7 @@ public class UserVoucher
     @Column(name = "used_at")
     private LocalDateTime usedAt;
 
+    @CreationTimestamp
     @Column(name = "saved_at")
     private LocalDateTime savedAt;
 }

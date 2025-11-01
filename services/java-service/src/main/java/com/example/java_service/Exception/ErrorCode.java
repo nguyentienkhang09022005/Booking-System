@@ -86,6 +86,11 @@ public enum ErrorCode
     END_DATE_BEFORE_STAR_DATE("END_DATE_BEFORE_STAR_DATE", "Ngày kết thúc không được trước ngày bắt đầu", HttpStatus.BAD_REQUEST),
     VOUCHER_NOT_FOUND("VOUCHER_NOT_FOUND", "Không tìm thấy voucher!", HttpStatus.NOT_FOUND),
     CODE_REQUIRED("CODE_REQUIRED", "Vui lòng nhập code!", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_ENOUGH_QUANTITY("VOUCHER_NOT_ENOUGH_QUANTITY", "Không đủ số lượng voucher!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi UserVoucher
+    VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),
+
 
     ;
 
