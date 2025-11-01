@@ -218,6 +218,14 @@ public class BookingHandleService
         if (bookingRequest.getUserVoucherRequests() != null && !bookingRequest.getUserVoucherRequests().isEmpty()) {
             for (UserVoucherRequest userVoucherRequest : bookingRequest.getUserVoucherRequests())
             {
+                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                // Kiểm tra voucher có thuộc hotel của booking
+                if (voucher.getHotel() == null || !voucher.getHotel().getIdHotel().equals(bookingRequest.getIdHotel())) {
+                    throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_HOTEL);
+                }
+
                 // Lưu voucher
                 userVoucherService.saveUserVoucherForBooking(userVoucherRequest);
 
@@ -227,9 +235,6 @@ public class BookingHandleService
                         .idVoucher(userVoucherRequest.getIdVoucher())
                         .build();
                 appliedVoucherService.saveAppliedVoucher(appliedVoucherRequest, savedBooking.getIdBooking());
-
-                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
-                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
 
                 if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal discount = totalPrice

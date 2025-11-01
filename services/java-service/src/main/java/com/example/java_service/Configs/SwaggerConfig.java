@@ -21,7 +21,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .servers(List.of(
-                        new Server().url(serverJava)
+                        new Server().url(serverJava),
+                        new Server().url("http://localhost:8080")
                 ))
                 .info(new Info()
                         .title("Booking API")

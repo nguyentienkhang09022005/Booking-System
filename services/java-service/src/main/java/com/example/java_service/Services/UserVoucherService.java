@@ -131,8 +131,9 @@ public class UserVoucherService
         return ResponseEntity.ok("Lưu voucher thành công!");
     }
 
+    @Transactional
     // Hàm lưu voucher cho booking
-    public ResponseEntity<String> saveUserVoucherForBooking(UserVoucherRequest userVoucherRequest)
+    public void saveUserVoucherForBooking(UserVoucherRequest userVoucherRequest)
     {
         Users user = userRepository.findById(userVoucherRequest.getIdUser()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -184,7 +185,5 @@ public class UserVoucherService
                 .build();
 
         userVoucherRepository.save(userVoucher);
-
-        return ResponseEntity.ok("Lưu voucher thành công!");
     }
 }

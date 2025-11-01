@@ -88,7 +88,7 @@ public enum ErrorCode
     CODE_REQUIRED("CODE_REQUIRED", "Vui lòng nhập code!", HttpStatus.BAD_REQUEST),
     VOUCHER_NOT_ENOUGH_QUANTITY("VOUCHER_NOT_ENOUGH_QUANTITY", "Không đủ số lượng voucher!", HttpStatus.BAD_REQUEST),
     VOUCHER_EXPIRED("VOUCHER_EXPIRED", "Voucher đã hết hạn!", HttpStatus.BAD_REQUEST),
-
+    VOUCHER_NOT_BELONG_TO_HOTEL("VOUCHER_NOT_BELONG_TO_HOTEL", "Voucher không thuộc về khách sạn!", HttpStatus.BAD_REQUEST),
 
     // Lỗi UserVoucher
     VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),
