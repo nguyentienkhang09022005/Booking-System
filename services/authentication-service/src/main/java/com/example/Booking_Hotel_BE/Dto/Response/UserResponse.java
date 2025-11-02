@@ -27,7 +27,6 @@ public class UserResponse
     LocalDate dob;
     String address;
     String email;
-    BigDecimal totalAmount;
     LocalDateTime createAt;
     String avatar;
 }
