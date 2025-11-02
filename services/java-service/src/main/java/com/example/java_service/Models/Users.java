@@ -60,17 +60,7 @@ public class Users
     @Column(name = "password_user")
     private String passwordUser;
 
-    @Column(name = "total_amount", precision = 10, scale = 2)
-    private BigDecimal totalAmount;
-
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.totalAmount == null) {
-            this.totalAmount = BigDecimal.ZERO;
-        }
-    }
 }
