@@ -34,6 +34,5 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, UserVo
     )
     AND uv.voucher.endDate >= CURRENT_TIMESTAMP
 """)
-
     List<UserVoucher> findUsedVouchersByBookingId(@Param("idBooking") UUID idBooking);
 }

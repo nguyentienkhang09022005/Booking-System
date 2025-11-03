@@ -34,7 +34,6 @@ public class BookingServiceService
     BookingServiceMapper bookingServiceMapper;
 
     // Hàm đặt dịch vụ
-    @Transactional
     public BookingServiceResponse saveBookingService(List<BookingServiceRequest> bookingServiceRequest, UUID idBooking)
     {
         if (bookingServiceRequest == null || bookingServiceRequest.isEmpty()){

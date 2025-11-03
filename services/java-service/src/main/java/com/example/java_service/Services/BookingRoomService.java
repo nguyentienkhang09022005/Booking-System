@@ -35,7 +35,6 @@ public class BookingRoomService
     BookingRoomMapper bookingRoomMapper;
 
     // Hàm đặt phòng
-    @Transactional
     public BookingRoomResponse saveBookingRoom(List<BookingRoomRequest> bookingRoomRequest, UUID idBooking)
     {
         if (bookingRoomRequest == null || bookingRoomRequest.isEmpty()){

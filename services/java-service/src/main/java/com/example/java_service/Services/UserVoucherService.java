@@ -78,7 +78,6 @@ public class UserVoucherService
     }
 
     // Hàm lưu voucher (cho user)
-    @Transactional
     public ResponseEntity<String> saveUserVoucher(UserVoucherRequest userVoucherRequest)
     {
         Users user = userRepository.findById(userVoucherRequest.getIdUser()).orElseThrow(
