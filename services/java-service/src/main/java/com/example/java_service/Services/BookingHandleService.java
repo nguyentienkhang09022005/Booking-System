@@ -570,9 +570,6 @@ public class BookingHandleService
         }
 
         //----------Xữ lý voucher đã tạo trước đó---------------
-        // Xóa danh sách voucher đã apply
-        appliedVoucherService.deleteAppliedVoucher(booking.getIdBooking());
-
         // Reset lại is_used và usedAt của voucher còn hạn
         List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingId(booking.getIdBooking());
         usedVouchers.forEach(uv -> {
@@ -580,7 +577,6 @@ public class BookingHandleService
             uv.setUsedAt(null);
         });
         userVoucherRepository.saveAll(usedVouchers);
-
 
         bookingRepository.delete(booking);
 
@@ -655,9 +651,6 @@ public class BookingHandleService
             throw new ApiException(ErrorCode.PAYMENT_NOT_FOUND);
         }
         payment.setStatus(PredefinedStatusPayment.STATUS_PAYMENT_FAILED);
-
-        // Xóa danh sách voucher đã apply
-        appliedVoucherService.deleteAppliedVoucher(booking.getIdBooking());
 
         // Reset lại is_used và usedAt của voucher còn hạn
         List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingId(booking.getIdBooking());
