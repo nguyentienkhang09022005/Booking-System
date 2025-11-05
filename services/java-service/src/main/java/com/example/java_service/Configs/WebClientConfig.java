@@ -11,7 +11,7 @@ import reactor.netty.http.client.HttpClient;
 @Configuration
 public class WebClientConfig {
     @NonFinal
-    @Value("${base.url}")
+    @Value("${golang.service}")
     protected String GOLANG_SERVICE_URL;
 
     @Bean
