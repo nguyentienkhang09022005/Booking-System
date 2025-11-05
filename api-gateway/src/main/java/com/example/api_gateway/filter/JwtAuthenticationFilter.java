@@ -27,7 +27,7 @@ import java.util.UUID;
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter {
 
-    final WebClient.Builder webClientBuilder;
+    final WebClient webClient;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -62,9 +62,9 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
         String token = authHeader.substring(7);
 
-        return webClientBuilder.build()
+        return webClient
                 .post()
-                .uri("https://authen-service-production-d9cd.up.railway.app/api/authen/introspect") // gọi sang Authen Service
+                .uri("/api/authen/introspect") // gọi sang Authen Service
                 .bodyValue(new IntrospectRequest(token))
                 .retrieve()
                 .bodyToMono(ApiResponse.class)
