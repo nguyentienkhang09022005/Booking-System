@@ -30,6 +30,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -265,7 +266,17 @@ public class BookingHandleService
                 totalService = bookingServiceResponse.getPriceBookingService();
             }
 
+            // Tính tổng tiền đặt phòng + thời gian đặt
             BigDecimal totalPrice = totalRoom.add(totalService);
+            long daysBetween = ChronoUnit.DAYS.between(
+                    bookingRequest.getCheckinDate().toInstant(),
+                    bookingRequest.getCheckoutDate().toInstant()
+            );
+
+            if (daysBetween <= 0) {
+                daysBetween = 1;
+            }
+            totalPrice = totalPrice.multiply(BigDecimal.valueOf(daysBetween));
 
             // Xữ lý nếu có voucher
             if (bookingRequest.getUserVoucherRequests() != null && !bookingRequest.getUserVoucherRequests().isEmpty()) {
@@ -422,6 +433,15 @@ public class BookingHandleService
         }
 
         BigDecimal totalPrice = totalRoom.add(totalService);
+        long daysBetween = ChronoUnit.DAYS.between(
+                bookingUpdateRequest.getCheckinDate().toInstant(),
+                bookingUpdateRequest.getCheckoutDate().toInstant()
+        );
+
+        if (daysBetween <= 0) {
+            daysBetween = 1;
+        }
+        totalPrice = totalPrice.multiply(BigDecimal.valueOf(daysBetween));
 
         // Nếu có cập nhật voucher
         if (bookingUpdateRequest.getUserVoucherRequests() != null && !bookingUpdateRequest.getUserVoucherRequests().isEmpty()) {
