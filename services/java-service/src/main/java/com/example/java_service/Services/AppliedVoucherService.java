@@ -1,7 +1,6 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Dto.Request.AppliedVoucherRequest;
-import com.example.java_service.Dto.Response.AppliedVoucherResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.AppliedVoucherMapper;
@@ -31,7 +30,7 @@ public class AppliedVoucherService
     AppliedVoucherMapper appliedVoucherMapper;
 
     // Hàm tạo voucher đã sử dụng bởi user
-    public AppliedVoucherResponse saveAppliedVoucher(AppliedVoucherRequest appliedVoucherRequest, UUID idBooking)
+    public void saveAppliedVoucher(AppliedVoucherRequest appliedVoucherRequest, UUID idBooking)
     {
         Users user = userRepository.findById(appliedVoucherRequest.getIdUser()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
@@ -51,8 +50,6 @@ public class AppliedVoucherService
                 .booking(booking)
                 .build();
         appliedVoucherRepository.save(appliedVoucher);
-
-        return appliedVoucherMapper.toAppliedVoucherResponse(appliedVoucher);
     }
 
     public void deleteAppliedVoucher(UUID idBooking)

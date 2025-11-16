@@ -49,12 +49,15 @@ public class FavoriteService
     }
 
     // Hàm xóa yêu thích khách sạn
-    public ResponseEntity<String> deleteFavorite(String idFavorite)
+    public ResponseEntity<String> deleteFavorite(FavoriteRequest request)
     {
-        Favorite favorite = favoriteRepository.findById(idFavorite).orElseThrow(
-                () -> new ApiException(ErrorCode.FAVORITE_NOT_FOUND)
-        );
-        favoriteRepository.delete(favorite);
+        if (!userRepository.existsById(UUID.fromString(request.getIdUser())))
+            throw new ApiException(ErrorCode.USER_NOT_FOUND);
+
+        if (!hotelRepository.existsById(UUID.fromString(request.getIdHotel())))
+            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+
+        favoriteRepository.deleteByIdUserAndIdHotel(request.getIdUser(), request.getIdHotel());
         return ResponseEntity.ok("Bỏ yêu thích thành công!");
     }
 }

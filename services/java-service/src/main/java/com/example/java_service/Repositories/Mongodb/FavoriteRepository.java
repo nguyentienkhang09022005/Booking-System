@@ -16,4 +16,6 @@ public interface FavoriteRepository extends MongoRepository<Favorite, String>
     void deleteByIdUser(String idUser);
 
     void deleteByIdHotel(String idHotel);
+
+    void deleteByIdUserAndIdHotel(String idUser, String idHotel);
 }
