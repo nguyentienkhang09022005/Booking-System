@@ -31,7 +31,7 @@ public class FavoriteController
 
     // Endpoint xóa yêu thích
     @DeleteMapping( "/delete")
-    public ApiResponse<ResponseEntity<String>> deleteFavorite(@RequestParam FavoriteRequest request)
+    public ApiResponse<ResponseEntity<String>> deleteFavorite(@RequestBody FavoriteRequest request)
     {
         var response = favoriteService.deleteFavorite(request);
         return ApiResponse.<ResponseEntity<String>>builder()
