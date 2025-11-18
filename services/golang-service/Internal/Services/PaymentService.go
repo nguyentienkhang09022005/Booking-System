@@ -34,7 +34,7 @@ func NewPaymentService(paymentRepository Repositories.PaymentRepository) Payment
 type ZaloPayCallBackData struct {
 	AppID      int    `json:"app_id"`
 	AppTransID string `json:"app_trans_id"`
-	ZpTransID  string `json:"zp_trans_id"`
+	ZpTransID  int64  `json:"zp_trans_id"`
 	AppTime    int64  `json:"app_time"`
 	AppUser    string `json:"app_user"`
 	Amount     int64  `json:"amount"`
@@ -149,7 +149,8 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 	}
 
 	// Cập nhật trạng thái thành công
-	err = p._paymentRepository.UpdateStatus(payment.IDPayment, zaloPayCallBackData.ZpTransID, Constants.StatusSuccess)
+	zpTransIdString := fmt.Sprintf("%d", zaloPayCallBackData.ZpTransID)
+	err = p._paymentRepository.UpdateStatus(payment.IDPayment, zpTransIdString, Constants.StatusSuccess)
 	if err != nil {
 		return fmt.Errorf("Cập nhật trạng thái giao dịch thất bại!: %w", err)
 	}
