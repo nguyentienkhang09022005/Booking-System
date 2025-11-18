@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"payment-service/Configs"
+	"payment-service/Constants"
 	"payment-service/Internal/Dtos/Request"
 	"payment-service/Internal/Dtos/Response"
 	"payment-service/Internal/Models"
@@ -33,6 +34,7 @@ func NewPaymentService(paymentRepository Repositories.PaymentRepository) Payment
 type ZaloPayCallBackData struct {
 	AppID      int    `json:"app_id"`
 	AppTransID string `json:"app_trans_id"`
+	ZpTransID  int64  `json:"zp_trans_id"`
 	AppTime    int64  `json:"app_time"`
 	AppUser    string `json:"app_user"`
 	Amount     int64  `json:"amount"`
@@ -51,7 +53,7 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		IDBooking:  paymentRequest.IDBooking,
 		Amount:     paymentRequest.Amount,
 		Method:     "ZaloPay",
-		Status:     "Pending",
+		Status:     Constants.StatusPending,
 		IDAppTrans: IdAppTrans,
 	}
 	createdPayment, err := p._paymentRepository.Create(newPayment)
@@ -100,12 +102,12 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 	zaloPayResponse, err := sendCreateOrderRequest(orderData)
 	if err != nil {
 		// Cập nhật status thành "failed" nếu gọi ZaloPay lỗi
-		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, "Failed")
+		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, 0, Constants.StatusFailed)
 		return nil, err
 	}
 
 	if zaloPayResponse["return_code"] != float64(1) {
-		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, "Failed")
+		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, 0, Constants.StatusFailed)
 		return nil, fmt.Errorf("Thông báo ZaloPay: Tạo đặt hàng thất bại!: %s", zaloPayResponse["return_message"])
 	}
 
@@ -142,12 +144,12 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 		return fmt.Errorf("Không tìm thấy giao dịch!")
 	}
 
-	if payment.Status == "Success" {
+	if payment.Status == Constants.StatusSuccess {
 		return nil
 	}
 
 	// Cập nhật trạng thái thành công
-	err = p._paymentRepository.UpdateStatus(payment.IDPayment, "Success")
+	err = p._paymentRepository.UpdateStatus(payment.IDPayment, zaloPayCallBackData.ZpTransID, Constants.StatusSuccess)
 	if err != nil {
 		return fmt.Errorf("Cập nhật trạng thái giao dịch thất bại!: %w", err)
 	}
