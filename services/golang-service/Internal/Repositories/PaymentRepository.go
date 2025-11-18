@@ -43,6 +43,6 @@ func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, zpTransId int64, s
 		Where("id_payment = ?", idPayment).
 		Updates(map[string]interface{}{
 			"status":      status,
-			"zp_trans_id": zpTransId,
+			"id_zp_trans": zpTransId,
 		}).Error
 }
