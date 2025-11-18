@@ -9,7 +9,7 @@ import (
 type PaymentRepository interface {
 	Create(payment *Models.Payment) (*Models.Payment, error)
 	FindByAppTransID(appTransID string) (*Models.Payment, error)
-	UpdateStatus(idPayment uuid.UUID, zpTransId int64, status string) error
+	UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error
 }
 type paymentRepository struct {
 	_db *gorm.DB
@@ -38,7 +38,7 @@ func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment
 	return &payment, nil
 }
 
-func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, zpTransId int64, status string) error {
+func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error {
 	return p._db.Model(&Models.Payment{}).
 		Where("id_payment = ?", idPayment).
 		Updates(map[string]interface{}{

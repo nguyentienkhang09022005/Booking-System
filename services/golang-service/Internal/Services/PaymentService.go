@@ -34,7 +34,7 @@ func NewPaymentService(paymentRepository Repositories.PaymentRepository) Payment
 type ZaloPayCallBackData struct {
 	AppID      int    `json:"app_id"`
 	AppTransID string `json:"app_trans_id"`
-	ZpTransID  int64  `json:"zp_trans_id"`
+	ZpTransID  string `json:"zp_trans_id"`
 	AppTime    int64  `json:"app_time"`
 	AppUser    string `json:"app_user"`
 	Amount     int64  `json:"amount"`
@@ -102,12 +102,12 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 	zaloPayResponse, err := sendCreateOrderRequest(orderData)
 	if err != nil {
 		// Cập nhật status thành "failed" nếu gọi ZaloPay lỗi
-		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, 0, Constants.StatusFailed)
+		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, "", Constants.StatusFailed)
 		return nil, err
 	}
 
 	if zaloPayResponse["return_code"] != float64(1) {
-		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, 0, Constants.StatusFailed)
+		p._paymentRepository.UpdateStatus(createdPayment.IDPayment, "", Constants.StatusFailed)
 		return nil, fmt.Errorf("Thông báo ZaloPay: Tạo đặt hàng thất bại!: %s", zaloPayResponse["return_message"])
 	}
 

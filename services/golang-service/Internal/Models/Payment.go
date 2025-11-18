@@ -12,7 +12,7 @@ type Payment struct {
 	Method     string    `gorm:"type:varchar(20)" json:"method"`
 	Status     string    `gorm:"type:varchar(20)" json:"status"`
 	IDAppTrans string    `gorm:"type:varchar(100)" json:"id_app_trans"`
-	IDZpTrans  int       `json:"id_zp_trans"`
+	IDZpTrans  string    `gorm:"type:varchar(100)" json:"id_zp_trans"`
 	CreateAt   time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại
