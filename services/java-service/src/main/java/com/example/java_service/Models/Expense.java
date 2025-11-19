@@ -24,11 +24,17 @@ public class Expense {
     @Column(name = "id_expense", nullable = false, updatable = false)
     private UUID idExpense;
 
-    @Column(name = "type_expense", length = 50)
-    private String typeExpense;
+    @Column(name = "expense_title", length = 150)
+    private String expenseTitle;
 
     @Column(name = "amount", precision = 12, scale = 2)
     private BigDecimal amount;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "department", length = 50)
+    private String department;
 
     @CreationTimestamp
     @Column(name = "create_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

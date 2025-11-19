@@ -94,6 +94,15 @@ public enum ErrorCode
     VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),
     VOUCHER_ALREADY_USED("VOUCHER_ALREADY_USED", "Voucher đã được sử dụng", HttpStatus.CONFLICT),
 
+    // Lỗi Chi tiêu
+    EXPENSE_NOT_FOUND("EXPENSE_NOT_FOUND", "Không tìm thấy chi tiêu!", HttpStatus.NOT_FOUND),
+    INVALID_AMOUNT("INVALID_AMOUNT", "Số tiền không được âm!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi báo cáo sự cố
+    INCIDENT_REPORT_NOT_FOUND("INCIDENT_REPORT_NOT_FOUND", "Không tìm thấy báo cáo sự cố!", HttpStatus.NOT_FOUND),
+    INVALID_INCIDENT_REPORT("INVALID_INCIDENT_REPORT", "Báo cáo sự cố đã được xữ lý không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_INCIDENT_REPORT("INVALID_STATUS_INCIDENT_REPORT", "Trạng thái phải là: Pending, In Progress, Cancelled, Resolved!", HttpStatus.BAD_REQUEST),
+    INVALID_SEVERITY_INCIDENT_REPORT("INVALID_SEVERITY_INCIDENT_REPORT", "Mức độ phải là: High, Low, Medium!", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;
