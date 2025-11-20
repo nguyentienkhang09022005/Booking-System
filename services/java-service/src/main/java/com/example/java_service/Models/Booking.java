@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -27,10 +26,10 @@ public class Booking {
     private LocalDateTime bookingDate;
 
     @Column(name = "checkin_date")
-    private Date checkinDate;
+    private LocalDateTime checkinDate;
 
     @Column(name = "checkout_date")
-    private Date checkoutDate;
+    private LocalDateTime checkoutDate;
 
     @Column(name = "status", length = 20)
     private String status;

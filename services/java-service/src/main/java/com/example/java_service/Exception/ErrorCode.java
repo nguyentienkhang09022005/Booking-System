@@ -73,7 +73,7 @@ public enum ErrorCode
     BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
     BOOKING_FAILED("BOOKING_FAILED", "Đặt phòng thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
     BOOKING_NOT_CANCEL("BOOKING_NOT_CANCEL", "Không thể hủy đặt phòng!", HttpStatus.BAD_REQUEST),
-    CHECKOUT_DATE_BEFORE_CHECKIN_DATE("CHECKOUT_DATE_BEFORE_CHECKIN_DATE", "Lỗi: Ngày checkout không được trước ngày checkin!", HttpStatus.BAD_REQUEST),
+    CHECKOUT_DATE_BEFORE_CHECKIN_DATE("CHECKOUT_DATE_BEFORE_CHECKIN_DATE", "Lỗi: Thời gian checkout không được trước hoặc bằng thời gian checkin!", HttpStatus.BAD_REQUEST),
 
     // Lỗi thanh toán
     PAYMENT_NOT_FOUND("PAYMENT_NOT_FOUND", "Không tìm thấy thông tin thanh toán!", HttpStatus.NOT_FOUND),

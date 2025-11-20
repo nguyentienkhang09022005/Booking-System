@@ -18,8 +18,8 @@ public class InfBookingOfIncidentReportResponse
 {
     UUID idBooking;
     LocalDateTime bookingDate;
-    Date checkinDate;
-    Date checkoutDate;
+    LocalDateTime checkinDate;
+    LocalDateTime checkoutDate;
     String status;
     BigDecimal totalPrice;
 }

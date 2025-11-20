@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -18,8 +17,8 @@ public class BookingResponse
 {
     UUID idBooking;
     LocalDateTime bookingDate;
-    Date checkinDate;
-    Date checkoutDate;
+    LocalDateTime checkinDate;
+    LocalDateTime checkoutDate;
     String status;
     BigDecimal totalPrice;
     PaymentInBookingResponse paymentInBookingResponse;

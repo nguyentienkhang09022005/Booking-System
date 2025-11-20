@@ -3,9 +3,8 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -14,8 +13,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookingUpdateRequest
 {
-    Date checkinDate;
-    Date checkoutDate;
+    LocalDateTime checkinDate;
+    LocalDateTime checkoutDate;
     List<BookingRoomRequest> bookingRooms;
     List<BookingServiceRequest> bookingServices;
     List<UserVoucherRequest> userVoucherRequests;

@@ -240,7 +240,7 @@ public class BookingHandleService
                     () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
             );
 
-            if (bookingRequest.getCheckoutDate().before(bookingRequest.getCheckinDate())){
+            if (!bookingRequest.getCheckoutDate().isAfter(bookingRequest.getCheckinDate())) {
                 throw new ApiException(ErrorCode.CHECKOUT_DATE_BEFORE_CHECKIN_DATE);
             }
 
@@ -256,27 +256,40 @@ public class BookingHandleService
                     savedBooking.getIdBooking());
 
             // Lưu tổng tiền của lần booking khi chưa có voucher
-            BigDecimal totalRoom = BigDecimal.ZERO;
-            BigDecimal totalService = BigDecimal.ZERO;
+            BigDecimal totalPriceRoom = BigDecimal.ZERO;
+            BigDecimal totalPriceService = BigDecimal.ZERO;
             if (bookingRoomResponse != null && bookingRoomResponse.getPriceBookingRoom() != null) {
-                totalRoom = bookingRoomResponse.getPriceBookingRoom();
+                totalPriceRoom = bookingRoomResponse.getPriceBookingRoom();
             }
 
             if (bookingServiceResponse != null && bookingServiceResponse.getPriceBookingService() != null) {
-                totalService = bookingServiceResponse.getPriceBookingService();
+                totalPriceService = bookingServiceResponse.getPriceBookingService();
             }
 
             // Tính tổng tiền đặt phòng + thời gian đặt
-            BigDecimal totalPrice = totalRoom.add(totalService);
+            BigDecimal totalPrice = BigDecimal.ZERO;
             long daysBetween = ChronoUnit.DAYS.between(
-                    bookingRequest.getCheckinDate().toInstant(),
-                    bookingRequest.getCheckoutDate().toInstant()
+                    bookingRequest.getCheckinDate().toLocalDate(),
+                    bookingRequest.getCheckoutDate().toLocalDate()
             );
 
-            if (daysBetween <= 0) {
-                daysBetween = 1;
+            if (daysBetween >= 1) {
+                totalPriceRoom = totalPriceRoom.multiply(BigDecimal.valueOf(daysBetween));
+                totalPrice = totalPriceRoom.add(totalPriceService);
+            } else
+            {
+                long minutesUsed = ChronoUnit.MINUTES.between(
+                        bookingRequest.getCheckinDate(),
+                        bookingRequest.getCheckoutDate());
+                if (minutesUsed < 0) {
+                    minutesUsed = 0;
+                }
+                // Tính phần trăm số tiền nếu đặt trong ngày
+                BigDecimal percentage = BigDecimal.valueOf(minutesUsed).divide(BigDecimal.valueOf(1440), 4, RoundingMode.HALF_UP);
+                BigDecimal totalPriceRoomInDay = totalPriceRoom.multiply(percentage);
+
+                totalPrice = totalPriceRoomInDay.add(totalPriceService);
             }
-            totalPrice = totalPrice.multiply(BigDecimal.valueOf(daysBetween));
 
             // Xữ lý nếu có voucher
             if (bookingRequest.getUserVoucherRequests() != null && !bookingRequest.getUserVoucherRequests().isEmpty()) {
@@ -366,6 +379,10 @@ public class BookingHandleService
                 () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
         );
 
+        if (!bookingUpdateRequest.getCheckoutDate().isAfter(bookingUpdateRequest.getCheckinDate())) {
+            throw new ApiException(ErrorCode.CHECKOUT_DATE_BEFORE_CHECKIN_DATE);
+        }
+
         bookingMapper.updateBookingFromRequest(bookingUpdateRequest, booking);
 
         // Nếu có thay đổi thông tin đặt phòng
@@ -422,26 +439,40 @@ public class BookingHandleService
         }
 
         // Lưu tổng tiền của lần booking
-        BigDecimal totalRoom = BigDecimal.ZERO;
-        BigDecimal totalService = BigDecimal.ZERO;
+        BigDecimal totalPriceRoom = BigDecimal.ZERO;
+        BigDecimal totalPriceService = BigDecimal.ZERO;
         if (bookingRoomResponse != null && bookingRoomResponse.getPriceBookingRoom() != null) {
-            totalRoom = bookingRoomResponse.getPriceBookingRoom();
+            totalPriceRoom = bookingRoomResponse.getPriceBookingRoom();
         }
 
         if (bookingServiceResponse != null && bookingServiceResponse.getPriceBookingService() != null) {
-            totalService = bookingServiceResponse.getPriceBookingService();
+            totalPriceService = bookingServiceResponse.getPriceBookingService();
         }
 
-        BigDecimal totalPrice = totalRoom.add(totalService);
+        // Tính tổng tiền đặt phòng + thời gian đặt
+        BigDecimal totalPrice = BigDecimal.ZERO;
         long daysBetween = ChronoUnit.DAYS.between(
-                bookingUpdateRequest.getCheckinDate().toInstant(),
-                bookingUpdateRequest.getCheckoutDate().toInstant()
+                bookingUpdateRequest.getCheckinDate().toLocalDate(),
+                bookingUpdateRequest.getCheckoutDate().toLocalDate()
         );
 
-        if (daysBetween <= 0) {
-            daysBetween = 1;
+        if (daysBetween >= 1) {
+            totalPriceRoom = totalPriceRoom.multiply(BigDecimal.valueOf(daysBetween));
+            totalPrice = totalPriceRoom.add(totalPriceService);
+        } else
+        {
+            long minutesUsed = ChronoUnit.MINUTES.between(
+                    bookingUpdateRequest.getCheckinDate(),
+                    bookingUpdateRequest.getCheckoutDate());
+            if (minutesUsed < 0) {
+                minutesUsed = 0;
+            }
+            // Tính phần trăm số tiền nếu đặt trong ngày
+            BigDecimal percentage = BigDecimal.valueOf(minutesUsed).divide(BigDecimal.valueOf(1440), 4, RoundingMode.HALF_UP);
+            BigDecimal totalPriceRoomInDay = totalPriceRoom.multiply(percentage);
+
+            totalPrice = totalPriceRoomInDay.add(totalPriceService);
         }
-        totalPrice = totalPrice.multiply(BigDecimal.valueOf(daysBetween));
 
         // Nếu có cập nhật voucher
         if (bookingUpdateRequest.getUserVoucherRequests() != null && !bookingUpdateRequest.getUserVoucherRequests().isEmpty()) {
