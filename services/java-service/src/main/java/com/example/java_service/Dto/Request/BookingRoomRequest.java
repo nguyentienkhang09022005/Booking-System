@@ -3,7 +3,6 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
 import java.util.UUID;
 
 @Data

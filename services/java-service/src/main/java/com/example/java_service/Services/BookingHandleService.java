@@ -223,13 +223,13 @@ public class BookingHandleService
     // Hàm tạo đặt phòng
     public PaymentResponse saveBooking(BookingRequest bookingRequest)
     {
-        Booking booking = self.createBookingTransactionally(bookingRequest);
+        Booking booking = self.createBookingTransactional(bookingRequest);
 
         return self.callPaymentApi(booking);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Booking createBookingTransactionally (BookingRequest bookingRequest)
+    public Booking createBookingTransactional(BookingRequest bookingRequest)
     {
         try {
             Users user = userRepository.findById(bookingRequest.getIdUser()).orElseThrow(
@@ -553,6 +553,70 @@ public class BookingHandleService
         }
     }
 
+    //Hàm checkout đặt phòng cho (company)
+    public ResponseEntity<String> checkoutBooking(BookingCheckoutRequest request, UUID idBooking)
+    {
+        // Kiểm tra người dùng đã thanh toán chưa
+        if (paymentRepository.existsByBooking_IdBookingAndStatus(idBooking, PredefinedStatusPayment.STATUS_PAYMENT_DEFAULT)){
+            throw new ApiException(ErrorCode.USER_UNPAID);
+        }
+
+        Booking booking = bookingRepository.findById(idBooking).orElseThrow(
+                () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
+        );
+        List<BookingRoom> bookingRooms = bookingRoomRepository.findAllBookingRoomByBookingIds(List.of(idBooking));
+
+        BigDecimal totalPriceBookingRoom = bookingRooms
+                .stream()
+                .map(BookingRoom::getPriceBookingRoom)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalPriceBooking = booking.getTotalPrice();
+        if (booking.getCheckinDate().isAfter(request.getCheckinDateActual()))
+        {
+            long minutesDiff  = ChronoUnit.MINUTES.between(
+                    request.getCheckinDateActual(),
+                    booking.getCheckinDate());
+            if (minutesDiff  < 0) {
+                minutesDiff  = 0;
+            }
+
+            // Tính phần trăm số tiền nếu checkin sớm
+            long daysEarly = minutesDiff / 1440;
+            long minutesEarly = minutesDiff % 1440;
+
+            BigDecimal priceEarly = totalPriceBookingRoom
+                    .multiply(BigDecimal.valueOf(daysEarly))
+                    .add(totalPriceBookingRoom.multiply(BigDecimal.valueOf(minutesEarly).divide(BigDecimal.valueOf(1440), 4, RoundingMode.HALF_UP)));
+
+            totalPriceBooking = totalPriceBooking.add(priceEarly);
+        }
+
+        if (booking.getCheckoutDate().isBefore(request.getCheckoutDateActual()))
+        {
+            long minutesDiff = ChronoUnit.MINUTES.between(
+                    booking.getCheckoutDate(),
+                    request.getCheckoutDateActual());
+            if (minutesDiff < 0) {
+                minutesDiff = 0;
+            }
+
+            // Tính phần trăm số tiền nếu checkout muộn
+            long daysLate = minutesDiff / 1440;
+            long minutesLate = minutesDiff % 1440;
+
+            BigDecimal priceLate = totalPriceBookingRoom
+                    .multiply(BigDecimal.valueOf(daysLate))
+                    .add(totalPriceBookingRoom.multiply(BigDecimal.valueOf(minutesLate).divide(BigDecimal.valueOf(1440), 4, RoundingMode.HALF_UP)));
+
+            totalPriceBooking = totalPriceBooking.add(priceLate);
+        }
+        booking.setTotalPrice(totalPriceBooking);
+        bookingRepository.save(booking);
+
+        return ResponseEntity.ok("Cập nhật trả phòng thành công!");
+    }
+
     // Hàm cập nhật status đặt phòng cho (company)
     public ResponseEntity<String> updateStatusBooking(BookingUpdateStatusRequest request, UUID idBooking)
     {
@@ -570,7 +634,6 @@ public class BookingHandleService
 
         return ResponseEntity.ok("Cập nhật trạng thái thành công!");
     }
-
     // Hàm xóa đặt phòng
     @Transactional
     public ResponseEntity<String> deleteBookingRoom(UUID idBooking)

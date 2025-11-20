@@ -19,6 +19,7 @@ public class BookingResponse
     LocalDateTime bookingDate;
     LocalDateTime checkinDate;
     LocalDateTime checkoutDate;
+    String note;
     String status;
     BigDecimal totalPrice;
     PaymentInBookingResponse paymentInBookingResponse;

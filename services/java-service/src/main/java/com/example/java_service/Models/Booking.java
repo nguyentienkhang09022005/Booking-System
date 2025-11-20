@@ -31,6 +31,9 @@ public class Booking {
     @Column(name = "checkout_date")
     private LocalDateTime checkoutDate;
 
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     @Column(name = "status", length = 20)
     private String status;
 

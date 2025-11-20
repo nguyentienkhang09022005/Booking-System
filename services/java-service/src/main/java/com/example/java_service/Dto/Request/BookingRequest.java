@@ -18,6 +18,7 @@ public class BookingRequest
     UUID idHotel;
     LocalDateTime checkinDate;
     LocalDateTime checkoutDate;
+    String note;
     List<BookingRoomRequest> bookingRooms;
     List<BookingServiceRequest> bookingServices;
     List<UserVoucherRequest> userVoucherRequests;

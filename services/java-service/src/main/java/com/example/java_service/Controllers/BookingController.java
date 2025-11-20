@@ -1,5 +1,6 @@
 package com.example.java_service.Controllers;
 
+import com.example.java_service.Dto.Request.BookingCheckoutRequest;
 import com.example.java_service.Dto.Request.BookingRequest;
 import com.example.java_service.Dto.Request.BookingUpdateRequest;
 import com.example.java_service.Dto.Request.BookingUpdateStatusRequest;
@@ -86,6 +87,17 @@ public class BookingController
                                                                        @RequestBody BookingUpdateStatusRequest request)
     {
         var response = bookingHandleService.updateStatusBooking(request, idBooking);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+
+    // Endpoint checkout booking
+    @PatchMapping("/checkout")
+    public ApiResponse<ResponseEntity<String>> checkoutBooking(@RequestParam UUID idBooking,
+                                                               @RequestBody BookingCheckoutRequest request)
+    {
+        var response = bookingHandleService.checkoutBooking(request, idBooking);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();
