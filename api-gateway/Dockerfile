@@ -23,4 +23,4 @@ COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
 
 # Chạy ứng dụng
-ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xms256m", "-Xmx256m", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xms192m", "-Xmx192m", "-XX:MaxDirectMemorySize=64m", "-jar", "app.jar"]
