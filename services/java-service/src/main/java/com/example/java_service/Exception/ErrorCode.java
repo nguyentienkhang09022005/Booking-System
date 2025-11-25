@@ -9,6 +9,7 @@ public enum ErrorCode
     // Lỗi chung
     QUANTITY_NOT_ENOUGH("QUANTITY_NOT_ENOUGH", "Số lượng không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
     PERCENT_NOT_NEGATIVE("PERCENT_NOT_NEGATIVE", "Phần trăm không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
+    INTERNAL_ERROR("INTERNAL_ERROR", "Lỗi phía máy chủ", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Lỗi xác thực người dùng
     UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực!", HttpStatus.UNAUTHORIZED),

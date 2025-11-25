@@ -14,10 +14,26 @@ public class WebClientConfig {
     @Value("${golang.service}")
     protected String GOLANG_SERVICE_URL;
 
+    @NonFinal
+    @Value("${gemini.api.url}")
+    protected String GEMINI_API_URL;
+
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
         return builder
                 .baseUrl(GOLANG_SERVICE_URL)
+                .clientConnector(
+                        new ReactorClientHttpConnector(
+                                HttpClient.create().followRedirect(true)
+                        )
+                )
+                .build();
+    }
+
+    @Bean
+    public WebClient aiModel(WebClient.Builder builder) {
+        return builder
+                .baseUrl(GEMINI_API_URL)
                 .clientConnector(
                         new ReactorClientHttpConnector(
                                 HttpClient.create().followRedirect(true)
