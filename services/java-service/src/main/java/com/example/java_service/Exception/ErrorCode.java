@@ -10,6 +10,7 @@ public enum ErrorCode
     QUANTITY_NOT_ENOUGH("QUANTITY_NOT_ENOUGH", "Số lượng không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
     PERCENT_NOT_NEGATIVE("PERCENT_NOT_NEGATIVE", "Phần trăm không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
     INTERNAL_ERROR("INTERNAL_ERROR", "Lỗi phía máy chủ", HttpStatus.INTERNAL_SERVER_ERROR),
+    AI_MODERATION_INVALID_RESPONSE("AI_MODERATION_INVALID_RESPONSE", "Mô hình AI đang gặp sự cố, không thể kiểm duệt bình luận", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Lỗi xác thực người dùng
     UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực!", HttpStatus.UNAUTHORIZED),
@@ -69,6 +70,7 @@ public enum ErrorCode
     EVALUATE_NOT_FOUND("EVALUATE_NOT_FOUND", "Lỗi không tìm thấy đánh giá!", HttpStatus.NOT_FOUND),
     USER_EVALUATED_HOTEL("USER_EVALUATED_HOTEL", "Bạn đã đánh giá khách sạn này rồi!", HttpStatus.CONFLICT),
     EVALUATE_UPDATE_TIME_EXPIRED("EVALUATE_UPDATE_TIME_EXPIRED", "Chỉ được thay đổi đánh giá trong 30 phút!", HttpStatus.BAD_REQUEST),
+    COMMENT_REJECTED_BY_AI("COMMENT_REJECTED_BY_AI", "Bình luận có phát ngôn không chuẩn mực, đã bị loại bỏ", HttpStatus.BAD_REQUEST),
 
     // Lỗi đặt phòng
     BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
