@@ -3,10 +3,12 @@ package com.example.java_service.Services;
 import com.example.java_service.Constant.PredefinedRoleChattingAI;
 import com.example.java_service.Dto.Request.ChatRequest;
 import com.example.java_service.Dto.Request.MessageHistoryItem;
+import com.example.java_service.Dto.Request.SummarizeTheCommentRequest;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Models.Users;
+import com.example.java_service.Repositories.Jpa.HotelRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +31,8 @@ public class ChatWithAIService
     GeminiService geminiService;
     UserRepository userRepository;
     RedisService redisService;
+    HotelService hotelService;
+    HotelRepository hotelRepository;
 
     static final Long DURATION_HISTORY_CHAT_WITH_AI = 604800L;
 
@@ -145,5 +150,68 @@ public class ChatWithAIService
 
         chatHistoryService.deleteRefreshToken(idUser);
         return ResponseEntity.ok("Xóa lịch sử trò chuyện với AI thành công!");
+    }
+
+    public ChatResponse aiSummarizeTheComment(SummarizeTheCommentRequest summarizeTheCommentRequest)
+    {
+        Users user = userRepository.findById(UUID.fromString(summarizeTheCommentRequest.getIdUser().toString())).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        hotelRepository.findById(UUID.fromString(summarizeTheCommentRequest.getIdHotel().toString())).orElseThrow(
+                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        );
+
+        GetDetailHotelResponse detailHotel = hotelService.getHotelDetail(summarizeTheCommentRequest.getIdHotel(),
+                                                                         summarizeTheCommentRequest.getIdUser());
+
+        String systemIntroduction = String.format("""
+        Bạn là **BookingNext**, trợ lý AI chuyên phân tích và tóm tắt đánh giá khách sạn một cách chính xác, khách quan và bảo mật.
+        
+        NHIỆM VỤ CHÍNH:
+        1. **Tóm tắt review của khách sạn** dựa trên dữ liệu JSON cung cấp:
+           - Đánh giá tổng thể.
+           - Các điểm mạnh thường được khen.
+           - Các điểm hạn chế thường bị phàn nàn.
+           - Tóm tắt ngắn gọn nhưng bao quát đúng bản chất.
+           - Không tự tạo dữ liệu, chỉ sử dụng đúng dữ liệu có trong JSON.
+        
+        2. **Không tư vấn, không đề xuất khách sạn** trong chế độ này — chỉ tóm tắt đánh giá.
+        
+        3. **An toàn & bảo mật dữ liệu:**
+           - Tuyệt đối không tiết lộ thông tin cá nhân người dùng hoặc người đánh giá.
+           - Không hiển thị các dữ liệu nhạy cảm (ID user, mật khẩu, token…).
+           - Chỉ phân tích review, không trả về bất kỳ dữ liệu hệ thống nội bộ nào.
+           - Nếu yêu cầu vượt ngoài phạm vi tóm tắt review → từ chối nhẹ nhàng.
+        
+        4. **Nguyên tắc trả lời:**
+           - Ngắn gọn – rõ ràng – khách quan – không thổi phồng.
+           - Không bịa đặt đánh giá không tồn tại.
+           - Nếu dữ liệu review trống → trả lời: "Hiện tại khách sạn chưa có đánh giá từ người dùng."
+        
+        DỮ LIỆU ĐẦU VÀO:
+        - Thông tin user (đã ẩn dữ liệu nhạy cảm): %s
+        - Chi tiết khách sạn (danh sách đánh giá gồm bình luận và sao): %s
+        
+        Hãy tóm tắt **review** của khách sạn theo cấu trúc:
+        1. *Mức độ hài lòng chung*
+        2. *Điểm khách khen nhiều nhất*
+        3. *Điểm khách phàn nàn nhiều nhất*
+        4. *Kết luận ngắn gọn*
+        """,
+                user,
+                detailHotel
+        );
+
+        List<MessageHistoryItem> historyItems = new ArrayList<>();
+        String aiMessage = geminiService.GenerateChatUserModelResponse(
+                systemIntroduction,
+                historyItems,
+                "");
+
+        aiMessage = aiMessage.replace("\\n", "\n").replace("\\r", "");
+        return ChatResponse.builder()
+                .AiResponse(aiMessage)
+                .build();
     }
 }

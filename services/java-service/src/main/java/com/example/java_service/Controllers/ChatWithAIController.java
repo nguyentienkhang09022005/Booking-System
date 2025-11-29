@@ -2,6 +2,7 @@ package com.example.java_service.Controllers;
 
 import com.example.java_service.Dto.Request.ChatRequest;
 import com.example.java_service.Dto.Request.MessageHistoryItem;
+import com.example.java_service.Dto.Request.SummarizeTheCommentRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.ChatResponse;
 import com.example.java_service.Services.ChatWithAIService;
@@ -40,6 +41,16 @@ public class ChatWithAIController
         return ApiResponse.<ChatResponse>builder()
                 .message("Gửi tin nhắn cho AI thành công!")
                 .data(chatWithAIService.sendChatForAI(chatRequest))
+                .build();
+    }
+
+    // Endpoint tóm tắt đánh giá khách sạn
+    @PostMapping( "/summarize-comment")
+    public ApiResponse<ChatResponse> aiSummarizeTheComment(@RequestBody SummarizeTheCommentRequest request)
+    {
+        return ApiResponse.<ChatResponse>builder()
+                .message("Gửi tin nhắn cho AI thành công!")
+                .data(chatWithAIService.aiSummarizeTheComment(request))
                 .build();
     }
 
