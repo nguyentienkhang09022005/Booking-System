@@ -120,7 +120,7 @@ public class RedisService
                 getKeyVoucher(idHotel.toString()),
                 60,
                 new TypeReference<List<VoucherViewResponse>>() {},
-                () -> voucherService.listVouchersApproved(idHotel)
+                () -> voucherService.listVouchersApprovedByHotel(idHotel)
         );
     }
 }

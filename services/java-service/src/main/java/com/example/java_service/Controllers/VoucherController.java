@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.VoucherCreationRequest;
 import com.example.java_service.Dto.Request.VoucherUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.VoucherEditResponse;
+import com.example.java_service.Dto.Response.VoucherViewAllResponse;
 import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.example.java_service.Services.VoucherService;
 import lombok.AccessLevel;
@@ -26,12 +27,22 @@ public class VoucherController
     VoucherService voucherService;
 
     // Endpoint lấy danh sách voucher của khách sạn đã được duyệt
-    @GetMapping("/list-voucher-approved")
-    public ApiResponse<List<VoucherViewResponse>> listVoucherApproved(@RequestParam UUID idHotel)
+    @GetMapping("/list-voucher-approved-by-hotel")
+    public ApiResponse<List<VoucherViewResponse>> listVoucherApprovedByHotel(@RequestParam UUID idHotel)
     {
         return ApiResponse.<List<VoucherViewResponse>>builder()
                 .message("Lấy danh sách voucher của khách sạn thành công!")
-                .data(voucherService.listVouchersApproved(idHotel))
+                .data(voucherService.listVouchersApprovedByHotel(idHotel))
+                .build();
+    }
+
+    // Endpoint lấy danh sách voucher đã được duyệt
+    @GetMapping("/list-voucher-approved")
+    public ApiResponse<List<VoucherViewAllResponse>> listVoucherApproved()
+    {
+        return ApiResponse.<List<VoucherViewAllResponse>>builder()
+                .message("Lấy danh sách voucher thành công!")
+                .data(voucherService.listVouchersApproved())
                 .build();
     }
 

@@ -3,6 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Dto.Request.VoucherCreationRequest;
 import com.example.java_service.Dto.Request.VoucherUpdateRequest;
 import com.example.java_service.Dto.Response.VoucherEditResponse;
+import com.example.java_service.Dto.Response.VoucherViewAllResponse;
 import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
@@ -59,9 +60,8 @@ public class VoucherService
         return code;
     }
 
-
     // Lấy danh sách voucher của khách sạn đã được phê duyệt và còn hạn (cho user)
-    public List<VoucherViewResponse> listVouchersApproved(UUID idHotel)
+    public List<VoucherViewResponse> listVouchersApprovedByHotel(UUID idHotel)
     {
         if (!hotelRepository.existsByIdHotel(idHotel)){
             throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
@@ -89,6 +89,40 @@ public class VoucherService
         return vouchers.stream()
                 .map(voucher -> {
                     VoucherViewResponse response = voucherMapper.toVoucherViewResponse(voucher);
+                    String voucherIdStr = voucher.getIdVoucher().toString();
+
+                    response.setUrlImage(voucherImagesMap.get(voucherIdStr));
+
+                    return response;
+                })
+                .toList();
+    }
+
+    // Lấy danh sách voucher
+    public List<VoucherViewAllResponse> listVouchersApproved()
+    {
+        List<Voucher> vouchers = voucherRepository.findAll();
+
+        if (vouchers.isEmpty()) {
+            return List.of();
+        }
+
+        // Lấy ID của tất cả voucher
+        List<String> voucherIds = vouchers.stream()
+                .map(voucher -> voucher.getIdVoucher().toString())
+                .toList();
+
+        // Lấy tất cả ảnh
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        Map<String, String> voucherImagesMap = images.stream()
+                .collect(Collectors.toMap(
+                        Images::getRefId,
+                        Images::getUrl
+                ));
+
+        return vouchers.stream()
+                .map(voucher -> {
+                    VoucherViewAllResponse response = voucherMapper.toVoucherViewAllResponse(voucher);
                     String voucherIdStr = voucher.getIdVoucher().toString();
 
                     response.setUrlImage(voucherImagesMap.get(voucherIdStr));
