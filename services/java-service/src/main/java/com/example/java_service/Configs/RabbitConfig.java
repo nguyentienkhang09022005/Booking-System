@@ -1,21 +1,43 @@
 package com.example.java_service.Configs;
 
+import lombok.experimental.NonFinal;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-public class RedisConfig
+public class RabbitConfig
 {
+    @NonFinal
+    @Value("${rabbitmq.exchange.name}")
+    public String EXCHANGE_NAME;
+
+    @NonFinal
+    @Value("${rabbitmq.queue.name}")
+    public String QUEUE_NAME;
+
+    @NonFinal
+    @Value("${rabbitmq.routing.key}")
+    public String ROUTING_KEY;
+
     @Bean
-    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory)
-    {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
-        return template;
+    public DirectExchange expenseExchange() {
+        return new DirectExchange(EXCHANGE_NAME);
+    }
+
+    @Bean
+    public Queue expenseQueue() {
+        return new Queue(QUEUE_NAME, true);
+    }
+
+    @Bean
+    public Binding binding(Queue expenseQueue, DirectExchange expenseExchange) {
+        return BindingBuilder.bind(expenseQueue)
+                .to(expenseExchange)
+                .with(ROUTING_KEY);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Dto.Request.ExpenseCreationRequest;
 import com.example.java_service.Dto.Request.ExpenseUpdateRequest;
 import com.example.java_service.Dto.Response.ExpenseResponse;
@@ -12,10 +13,13 @@ import com.example.java_service.Repositories.Jpa.ExpenseRepository;
 import com.example.java_service.Repositories.Jpa.HotelRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +38,9 @@ public class ExpenseService
     UserRepository userRepository;
     ImagesRepository imagesRepository;
     ExpenseMapper expenseMapper;
+    ObjectMapper objectMapper;
+    RabbitTemplate rabbitTemplate;
+    RabbitConfig rabbitConfig;
 
     // Hàm lấy danh sách chi tiêu của khách sạn
     public List<ExpenseResponse> getListExpense(UUID idHotel)
@@ -114,6 +121,18 @@ public class ExpenseService
         expense.setUser(user);
 
         Expense savedExpense = expenseRepository.save(expense);
+//        try
+//        {
+//            String message = objectMapper.writeValueAsString(savedExpense);
+//            rabbitTemplate.convertAndSend(
+//                    rabbitConfig.EXCHANGE_NAME,
+//                    rabbitConfig.ROUTING_KEY,
+//                    message
+//            );
+//        } catch (Exception ex)
+//        {
+//            ex.printStackTrace();
+//        }
 
         ExpenseResponse expenseResponse = expenseMapper.toExpenseResponse(savedExpense);
         String avatarUrl = imagesRepository.findByRefId(user.getIdUser().toString())
