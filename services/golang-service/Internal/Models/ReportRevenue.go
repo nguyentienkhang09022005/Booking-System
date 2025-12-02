@@ -20,3 +20,7 @@ type ReportRevenue struct {
 	// Quan hệ
 	Details []ReportRevenueDetail `gorm:"foreignKey:IDReportRevenue;constraint:OnDelete:CASCADE" json:"details,omitempty"`
 }
+
+func (ReportRevenue) TableName() string {
+	return "report_revenue"
+}

@@ -18,16 +18,16 @@ import (
 	"time"
 )
 
-type PaymentService interface {
+type IPaymentService interface {
 	CreatePayment(paymentRequest Request.PaymentRequest) (*Response.PaymentResponse, error)
 	ResolveCallBackZaloPay(zaloPayCallBackRequest Request.ZaloPayCallBackRequest) error
 }
 
 type paymentService struct {
-	_paymentRepository Repositories.PaymentRepository
+	_paymentRepository Repositories.IPaymentRepository
 }
 
-func NewPaymentService(paymentRepository Repositories.PaymentRepository) PaymentService {
+func PaymentService(paymentRepository Repositories.IPaymentRepository) IPaymentService {
 	return &paymentService{_paymentRepository: paymentRepository}
 }
 

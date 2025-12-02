@@ -1,0 +1,140 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Golang-Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/report-revenues/create": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "description": "Thông tin báo cáo",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.ReportRevenueRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/payments": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "parameters": [
+                    {
+                        "description": "Thông tin thanh toán",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.PaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/payments/callback": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment"
+                ],
+                "parameters": [
+                    {
+                        "description": "Dữ liệu callback",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.ZaloPayCallBackRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "Request.PaymentRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "id_booking",
+                "id_user"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "id_booking": {
+                    "type": "string"
+                },
+                "id_user": {
+                    "type": "string"
+                }
+            }
+        },
+        "Request.ReportRevenueRequest": {
+            "type": "object",
+            "properties": {
+                "idHotel": {
+                    "type": "string"
+                },
+                "idUser": {
+                    "type": "string"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Request.ZaloPayCallBackRequest": {
+            "type": "object",
+            "required": [
+                "data",
+                "mac"
+            ],
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "mac": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

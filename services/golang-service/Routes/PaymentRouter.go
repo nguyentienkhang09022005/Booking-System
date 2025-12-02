@@ -9,9 +9,9 @@ import (
 )
 
 func PaymentRouter(router *gin.Engine, db *gorm.DB) {
-	paymentRepository := Repositories.NewPaymentRepository(db)
-	paymentService := Services.NewPaymentService(paymentRepository)
-	paymentController := Controllers.NewPaymentController(paymentService)
+	paymentRepository := Repositories.PaymentRepository(db)
+	paymentService := Services.PaymentService(paymentRepository)
+	paymentController := Controllers.PaymentController(paymentService)
 
 	paymentRoutes := router.Group("/api/v1/payments")
 	{

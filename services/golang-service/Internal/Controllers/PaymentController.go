@@ -7,16 +7,21 @@ import (
 	"payment-service/Internal/Services"
 )
 
-type PaymentController struct {
-	_paymentService Services.PaymentService
+type paymentController struct {
+	_paymentService Services.IPaymentService
 }
 
-func NewPaymentController(paymentService Services.PaymentService) *PaymentController {
-	return &PaymentController{_paymentService: paymentService}
+func PaymentController(paymentService Services.IPaymentService) *paymentController {
+	return &paymentController{_paymentService: paymentService}
 }
 
-// Controller tạo thanh toán
-func (pc *PaymentController) CreatePayment(c *gin.Context) {
+// CreatePayment
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Param request body Request.PaymentRequest true "Thông tin thanh toán"
+// @Router /api/v1/payments [post]
+func (pc *paymentController) CreatePayment(c *gin.Context) {
 	var paymentRequest Request.PaymentRequest
 	if err := c.ShouldBindJSON(&paymentRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -30,7 +35,13 @@ func (pc *PaymentController) CreatePayment(c *gin.Context) {
 	c.JSON(http.StatusCreated, paymentResponse)
 }
 
-func (pc *PaymentController) HandleCallBack(c *gin.Context) {
+// HandleCallBack
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Param request body Request.ZaloPayCallBackRequest true "Dữ liệu callback"
+// @Router /api/v1/payments/callback [post]
+func (pc *paymentController) HandleCallBack(c *gin.Context) {
 	var zaloPayCallBackRequest Request.ZaloPayCallBackRequest
 	if err := c.ShouldBind(&zaloPayCallBackRequest); err != nil {
 		c.JSON(http.StatusOK, gin.H{"return_code": 0, "return_message": "Dữ liệu không hợp lệ!"})

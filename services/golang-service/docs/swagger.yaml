@@ -1,0 +1,91 @@
+basePath: /
+definitions:
+  Request.PaymentRequest:
+    properties:
+      amount:
+        type: number
+      id_booking:
+        type: string
+      id_user:
+        type: string
+    required:
+    - amount
+    - id_booking
+    - id_user
+    type: object
+  Request.ReportRevenueRequest:
+    properties:
+      idHotel:
+        type: string
+      idUser:
+        type: string
+      month:
+        type: integer
+      year:
+        type: integer
+    type: object
+  Request.ZaloPayCallBackRequest:
+    properties:
+      data:
+        type: string
+      mac:
+        type: string
+    required:
+    - data
+    - mac
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: Golang-Service API
+  version: "1.0"
+paths:
+  /api/report-revenues/create:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.ReportRevenueRequest'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
+  /api/v1/payments:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin thanh toán
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.PaymentRequest'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Payment
+  /api/v1/payments/callback:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dữ liệu callback
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.ZaloPayCallBackRequest'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Payment
+swagger: "2.0"

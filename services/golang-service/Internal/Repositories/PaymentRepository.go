@@ -6,7 +6,7 @@ import (
 	"payment-service/Internal/Models"
 )
 
-type PaymentRepository interface {
+type IPaymentRepository interface {
 	Create(payment *Models.Payment) (*Models.Payment, error)
 	FindByAppTransID(appTransID string) (*Models.Payment, error)
 	UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error
@@ -16,7 +16,7 @@ type paymentRepository struct {
 }
 
 // Construtor
-func NewPaymentRepository(db *gorm.DB) PaymentRepository {
+func PaymentRepository(db *gorm.DB) IPaymentRepository {
 	return &paymentRepository{_db: db}
 }
 
