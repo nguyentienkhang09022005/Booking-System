@@ -3,6 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Dto.Request.ExpenseCreationRequest;
 import com.example.java_service.Dto.Request.ExpenseUpdateRequest;
+import com.example.java_service.Dto.Response.ExpenseCreatedEvent;
 import com.example.java_service.Dto.Response.ExpenseResponse;
 import com.example.java_service.Dto.Response.InfUserCreatedExpenseResponse;
 import com.example.java_service.Exception.ApiException;
@@ -121,16 +122,25 @@ public class ExpenseService
         expense.setUser(user);
 
         Expense savedExpense = expenseRepository.save(expense);
-//        try
-//        {
-//            String message = objectMapper.writeValueAsString(savedExpense);
+
+//        // event
+//        ExpenseCreatedEvent event = ExpenseCreatedEvent.builder()
+//                .idExpense(savedExpense.getIdExpense())
+//                .idHotel(savedExpense.getHotel().getIdHotel())
+//                .idUser(savedExpense.getUser().getIdUser())
+//                .amount(savedExpense.getAmount())
+//                .month(savedExpense.getCreateAt().getMonthValue())
+//                .year(savedExpense.getCreateAt().getYear())
+//                .build();
+//
+//        try {
+//            String message = objectMapper.writeValueAsString(event);
 //            rabbitTemplate.convertAndSend(
 //                    rabbitConfig.EXCHANGE_NAME,
 //                    rabbitConfig.ROUTING_KEY,
 //                    message
 //            );
-//        } catch (Exception ex)
-//        {
+//        } catch (Exception ex) {
 //            ex.printStackTrace();
 //        }
 

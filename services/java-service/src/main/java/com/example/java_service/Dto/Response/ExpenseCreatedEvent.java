@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -12,13 +11,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ExpenseResponse
-{
+public class ExpenseCreatedEvent {
     UUID idExpense;
-    String expenseTitle;
+    UUID idHotel;
+    UUID idUser;
     BigDecimal amount;
-    String description;
-    String department;
-    LocalDateTime createAt;
-    InfUserCreatedExpenseResponse infUserCreatedExpenseResponse;
+    int month;
+    int year;
 }
+
