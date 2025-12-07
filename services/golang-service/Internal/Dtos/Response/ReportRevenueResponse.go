@@ -16,10 +16,3 @@ type ReportRevenueResponse struct {
 	CreateAt        time.Time                     `json:"createAt"`
 	Details         []ReportRevenueDetailResponse `json:"reportDetails,omitempty"`
 }
-
-type ReportRevenueDetailResponse struct {
-	IDRevenueDetail uuid.UUID `json:"idRevenueDetail"`
-	TypeRevenue     string    `json:"typeRevenue"`
-	Amount          float64   `json:"amount"`
-	CreateAt        time.Time `json:"createAt"`
-}

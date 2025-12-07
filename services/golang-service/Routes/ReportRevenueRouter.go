@@ -14,6 +14,7 @@ func ReportRevenueRouter(router *gin.Engine, db *gorm.DB) {
 	userRepository := Repositories.UserRepository(db)
 
 	reportRevenueService := Services.ReportRevenueService(reportRevenueRepository, hotelRepository, userRepository)
+
 	reportRevenueController := Controllers.ReportRevenueController(reportRevenueService)
 
 	reportRevenueRoutes := router.Group("/api/report-revenues")

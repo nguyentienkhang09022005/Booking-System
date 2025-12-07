@@ -5,8 +5,8 @@ import (
 )
 
 type ReportRevenueRequest struct {
-	IDHotel uuid.UUID `gorm:"type:uuid" json:"idHotel"`
-	IDUser  uuid.UUID `gorm:"type:uuid" json:"idUser"`
+	IDHotel uuid.UUID `json:"idHotel"`
+	IDUser  uuid.UUID `json:"idUser"`
 	Month   int       `json:"month"`
 	Year    int       `json:"year"`
 }

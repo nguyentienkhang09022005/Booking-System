@@ -24,6 +24,23 @@ definitions:
       year:
         type: integer
     type: object
+  Request.RevenueCreatedEvent:
+    properties:
+      amount:
+        type: number
+      idBooking:
+        type: string
+      idExpense:
+        type: string
+      idHotel:
+        type: string
+      idUser:
+        type: string
+      month:
+        type: integer
+      year:
+        type: integer
+    type: object
   Request.ZaloPayCallBackRequest:
     properties:
       data:
@@ -40,6 +57,22 @@ info:
   title: Golang-Service API
   version: "1.0"
 paths:
+  /api/report-revenues-detail/create:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin chi tiết báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.RevenueCreatedEvent'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue Detail
   /api/report-revenues/{idReportRevenue}:
     delete:
       consumes:

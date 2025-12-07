@@ -5,6 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"os"
 	"payment-service/Configs"
+	"payment-service/Internal/RabbitMQ"
+	"payment-service/Internal/Repositories"
+	"payment-service/Internal/Services"
 	"payment-service/Routes"
 	_ "payment-service/docs"
 )
@@ -22,6 +25,16 @@ func main() {
 	if err != nil {
 		return
 	}
+
+	reportRevenueRepository := Repositories.ReportRevenueRepository(db)
+	reportRevenueDetailRepository := Repositories.ReportRevenueDetailRepository(db)
+	userRepository := Repositories.UserRepository(db)
+	hotelRepository := Repositories.HotelRepository(db)
+	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository, userRepository)
+
+	// Khởi động RabbitMQ consumer
+	go RabbitMQ.StartRevenueConsumer(reportRevenueDetailService)
+
 	// Chạy Gin Framework
 	r := gin.Default()
 
@@ -29,6 +42,7 @@ func main() {
 	Routes.SwaggerRouter(r)
 	Routes.PaymentRouter(r, db)
 	Routes.ReportRevenueRouter(r, db)
+	Routes.ReportRevenueDetailRouter(r, db)
 
 	// Chạy server
 	port := os.Getenv("PORT")

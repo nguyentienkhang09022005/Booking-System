@@ -15,6 +15,31 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/report-revenues-detail/create": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue Detail"
+                ],
+                "parameters": [
+                    {
+                        "description": "Thông tin chi tiết báo cáo",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.RevenueCreatedEvent"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/api/report-revenues/create": {
             "post": {
                 "consumes": [
@@ -137,6 +162,32 @@ const docTemplate = `{
         "Request.ReportRevenueRequest": {
             "type": "object",
             "properties": {
+                "idHotel": {
+                    "type": "string"
+                },
+                "idUser": {
+                    "type": "string"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Request.RevenueCreatedEvent": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "idBooking": {
+                    "type": "string"
+                },
+                "idExpense": {
+                    "type": "string"
+                },
                 "idHotel": {
                     "type": "string"
                 },

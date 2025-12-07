@@ -10,6 +10,7 @@ type IReportRevenueRepository interface {
 	Create(reportRevenue *Models.ReportRevenue) (*Models.ReportRevenue, error)
 	Delete(idReportRevenue uuid.UUID) error
 	FindById(idReportRevenue uuid.UUID) (*Models.ReportRevenue, error)
+	FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRevenue, error)
 }
 type reportRevenueRepository struct {
 	_db *gorm.DB
@@ -21,8 +22,20 @@ func ReportRevenueRepository(db *gorm.DB) IReportRevenueRepository {
 }
 
 func (r *reportRevenueRepository) FindById(idReportRevenue uuid.UUID) (*Models.ReportRevenue, error) {
-	reportRevenue := Models.ReportRevenue{}
+	var reportRevenue Models.ReportRevenue
+
 	if err := r._db.Where("id_report_revenue = ?", idReportRevenue).First(&reportRevenue).Error; err != nil {
+		return nil, err
+	}
+	return &reportRevenue, nil
+}
+
+func (r *reportRevenueRepository) FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRevenue, error) {
+	var reportRevenue Models.ReportRevenue
+
+	if err := r._db.
+		Where("id_hotel = ? AND month = ? AND year = ?", idHotel, month, year).
+		First(&reportRevenue).Error; err != nil {
 		return nil, err
 	}
 	return &reportRevenue, nil

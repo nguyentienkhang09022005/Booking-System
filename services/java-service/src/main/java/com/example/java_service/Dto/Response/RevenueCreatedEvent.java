@@ -13,6 +13,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ExpenseCreatedEvent {
     UUID idExpense;
+    UUID idBooking;
     UUID idHotel;
     UUID idUser;
     BigDecimal amount;

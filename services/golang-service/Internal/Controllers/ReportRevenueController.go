@@ -18,7 +18,7 @@ func ReportRevenueController(reportRevenueService Services.IReportRevenueService
 	return &reportRevenueController{_reportRevenueService: reportRevenueService}
 }
 
-// CreateReportRevenue tạo báo cáo thu chi mới
+// CreateReportRevenue tạo báo cáo doanh thu mới
 // @Tags Report Revenue
 // @Accept json
 // @Produce json
