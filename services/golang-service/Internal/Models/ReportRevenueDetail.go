@@ -21,3 +21,7 @@ type ReportRevenueDetail struct {
 	Booking *Booking       `gorm:"foreignKey:IDBooking;constraint:OnDelete:CASCADE" json:"booking,omitempty"`
 	Revenue *ReportRevenue `gorm:"foreignKey:IDReportRevenue;constraint:OnDelete:CASCADE" json:"report_revenue,omitempty"`
 }
+
+func (ReportRevenueDetail) TableName() string {
+	return "report_revenue_detal"
+}

@@ -40,6 +40,21 @@ info:
   title: Golang-Service API
   version: "1.0"
 paths:
+  /api/report-revenues/{idReportRevenue}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID báo cáo (UUID)
+        in: path
+        name: idReportRevenue
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
   /api/report-revenues/create:
     post:
       consumes:

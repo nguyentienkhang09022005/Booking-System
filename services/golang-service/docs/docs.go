@@ -40,6 +40,29 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/api/report-revenues/{idReportRevenue}": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID báo cáo (UUID)",
+                        "name": "idReportRevenue",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/api/v1/payments": {
             "post": {
                 "consumes": [

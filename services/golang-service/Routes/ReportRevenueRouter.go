@@ -10,11 +10,15 @@ import (
 
 func ReportRevenueRouter(router *gin.Engine, db *gorm.DB) {
 	reportRevenueRepository := Repositories.ReportRevenueRepository(db)
-	reportRevenueService := Services.ReportRevenueService(reportRevenueRepository)
+	hotelRepository := Repositories.HotelRepository(db)
+	userRepository := Repositories.UserRepository(db)
+
+	reportRevenueService := Services.ReportRevenueService(reportRevenueRepository, hotelRepository, userRepository)
 	reportRevenueController := Controllers.ReportRevenueController(reportRevenueService)
 
 	reportRevenueRoutes := router.Group("/api/report-revenues")
 	{
 		reportRevenueRoutes.POST("/create", reportRevenueController.CreateReportRevenue)
+		reportRevenueRoutes.DELETE("/:idReportRevenue", reportRevenueController.DeleteReportRevenue)
 	}
 }
