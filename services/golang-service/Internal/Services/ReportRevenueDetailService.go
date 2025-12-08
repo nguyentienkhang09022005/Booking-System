@@ -82,9 +82,11 @@ func (r *reportRevenueDetailService) CreateReportRevenueDetail(revenueCreatedEve
 
 	if revenueCreatedEvent.IDBooking != nil {
 		detail.TypeRevenue = Constants.TypeIncome
-		detail.IDBooking = *revenueCreatedEvent.IDBooking
+		detail.IDBooking = revenueCreatedEvent.IDBooking
+		detail.IDExpense = nil
 	} else {
 		detail.TypeRevenue = Constants.TypeExpense
+		detail.IDBooking = nil
 		detail.IDExpense = revenueCreatedEvent.IDExpense
 	}
 

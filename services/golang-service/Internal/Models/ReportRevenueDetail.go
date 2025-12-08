@@ -13,9 +13,9 @@ type ReportRevenueDetail struct {
 	CreateAt        time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại
-	IDReportRevenue uuid.UUID `gorm:"type:uuid" json:"id_report_revenue"`
-	IDBooking       uuid.UUID `gorm:"type:uuid" json:"id_booking"`
-	IDExpense       uuid.UUID `gorm:"type:uuid" json:"id_expense"`
+	IDReportRevenue uuid.UUID  `gorm:"type:uuid" json:"id_report_revenue"`
+	IDBooking       *uuid.UUID `gorm:"type:uuid" json:"id_booking"`
+	IDExpense       *uuid.UUID `gorm:"type:uuid" json:"id_expense"`
 
 	// Quan hệ
 	Booking *Booking       `gorm:"foreignKey:IDBooking;constraint:OnDelete:CASCADE" json:"booking,omitempty"`
@@ -23,5 +23,5 @@ type ReportRevenueDetail struct {
 }
 
 func (ReportRevenueDetail) TableName() string {
-	return "report_revenue_detal"
+	return "report_revenue_detail"
 }

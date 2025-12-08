@@ -47,7 +47,7 @@ func main() {
 	// Chạy server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8081"
 	}
 	addr := fmt.Sprintf(":%s", port)
 	r.Run(addr)

@@ -1,6 +1,7 @@
 package Repositories
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"payment-service/Internal/Models"
@@ -33,9 +34,14 @@ func (r *reportRevenueRepository) FindById(idReportRevenue uuid.UUID) (*Models.R
 func (r *reportRevenueRepository) FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRevenue, error) {
 	var reportRevenue Models.ReportRevenue
 
-	if err := r._db.
+	err := r._db.
 		Where("id_hotel = ? AND month = ? AND year = ?", idHotel, month, year).
-		First(&reportRevenue).Error; err != nil {
+		First(&reportRevenue).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &reportRevenue, nil

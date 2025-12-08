@@ -12,10 +12,10 @@ import (
 
 func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDetailService) {
 	_ = godotenv.Load(".env")
-	urlRabbitMQ := os.Getenv("URL_RABBITMQ")
+	url_rabbitMQ := os.Getenv("URL_RABBITMQ")
 	queueName := os.Getenv("QUEUE_NAME")
 
-	conn, err := amqp091.Dial(urlRabbitMQ)
+	conn, err := amqp091.Dial(url_rabbitMQ)
 	if err != nil {
 		log.Fatalf("Không thể kết nối đến RabbitMQ: %v", err)
 	}
@@ -25,6 +25,7 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 		log.Fatalf("Không thể tạo channel: %v", err)
 	}
 
+	// FIX: Khai báo queue trước khi consume
 	_, err = ch.QueueDeclare(
 		queueName,
 		true,

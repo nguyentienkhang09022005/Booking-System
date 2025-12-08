@@ -3,7 +3,7 @@ package Request
 import "github.com/google/uuid"
 
 type RevenueCreatedEvent struct {
-	IDExpense uuid.UUID  `json:"idExpense"`
+	IDExpense *uuid.UUID `json:"idExpense"`
 	IDBooking *uuid.UUID `json:"idBooking"`
 	IDHotel   uuid.UUID  `json:"idHotel"`
 	IDUser    uuid.UUID  `json:"idUser"`
