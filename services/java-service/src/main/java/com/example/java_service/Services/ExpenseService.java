@@ -3,7 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Dto.Request.ExpenseCreationRequest;
 import com.example.java_service.Dto.Request.ExpenseUpdateRequest;
-import com.example.java_service.Dto.Response.ExpenseCreatedEvent;
+import com.example.java_service.Dto.Response.RevenueCreatedEvent;
 import com.example.java_service.Dto.Response.ExpenseResponse;
 import com.example.java_service.Dto.Response.InfUserCreatedExpenseResponse;
 import com.example.java_service.Exception.ApiException;
@@ -123,26 +123,26 @@ public class ExpenseService
 
         Expense savedExpense = expenseRepository.save(expense);
 
-//        // event
-//        ExpenseCreatedEvent event = ExpenseCreatedEvent.builder()
-//                .idExpense(savedExpense.getIdExpense())
-//                .idHotel(savedExpense.getHotel().getIdHotel())
-//                .idUser(savedExpense.getUser().getIdUser())
-//                .amount(savedExpense.getAmount())
-//                .month(savedExpense.getCreateAt().getMonthValue())
-//                .year(savedExpense.getCreateAt().getYear())
-//                .build();
-//
-//        try {
-//            String message = objectMapper.writeValueAsString(event);
-//            rabbitTemplate.convertAndSend(
-//                    rabbitConfig.EXCHANGE_NAME,
-//                    rabbitConfig.ROUTING_KEY,
-//                    message
-//            );
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
+        // Gửi sự kiện vào Exchanges
+        RevenueCreatedEvent event = RevenueCreatedEvent.builder()
+                .idExpense(savedExpense.getIdExpense())
+                .idHotel(savedExpense.getHotel().getIdHotel())
+                .idUser(savedExpense.getUser().getIdUser())
+                .amount(savedExpense.getAmount())
+                .month(savedExpense.getCreateAt().getMonthValue())
+                .year(savedExpense.getCreateAt().getYear())
+                .build();
+
+        try {
+            String message = objectMapper.writeValueAsString(event);
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_NAME,
+                    rabbitConfig.ROUTING_KEY,
+                    message
+            );
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
         ExpenseResponse expenseResponse = expenseMapper.toExpenseResponse(savedExpense);
         String avatarUrl = imagesRepository.findByRefId(user.getIdUser().toString())

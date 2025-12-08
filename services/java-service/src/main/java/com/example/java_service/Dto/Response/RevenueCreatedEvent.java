@@ -11,7 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ExpenseCreatedEvent {
+public class RevenueCreatedEvent {
     UUID idExpense;
     UUID idBooking;
     UUID idHotel;
