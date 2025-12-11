@@ -65,6 +65,43 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/api/report-revenues/inf-report-revenue-by-month": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Hotel",
+                        "name": "idHotel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Tháng",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Năm",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/api/report-revenues/{idReportRevenue}": {
             "delete": {
                 "consumes": [

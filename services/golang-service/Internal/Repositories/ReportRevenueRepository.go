@@ -35,6 +35,7 @@ func (r *reportRevenueRepository) FindByMonthAndYear(idHotel uuid.UUID, month in
 	var reportRevenue Models.ReportRevenue
 
 	err := r._db.
+		Preload("Details").
 		Where("id_hotel = ? AND month = ? AND year = ?", idHotel, month, year).
 		First(&reportRevenue).Error
 

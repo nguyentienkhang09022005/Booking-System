@@ -7,6 +7,6 @@ import (
 )
 
 func SwaggerRouter(router *gin.Engine) {
-	// http://localhost:8080/swagger/index.html
+	// http://localhost:8081/swagger/index.html
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

@@ -13,7 +13,6 @@ import (
 
 type IReportRevenueDetailService interface {
 	CreateReportRevenueDetail(revenueCreatedEvent Request.RevenueCreatedEvent) (*Response.ReportRevenueDetailResponse, error)
-	//DeleteReportRevenueDetail(idReportRevenueDetail uuid.UUID) error
 }
 
 type reportRevenueDetailService struct {

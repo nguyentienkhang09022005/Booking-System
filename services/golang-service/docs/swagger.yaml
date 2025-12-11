@@ -100,6 +100,31 @@ paths:
       responses: {}
       tags:
       - Report Revenue
+  /api/report-revenues/inf-report-revenue-by-month:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID Hotel
+        in: query
+        name: idHotel
+        required: true
+        type: string
+      - description: Tháng
+        in: query
+        name: month
+        required: true
+        type: integer
+      - description: Năm
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
   /api/v1/payments:
     post:
       consumes:

@@ -8,6 +8,7 @@ import (
 	"payment-service/Internal/Errors"
 	"payment-service/Internal/Helper"
 	"payment-service/Internal/Services"
+	"strconv"
 )
 
 type reportRevenueController struct {
@@ -16,6 +17,55 @@ type reportRevenueController struct {
 
 func ReportRevenueController(reportRevenueService Services.IReportRevenueService) *reportRevenueController {
 	return &reportRevenueController{_reportRevenueService: reportRevenueService}
+}
+
+// GetInfReportByMonth Lấy thông cáo doanh thu theo tháng
+// @Tags Report Revenue
+// @Accept json
+// @Produce json
+// @Param idHotel query string true "ID Hotel" format:uuid
+// @Param month query int true "Tháng"
+// @Param year query int true "Năm"
+// @Router /api/report-revenues/inf-report-revenue-by-month [get]
+func (r *reportRevenueController) GetInfReportByMonth(c *gin.Context) {
+	idHotelStr := c.Query("idHotel")
+	monthStr := c.Query("month")
+	yearStr := c.Query("year")
+
+	if idHotelStr == "" || monthStr == "" || yearStr == "" {
+		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idHotel, month và year!")
+		return
+	}
+
+	idHotelUUID, err := uuid.Parse(idHotelStr)
+	if err != nil {
+		Helper.Error(c, http.StatusBadRequest, "ID Hotel không đúng định dạng UUID!")
+		return
+	}
+
+	month, err := strconv.Atoi(monthStr)
+	if err != nil {
+		Helper.Error(c, http.StatusBadRequest, "Month phải là số nguyên!")
+		return
+	}
+
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		Helper.Error(c, http.StatusBadRequest, "Year phải là số nguyên!")
+		return
+	}
+
+	reportRevenueResponse, err := r._reportRevenueService.GetInfReportByMonth(idHotelUUID, month, year)
+	if err != nil {
+		if customErr, ok := err.(*Errors.ApiError); ok {
+			Helper.Error(c, customErr.Status, customErr.Message)
+			return
+		}
+
+		Helper.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	Helper.Success(c, "Lấy thông tin báo cáo doanh thu thành công!", reportRevenueResponse)
 }
 
 // CreateReportRevenue tạo báo cáo doanh thu mới
@@ -69,6 +119,5 @@ func (r *reportRevenueController) DeleteReportRevenue(c *gin.Context) {
 		Helper.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-
 	Helper.Success(c, "Xóa báo cáo doanh thu thành công!", nil)
 }

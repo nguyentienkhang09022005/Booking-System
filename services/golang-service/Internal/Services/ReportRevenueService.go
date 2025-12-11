@@ -11,6 +11,7 @@ import (
 )
 
 type IReportRevenueService interface {
+	GetInfReportByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error)
 	CreateReportRevenue(reportRevenueRequest Request.ReportRevenueRequest) (*Response.ReportRevenueResponse, error)
 	DeleteReportRevenue(idReportRevenue uuid.UUID) error
 }
@@ -29,6 +30,48 @@ func ReportRevenueService(reportRevenueRepository Repositories.IReportRevenueRep
 		_hotelRepository:         hotelRepository,
 		_userRepository:          userRepository,
 	}
+}
+
+func (r *reportRevenueService) GetInfReportByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error) {
+	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(idHotel, month, year)
+
+	if err != nil {
+		return nil, Errors.New(http.StatusNotFound, Errors.ReportRevenueNotFound)
+	}
+
+	var totalIncome float64 = 0
+	var totalExpense float64 = 0
+	var detailsResponse []Response.ReportRevenueDetailResponse
+
+	for _, detail := range reportRevenueExisted.Details {
+		detailsResponse = append(detailsResponse, Response.ReportRevenueDetailResponse{
+			IDRevenueDetail: detail.IDRevenueDetail,
+			TypeRevenue:     detail.TypeRevenue,
+			Amount:          detail.Amount,
+			CreateAt:        detail.CreateAt,
+		})
+
+		if detail.TypeRevenue == "Income" {
+			totalIncome += detail.Amount
+		} else if detail.TypeRevenue == "Expense" {
+			totalExpense += detail.Amount
+		}
+	}
+
+	profit := totalIncome - totalExpense
+
+	response := &Response.ReportRevenueResponse{
+		IDReportRevenue: reportRevenueExisted.IDReportRevenue,
+		Month:           reportRevenueExisted.Month,
+		Year:            reportRevenueExisted.Year,
+		TotalRevenue:    totalIncome,
+		TotalIncome:     totalIncome,
+		TotalExpense:    totalExpense,
+		Profit:          profit,
+		CreateAt:        reportRevenueExisted.CreateAt,
+		Details:         detailsResponse,
+	}
+	return response, nil
 }
 
 func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.ReportRevenueRequest) (*Response.ReportRevenueResponse, error) {
@@ -53,7 +96,6 @@ func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.
 		IDReportRevenue: createdReportRevenue.IDReportRevenue,
 		Month:           createdReportRevenue.Month,
 		Year:            createdReportRevenue.Year,
-		TotalRevenue:    createdReportRevenue.TotalRevenue,
 		CreateAt:        createdReportRevenue.CreateAt,
 	}
 	return response, nil

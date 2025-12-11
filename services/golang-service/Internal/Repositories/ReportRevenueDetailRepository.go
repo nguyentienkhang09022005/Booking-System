@@ -8,7 +8,6 @@ import (
 
 type IReportRevenueDetailRepository interface {
 	Create(reportRevenueDetail *Models.ReportRevenueDetail) (*Models.ReportRevenueDetail, error)
-	Delete(idReportRevenueDetail uuid.UUID) error
 	FindById(idReportRevenueDetail uuid.UUID) (*Models.ReportRevenueDetail, error)
 }
 type reportRevenueDetailRepository struct {
@@ -35,16 +34,4 @@ func (r *reportRevenueDetailRepository) Create(reportRevenueDetail *Models.Repor
 		return nil, err
 	}
 	return reportRevenueDetail, nil
-}
-
-func (r *reportRevenueDetailRepository) Delete(idReportRevenueDetail uuid.UUID) error {
-	result := r._db.Delete(&Models.ReportRevenueDetail{}, "id_revenue_detail = ?", idReportRevenueDetail)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
 }

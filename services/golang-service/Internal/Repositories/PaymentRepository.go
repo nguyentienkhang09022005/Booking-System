@@ -29,18 +29,6 @@ func (p *paymentRepository) Create(payment *Models.Payment) (*Models.Payment, er
 	return payment, nil
 }
 
-//	func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
-//		var payment Models.Payment
-//		err := p._db.
-//			Preload("Booking").
-//			Where("id_app_trans = ?", IDAppTrans).
-//			First(&payment).Error
-//
-//		if err != nil {
-//			return nil, err
-//		}
-//		return &payment, nil
-//	}
 func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
 	var payment Models.Payment
 
