@@ -146,7 +146,6 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 	// Tìm giao dịch trong db
 	payment, err := p._paymentRepository.FindByAppTransID(zaloPayCallBackData.AppTransID)
 	if err != nil {
-		fmt.Printf("LỖI [ResolveCallBack]: Không tìm thấy transaction %s\n", zaloPayCallBackData.AppTransID)
 		return fmt.Errorf("Không tìm thấy giao dịch!")
 	}
 
@@ -154,41 +153,30 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 		return nil
 	}
 
-	// ... (Giữ nguyên đoạn Update Status) ...
-
-	// --- BẮT ĐẦU DEBUG LOG ---
-	fmt.Println("---------------------------------------------------")
-	fmt.Printf("DEBUG ZALOPAY CALLBACK:\n")
-	fmt.Printf("- IDBooking: %s\n", payment.IDBooking)
-	fmt.Printf("- IDHotel (Extracted): %s\n", payment.Booking.IDHotel)
-	fmt.Println("---------------------------------------------------")
-
-	// Kiểm tra dữ liệu trước khi gọi service báo cáo
-	if payment.Booking.IDHotel == uuid.Nil {
-		fmt.Println("LỖI [ResolveCallBack]: IDHotel bị rỗng (0000...) -> Không thể tạo báo cáo.")
-		// Tạm thời return nil để ZaloPay không báo lỗi 500 liên tục, nhưng log lại để bạn sửa data
-		return nil
+	// Cập nhật trạng thái thành công
+	zpTransIdString := fmt.Sprintf("%d", zaloPayCallBackData.ZpTransID)
+	err = p._paymentRepository.UpdateStatus(payment.IDPayment, zpTransIdString, Constants.StatusSuccess)
+	if err != nil {
+		return fmt.Errorf("Cập nhật trạng thái giao dịch thất bại!: %w", err)
 	}
 
 	now := time.Now()
+	month := int(now.Month())
+	year := now.Year()
 
 	revenueEvent := Request.RevenueCreatedEvent{
 		IDBooking: &payment.IDBooking,
 		IDExpense: nil,
-		IDHotel:   payment.Booking.IDHotel, // Đảm bảo trường này không rỗng
+		IDHotel:   payment.Booking.IDHotel,
 		Amount:    payment.Amount,
-		Month:     int(now.Month()),
-		Year:      now.Year(),
+		Month:     month,
+		Year:      year,
 	}
 
 	_, err = p._reportRevenueDetailService.CreateReportRevenueDetail(revenueEvent)
 	if err != nil {
-		// IN LỖI RA MÀN HÌNH ĐỂ THẤY
-		fmt.Printf("LỖI [CreateReportRevenueDetail]: %v\n", err)
 		return fmt.Errorf("Lỗi tạo báo cáo doanh thu: %w", err)
 	}
-
-	fmt.Println("THÀNH CÔNG: Đã cập nhật thanh toán và tạo báo cáo.")
 	return nil
 }
 

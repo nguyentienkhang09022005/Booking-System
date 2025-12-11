@@ -29,45 +29,19 @@ func (p *paymentRepository) Create(payment *Models.Payment) (*Models.Payment, er
 	return payment, nil
 }
 
-//	func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
-//		var payment Models.Payment
-//		err := p._db.
-//			Preload("Booking").
-//			Where("id_app_trans = ?", IDAppTrans).
-//			First(&payment).Error
-//
-//		if err != nil {
-//			return nil, err
-//		}
-//		return &payment, nil
-//	}
 func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
 	var payment Models.Payment
-
-	// 1. Tìm Payment trước
 	err := p._db.
+		Preload("Booking").
 		Where("id_app_trans = ?", IDAppTrans).
 		First(&payment).Error
 
 	if err != nil {
 		return nil, err
 	}
-
-	// 2. Query thủ công bảng Booking để lấy thông tin (An toàn hơn Preload trong trường hợp này)
-	// Vì bạn đã thêm func TableName() return "booking" nên GORM sẽ tìm đúng bảng
-	var booking Models.Booking
-	errBooking := p._db.Where("id_booking = ?", payment.IDBooking).First(&booking).Error
-
-	if errBooking == nil {
-		// Gán ngược lại vào payment
-		payment.Booking = booking
-	} else {
-		// Log lỗi nếu không tìm thấy booking (để debug)
-		// fmt.Printf("CẢNH BÁO: Không tìm thấy Booking ID %s trong DB\n", payment.IDBooking)
-	}
-
 	return &payment, nil
 }
+
 func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error {
 	return p._db.Model(&Models.Payment{}).
 		Where("id_payment = ?", idPayment).
