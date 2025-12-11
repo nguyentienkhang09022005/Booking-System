@@ -25,7 +25,6 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 		log.Fatalf("Không thể tạo channel: %v", err)
 	}
 
-	// FIX: Khai báo queue trước khi consume
 	_, err = ch.QueueDeclare(
 		queueName,
 		true,

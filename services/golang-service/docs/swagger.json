@@ -5,7 +5,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:8081",
     "basePath": "/",
     "paths": {
         "/api/report-revenues-detail/create": {
@@ -158,9 +158,6 @@
                 "idHotel": {
                     "type": "string"
                 },
-                "idUser": {
-                    "type": "string"
-                },
                 "month": {
                     "type": "integer"
                 },
@@ -182,9 +179,6 @@
                     "type": "string"
                 },
                 "idHotel": {
-                    "type": "string"
-                },
-                "idUser": {
                     "type": "string"
                 },
                 "month": {

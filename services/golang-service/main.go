@@ -14,7 +14,7 @@ import (
 
 // @title Golang-Service API
 // @version 1.0
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /
 func main() {
 	// Kết nối database

@@ -165,9 +165,6 @@ const docTemplate = `{
                 "idHotel": {
                     "type": "string"
                 },
-                "idUser": {
-                    "type": "string"
-                },
                 "month": {
                     "type": "integer"
                 },
@@ -189,9 +186,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "idHotel": {
-                    "type": "string"
-                },
-                "idUser": {
                     "type": "string"
                 },
                 "month": {
@@ -223,7 +217,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:8081",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Golang-Service API",

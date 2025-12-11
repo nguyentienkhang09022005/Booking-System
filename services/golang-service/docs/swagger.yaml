@@ -17,8 +17,6 @@ definitions:
     properties:
       idHotel:
         type: string
-      idUser:
-        type: string
       month:
         type: integer
       year:
@@ -33,8 +31,6 @@ definitions:
       idExpense:
         type: string
       idHotel:
-        type: string
-      idUser:
         type: string
       month:
         type: integer
@@ -51,7 +47,7 @@ definitions:
     - data
     - mac
     type: object
-host: localhost:8080
+host: localhost:8081
 info:
   contact: {}
   title: Golang-Service API
