@@ -3,6 +3,7 @@ package Services
 import (
 	"github.com/google/uuid"
 	"net/http"
+	"payment-service/Constants"
 	"payment-service/Internal/Dtos/Request"
 	"payment-service/Internal/Dtos/Response"
 	"payment-service/Internal/Errors"
@@ -51,23 +52,20 @@ func (r *reportRevenueService) GetInfReportByMonth(idHotel uuid.UUID, month int,
 			CreateAt:        detail.CreateAt,
 		})
 
-		if detail.TypeRevenue == "Income" {
+		if detail.TypeRevenue == Constants.TypeIncome {
 			totalIncome += detail.Amount
-		} else if detail.TypeRevenue == "Expense" {
+		} else if detail.TypeRevenue == Constants.TypeExpense {
 			totalExpense += detail.Amount
 		}
 	}
-
-	profit := totalIncome - totalExpense
 
 	response := &Response.ReportRevenueResponse{
 		IDReportRevenue: reportRevenueExisted.IDReportRevenue,
 		Month:           reportRevenueExisted.Month,
 		Year:            reportRevenueExisted.Year,
-		TotalRevenue:    totalIncome,
+		TotalRevenue:    totalIncome - totalExpense,
 		TotalIncome:     totalIncome,
 		TotalExpense:    totalExpense,
-		Profit:          profit,
 		CreateAt:        reportRevenueExisted.CreateAt,
 		Details:         detailsResponse,
 	}

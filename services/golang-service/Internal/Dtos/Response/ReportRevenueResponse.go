@@ -12,7 +12,6 @@ type ReportRevenueResponse struct {
 	TotalRevenue    float64                       `json:"totalRevenue"`
 	TotalIncome     float64                       `json:"totalIncome"`
 	TotalExpense    float64                       `json:"totalExpense"`
-	Profit          float64                       `json:"profit"`
 	CreateAt        time.Time                     `json:"createAt"`
 	Details         []ReportRevenueDetailResponse `json:"reportDetails,omitempty"`
 }
