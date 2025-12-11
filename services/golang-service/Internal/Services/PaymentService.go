@@ -160,23 +160,26 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 		return fmt.Errorf("Cập nhật trạng thái giao dịch thất bại!: %w", err)
 	}
 
+	if payment.Booking.IDHotel == uuid.Nil {
+		return nil
+	}
+
 	now := time.Now()
-	month := int(now.Month())
-	year := now.Year()
 
 	revenueEvent := Request.RevenueCreatedEvent{
 		IDBooking: &payment.IDBooking,
 		IDExpense: nil,
 		IDHotel:   payment.Booking.IDHotel,
 		Amount:    payment.Amount,
-		Month:     month,
-		Year:      year,
+		Month:     int(now.Month()),
+		Year:      now.Year(),
 	}
 
 	_, err = p._reportRevenueDetailService.CreateReportRevenueDetail(revenueEvent)
 	if err != nil {
 		return fmt.Errorf("Lỗi tạo báo cáo doanh thu: %w", err)
 	}
+	fmt.Println("Đã cập nhật thanh toán và tạo báo cáo.")
 	return nil
 }
 

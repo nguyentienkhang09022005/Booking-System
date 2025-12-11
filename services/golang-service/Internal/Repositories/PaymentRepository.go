@@ -29,19 +29,39 @@ func (p *paymentRepository) Create(payment *Models.Payment) (*Models.Payment, er
 	return payment, nil
 }
 
+//	func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
+//		var payment Models.Payment
+//		err := p._db.
+//			Preload("Booking").
+//			Where("id_app_trans = ?", IDAppTrans).
+//			First(&payment).Error
+//
+//		if err != nil {
+//			return nil, err
+//		}
+//		return &payment, nil
+//	}
 func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
 	var payment Models.Payment
+
 	err := p._db.
-		Preload("Booking").
 		Where("id_app_trans = ?", IDAppTrans).
 		First(&payment).Error
 
 	if err != nil {
 		return nil, err
 	}
+
+	var booking Models.Booking
+	errBooking := p._db.Where("id_booking = ?", payment.IDBooking).First(&booking).Error
+
+	if errBooking == nil {
+		payment.Booking = booking
+	} else {
+	}
+
 	return &payment, nil
 }
-
 func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error {
 	return p._db.Model(&Models.Payment{}).
 		Where("id_payment = ?", idPayment).
