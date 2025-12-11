@@ -364,26 +364,26 @@ public class BookingHandleService
                 throw new ApiException(ErrorCode.PAYMENT_FAILED);
             }
 
-            LocalDateTime now = LocalDateTime.now();
-            // Gửi sự kiện vào Exchanges
-            RevenueCreatedEvent event = RevenueCreatedEvent.builder()
-                    .idBooking(booking.getIdBooking())
-                    .idHotel(booking.getHotel().getIdHotel())
-                    .amount(booking.getTotalPrice())
-                    .month(now.getMonthValue())
-                    .year(now.getYear())
-                    .build();
-
-            try {
-                String message = objectMapper.writeValueAsString(event);
-                rabbitTemplate.convertAndSend(
-                        rabbitConfig.EXCHANGE_NAME,
-                        rabbitConfig.ROUTING_KEY,
-                        message
-                );
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+//            LocalDateTime now = LocalDateTime.now();
+//            // Gửi sự kiện vào Exchanges
+//            RevenueCreatedEvent event = RevenueCreatedEvent.builder()
+//                    .idBooking(booking.getIdBooking())
+//                    .idHotel(booking.getHotel().getIdHotel())
+//                    .amount(booking.getTotalPrice())
+//                    .month(now.getMonthValue())
+//                    .year(now.getYear())
+//                    .build();
+//
+//            try {
+//                String message = objectMapper.writeValueAsString(event);
+//                rabbitTemplate.convertAndSend(
+//                        rabbitConfig.EXCHANGE_NAME,
+//                        rabbitConfig.ROUTING_KEY,
+//                        message
+//                );
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
             return paymentResponse;
         }
         catch (Exception e) {
