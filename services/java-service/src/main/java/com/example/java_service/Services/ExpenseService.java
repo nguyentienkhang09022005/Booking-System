@@ -127,7 +127,6 @@ public class ExpenseService
         RevenueCreatedEvent event = RevenueCreatedEvent.builder()
                 .idExpense(savedExpense.getIdExpense())
                 .idHotel(savedExpense.getHotel().getIdHotel())
-                .idUser(savedExpense.getUser().getIdUser())
                 .amount(savedExpense.getAmount())
                 .month(savedExpense.getCreateAt().getMonthValue())
                 .year(savedExpense.getCreateAt().getYear())

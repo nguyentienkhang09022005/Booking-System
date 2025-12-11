@@ -15,7 +15,6 @@ public class RevenueCreatedEvent {
     UUID idExpense;
     UUID idBooking;
     UUID idHotel;
-    UUID idUser;
     BigDecimal amount;
     int month;
     int year;

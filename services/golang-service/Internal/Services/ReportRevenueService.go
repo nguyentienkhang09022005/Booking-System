@@ -32,19 +32,13 @@ func ReportRevenueService(reportRevenueRepository Repositories.IReportRevenueRep
 }
 
 func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.ReportRevenueRequest) (*Response.ReportRevenueResponse, error) {
-	_, err := r._userRepository.FindById(reportRevenueRequest.IDUser)
-	if err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.UserNotFound)
-	}
-
-	_, err = r._hotelRepository.FindById(reportRevenueRequest.IDHotel)
+	_, err := r._hotelRepository.FindById(reportRevenueRequest.IDHotel)
 	if err != nil {
 		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
 	}
 
 	newReportRevenue := &Models.ReportRevenue{
 		IDReportRevenue: uuid.New(),
-		IDUser:          reportRevenueRequest.IDUser,
 		IDHotel:         reportRevenueRequest.IDHotel,
 		Month:           reportRevenueRequest.Month,
 		Year:            reportRevenueRequest.Year,

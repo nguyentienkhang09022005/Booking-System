@@ -38,11 +38,6 @@ func ReportRevenueDetailService(
 
 func (r *reportRevenueDetailService) CreateReportRevenueDetail(revenueCreatedEvent Request.RevenueCreatedEvent,
 ) (*Response.ReportRevenueDetailResponse, error) {
-
-	if _, err := r._userRepository.FindById(revenueCreatedEvent.IDUser); err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.UserNotFound)
-	}
-
 	if _, err := r._hotelRepository.FindById(revenueCreatedEvent.IDHotel); err != nil {
 		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
 	}
@@ -58,7 +53,6 @@ func (r *reportRevenueDetailService) CreateReportRevenueDetail(revenueCreatedEve
 	if err != nil || reportRevenueExisted == nil {
 		reportRevenue = &Models.ReportRevenue{
 			IDReportRevenue: uuid.New(),
-			IDUser:          revenueCreatedEvent.IDUser,
 			IDHotel:         revenueCreatedEvent.IDHotel,
 			Month:           revenueCreatedEvent.Month,
 			Year:            revenueCreatedEvent.Year,
