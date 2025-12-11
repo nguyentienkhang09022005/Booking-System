@@ -332,27 +332,6 @@ public class BookingHandleService
             booking.setTotalPrice(totalPrice);
             bookingRepository.save(booking);
 
-            LocalDateTime now = LocalDateTime.now();
-            // Gửi sự kiện vào Exchanges
-            RevenueCreatedEvent event = RevenueCreatedEvent.builder()
-                    .idBooking(savedBooking.getIdBooking())
-                    .idHotel(savedBooking.getHotel().getIdHotel())
-                    .amount(savedBooking.getTotalPrice())
-                    .month(now.getMonthValue())
-                    .year(now.getYear())
-                    .build();
-
-            try {
-                String message = objectMapper.writeValueAsString(event);
-                rabbitTemplate.convertAndSend(
-                        rabbitConfig.EXCHANGE_NAME,
-                        rabbitConfig.ROUTING_KEY,
-                        message
-                );
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
             return booking;
         } catch (Exception e)
         {
@@ -385,6 +364,26 @@ public class BookingHandleService
                 throw new ApiException(ErrorCode.PAYMENT_FAILED);
             }
 
+            LocalDateTime now = LocalDateTime.now();
+            // Gửi sự kiện vào Exchanges
+            RevenueCreatedEvent event = RevenueCreatedEvent.builder()
+                    .idBooking(booking.getIdBooking())
+                    .idHotel(booking.getHotel().getIdHotel())
+                    .amount(booking.getTotalPrice())
+                    .month(now.getMonthValue())
+                    .year(now.getYear())
+                    .build();
+
+            try {
+                String message = objectMapper.writeValueAsString(event);
+                rabbitTemplate.convertAndSend(
+                        rabbitConfig.EXCHANGE_NAME,
+                        rabbitConfig.ROUTING_KEY,
+                        message
+                );
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
             return paymentResponse;
         }
         catch (Exception e) {
