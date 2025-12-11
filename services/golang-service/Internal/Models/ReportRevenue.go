@@ -15,7 +15,6 @@ type ReportRevenue struct {
 
 	// Khóa ngoại
 	IDHotel uuid.UUID `gorm:"type:uuid" json:"id_hotel"`
-	IDUser  uuid.UUID `gorm:"type:uuid" json:"id_user"`
 
 	// Quan hệ
 	Details []ReportRevenueDetail `gorm:"foreignKey:IDReportRevenue;constraint:OnDelete:CASCADE" json:"details,omitempty"`
