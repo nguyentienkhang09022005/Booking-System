@@ -47,7 +47,6 @@ definitions:
     - data
     - mac
     type: object
-host: localhost:8081
 info:
   contact: {}
   title: Golang-Service API
