@@ -1,6 +1,5 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Constant.PredefinedStatusBooking;
 import com.example.java_service.Constant.PredefinedStatusPayment;
 import com.example.java_service.Constant.PredefinedStatusRoom;
@@ -16,13 +15,11 @@ import com.example.java_service.Mappers.VoucherMapper;
 import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.*;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +30,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -62,13 +58,10 @@ public class BookingHandleService
     RoomMapper roomMapper;
     ServiceMapper serviceMapper;
     VoucherMapper voucherMapper;
-    ObjectMapper objectMapper;
     BookingRoomService bookingRoomService;
     BookingServiceService bookingServiceService;
     UserVoucherService userVoucherService;
     AppliedVoucherService appliedVoucherService;
-    RabbitTemplate rabbitTemplate;
-    RabbitConfig rabbitConfig;
 
     @NonFinal //
     BookingHandleService self;
@@ -363,27 +356,7 @@ public class BookingHandleService
             if (paymentResponse == null) {
                 throw new ApiException(ErrorCode.PAYMENT_FAILED);
             }
-
-//            LocalDateTime now = LocalDateTime.now();
-//            // Gửi sự kiện vào Exchanges
-//            RevenueCreatedEvent event = RevenueCreatedEvent.builder()
-//                    .idBooking(booking.getIdBooking())
-//                    .idHotel(booking.getHotel().getIdHotel())
-//                    .amount(booking.getTotalPrice())
-//                    .month(now.getMonthValue())
-//                    .year(now.getYear())
-//                    .build();
-//
-//            try {
-//                String message = objectMapper.writeValueAsString(event);
-//                rabbitTemplate.convertAndSend(
-//                        rabbitConfig.EXCHANGE_NAME,
-//                        rabbitConfig.ROUTING_KEY,
-//                        message
-//                );
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
+            
             return paymentResponse;
         }
         catch (Exception e) {
