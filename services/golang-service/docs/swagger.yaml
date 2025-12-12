@@ -52,118 +52,6 @@ info:
   title: Golang-Service API
   version: "1.0"
 paths:
-  /api/report-revenues-detail/create:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Thông tin chi tiết báo cáo
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/Request.RevenueCreatedEvent'
-      produces:
-      - application/json
-      responses: {}
-      tags:
-      - Report Revenue Detail
-  /api/report-revenues/{idReportRevenue}:
-    delete:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID báo cáo
-        in: path
-        name: idReportRevenue
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      tags:
-      - Report Revenue
-  /api/report-revenues/create:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Thông tin báo cáo
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/Request.ReportRevenueRequest'
-      produces:
-      - application/json
-      responses: {}
-      tags:
-      - Report Revenue
-  /api/report-revenues/inf-report-revenue-by-month:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID Hotel
-        in: query
-        name: idHotel
-        required: true
-        type: string
-      - description: Tháng
-        in: query
-        name: month
-        required: true
-        type: integer
-      - description: Năm
-        in: query
-        name: year
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      tags:
-      - Report Revenue
-  /api/report-type-room-booking/{idReportRoomBooking}:
-    delete:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID báo cáo
-        in: path
-        name: idReportRoomBooking
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses: {}
-      tags:
-      - Report Type Room Booking
-  /api/report-type-room-booking/inf-report-type-room-booking-by-month:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: ID Hotel
-        in: query
-        name: idHotel
-        required: true
-        type: string
-      - description: Tháng
-        in: query
-        name: month
-        required: true
-        type: integer
-      - description: Năm
-        in: query
-        name: year
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses: {}
-      tags:
-      - Report Type Room Booking
   /api/v1/payments:
     post:
       consumes:
@@ -196,4 +84,116 @@ paths:
       responses: {}
       tags:
       - Payment
+  /report-revenues-detail/create:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin chi tiết báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.RevenueCreatedEvent'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue Detail
+  /report-revenues/{idReportRevenue}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: idReportRevenue
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
+  /report-revenues/create:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin báo cáo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.ReportRevenueRequest'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
+  /report-revenues/inf-report-revenue-by-month:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID Hotel
+        in: query
+        name: idHotel
+        required: true
+        type: string
+      - description: Tháng
+        in: query
+        name: month
+        required: true
+        type: integer
+      - description: Năm
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
+  /report-type-room-booking/{idReportRoomBooking}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: idReportRoomBooking
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Type Room Booking
+  /report-type-room-booking/inf-report-type-room-booking-by-month:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID Hotel
+        in: query
+        name: idHotel
+        required: true
+        type: string
+      - description: Tháng
+        in: query
+        name: month
+        required: true
+        type: integer
+      - description: Năm
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Type Room Booking
 swagger: "2.0"

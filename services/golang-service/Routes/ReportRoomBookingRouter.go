@@ -16,7 +16,7 @@ func ReportRoomBookingRouter(router *gin.Engine, db *gorm.DB) {
 
 	reportRoomBookingController := Controllers.ReportRoomBookingController(reportRoomBookingService)
 
-	reportRoomBookingRoutes := router.Group("/api/report-type-room-booking")
+	reportRoomBookingRoutes := router.Group("/report-type-room-booking")
 	{
 		reportRoomBookingRoutes.GET("/inf-report-type-room-booking-by-month", reportRoomBookingController.GetInfReportRoomBookingByMonth)
 		reportRoomBookingRoutes.DELETE("/:idReportRoomBooking", reportRoomBookingController.DeleteReportRoomBooking)

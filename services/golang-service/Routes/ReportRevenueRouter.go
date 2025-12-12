@@ -16,7 +16,7 @@ func ReportRevenueRouter(router *gin.Engine, db *gorm.DB) {
 
 	reportRevenueController := Controllers.ReportRevenueController(reportRevenueService)
 
-	reportRevenueRoutes := router.Group("/api/report-revenues")
+	reportRevenueRoutes := router.Group("/report-revenues")
 	{
 		reportRevenueRoutes.GET("/inf-report-revenue-by-month", reportRevenueController.GetInfReportByMonth)
 		reportRevenueRoutes.POST("/create", reportRevenueController.CreateReportRevenue)

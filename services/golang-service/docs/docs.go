@@ -15,176 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/report-revenues-detail/create": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report Revenue Detail"
-                ],
-                "parameters": [
-                    {
-                        "description": "Thông tin chi tiết báo cáo",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/Request.RevenueCreatedEvent"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/api/report-revenues/create": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report Revenue"
-                ],
-                "parameters": [
-                    {
-                        "description": "Thông tin báo cáo",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/Request.ReportRevenueRequest"
-                        }
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/api/report-revenues/inf-report-revenue-by-month": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report Revenue"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Tháng",
-                        "name": "month",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Năm",
-                        "name": "year",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/api/report-revenues/{idReportRevenue}": {
-            "delete": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report Revenue"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID báo cáo",
-                        "name": "idReportRevenue",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/api/report-type-room-booking/inf-report-type-room-booking-by-month": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report Type Room Booking"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Tháng",
-                        "name": "month",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Năm",
-                        "name": "year",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/api/report-type-room-booking/{idReportRoomBooking}": {
-            "delete": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Report Type Room Booking"
-                ],
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID báo cáo",
-                        "name": "idReportRoomBooking",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/api/v1/payments": {
             "post": {
                 "consumes": [
@@ -230,6 +60,176 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/Request.ZaloPayCallBackRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/report-revenues-detail/create": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue Detail"
+                ],
+                "parameters": [
+                    {
+                        "description": "Thông tin chi tiết báo cáo",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.RevenueCreatedEvent"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/report-revenues/create": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "description": "Thông tin báo cáo",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.ReportRevenueRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/report-revenues/inf-report-revenue-by-month": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Hotel",
+                        "name": "idHotel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Tháng",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Năm",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/report-revenues/{idReportRevenue}": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID báo cáo",
+                        "name": "idReportRevenue",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/report-type-room-booking/inf-report-type-room-booking-by-month": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Type Room Booking"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Hotel",
+                        "name": "idHotel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Tháng",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Năm",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/report-type-room-booking/{idReportRoomBooking}": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Type Room Booking"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID báo cáo",
+                        "name": "idReportRoomBooking",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}

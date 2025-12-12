@@ -22,7 +22,7 @@ func ReportRevenueDetailController(reportRevenueDetailService Services.IReportRe
 // @Accept json
 // @Produce json
 // @Param request body Request.RevenueCreatedEvent true "Thông tin chi tiết báo cáo"
-// @Router /api/report-revenues-detail/create [post]
+// @Router /report-revenues-detail/create [post]
 func (r *reportRevenueDetailController) CreateReportRevenueDetail(c *gin.Context) {
 	var revenueCreatedEvent Request.RevenueCreatedEvent
 	if err := c.ShouldBindJSON(&revenueCreatedEvent); err != nil {

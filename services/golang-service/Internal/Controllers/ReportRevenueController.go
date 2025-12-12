@@ -26,7 +26,7 @@ func ReportRevenueController(reportRevenueService Services.IReportRevenueService
 // @Param idHotel query string true "ID Hotel" format:uuid
 // @Param month query int true "Tháng"
 // @Param year query int true "Năm"
-// @Router /api/report-revenues/inf-report-revenue-by-month [get]
+// @Router /report-revenues/inf-report-revenue-by-month [get]
 func (r *reportRevenueController) GetInfReportByMonth(c *gin.Context) {
 	idHotelStr := c.Query("idHotel")
 	monthStr := c.Query("month")
@@ -73,7 +73,7 @@ func (r *reportRevenueController) GetInfReportByMonth(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body Request.ReportRevenueRequest true "Thông tin báo cáo"
-// @Router /api/report-revenues/create [post]
+// @Router /report-revenues/create [post]
 func (r *reportRevenueController) CreateReportRevenue(c *gin.Context) {
 	var reportRevenueRequest Request.ReportRevenueRequest
 	if err := c.ShouldBindJSON(&reportRevenueRequest); err != nil {
@@ -98,7 +98,7 @@ func (r *reportRevenueController) CreateReportRevenue(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param idReportRevenue path string true "ID báo cáo"
-// @Router /api/report-revenues/{idReportRevenue} [delete]
+// @Router /report-revenues/{idReportRevenue} [delete]
 func (r *reportRevenueController) DeleteReportRevenue(c *gin.Context) {
 	idReportRevenueStr := c.Param("idReportRevenue")
 

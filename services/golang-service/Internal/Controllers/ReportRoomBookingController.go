@@ -25,7 +25,7 @@ func ReportRoomBookingController(reportRoomBookingService Services.IReportRoomBo
 // @Param idHotel query string true "ID Hotel" format:uuid
 // @Param month query int true "Tháng"
 // @Param year query int true "Năm"
-// @Router /api/report-type-room-booking/inf-report-type-room-booking-by-month [get]
+// @Router /report-type-room-booking/inf-report-type-room-booking-by-month [get]
 func (r *reportRoomBookingController) GetInfReportRoomBookingByMonth(c *gin.Context) {
 	idHotelStr := c.Query("idHotel")
 	monthStr := c.Query("month")
@@ -72,7 +72,7 @@ func (r *reportRoomBookingController) GetInfReportRoomBookingByMonth(c *gin.Cont
 // @Accept json
 // @Produce json
 // @Param idReportRoomBooking path string true "ID báo cáo"
-// @Router /api/report-type-room-booking/{idReportRoomBooking} [delete]
+// @Router /report-type-room-booking/{idReportRoomBooking} [delete]
 func (r *reportRoomBookingController) DeleteReportRoomBooking(c *gin.Context) {
 	idReportRoomBookingStr := c.Param("idReportRoomBooking")
 
