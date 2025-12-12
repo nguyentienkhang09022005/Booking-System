@@ -12,9 +12,8 @@ func ReportRevenueDetailRouter(router *gin.Engine, db *gorm.DB) {
 	reportRevenueRepository := Repositories.ReportRevenueRepository(db)
 	reportRevenueDetailRepository := Repositories.ReportRevenueDetailRepository(db)
 	hotelRepository := Repositories.HotelRepository(db)
-	userRepository := Repositories.UserRepository(db)
 
-	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository, userRepository)
+	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository)
 
 	reportRevenueDetailController := Controllers.ReportRevenueDetailController(reportRevenueDetailService)
 

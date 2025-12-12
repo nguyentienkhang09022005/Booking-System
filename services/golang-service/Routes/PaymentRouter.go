@@ -16,14 +16,11 @@ func PaymentRouter(router *gin.Engine, db *gorm.DB) {
 	reportRevenueDetailRepository := Repositories.ReportRevenueDetailRepository(db)
 
 	hotelRepository := Repositories.HotelRepository(db)
-	userRepository := Repositories.UserRepository(db)
 
 	reportRevenueDetailService := Services.ReportRevenueDetailService(
 		reportRevenueRepository,
 		reportRevenueDetailRepository,
-		hotelRepository,
-		userRepository,
-	)
+		hotelRepository)
 
 	paymentService := Services.PaymentService(paymentRepository, reportRevenueDetailService)
 

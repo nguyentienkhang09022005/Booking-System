@@ -74,7 +74,7 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: ID báo cáo (UUID)
+      - description: ID báo cáo
         in: path
         name: idReportRevenue
         required: true
@@ -125,6 +125,46 @@ paths:
       responses: {}
       tags:
       - Report Revenue
+  /api/report-type-room-booking/{idReportRoomBooking}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID báo cáo
+        in: path
+        name: idReportRoomBooking
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Type Room Booking
+  /api/report-type-room-booking/inf-report-type-room-booking-by-month:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID Hotel
+        in: query
+        name: idHotel
+        required: true
+        type: string
+      - description: Tháng
+        in: query
+        name: month
+        required: true
+        type: integer
+      - description: Năm
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Type Room Booking
   /api/v1/payments:
     post:
       consumes:

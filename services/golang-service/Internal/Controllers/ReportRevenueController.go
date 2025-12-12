@@ -19,7 +19,7 @@ func ReportRevenueController(reportRevenueService Services.IReportRevenueService
 	return &reportRevenueController{_reportRevenueService: reportRevenueService}
 }
 
-// GetInfReportByMonth Lấy thông cáo doanh thu theo tháng
+// GetInfReportByMonth Lấy thông báo cáo doanh thu theo tháng
 // @Tags Report Revenue
 // @Accept json
 // @Produce json
@@ -97,7 +97,7 @@ func (r *reportRevenueController) CreateReportRevenue(c *gin.Context) {
 // @Tags Report Revenue
 // @Accept json
 // @Produce json
-// @Param idReportRevenue path string true "ID báo cáo (UUID)"
+// @Param idReportRevenue path string true "ID báo cáo"
 // @Router /api/report-revenues/{idReportRevenue} [delete]
 func (r *reportRevenueController) DeleteReportRevenue(c *gin.Context) {
 	idReportRevenueStr := c.Param("idReportRevenue")

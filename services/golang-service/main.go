@@ -28,9 +28,8 @@ func main() {
 
 	reportRevenueRepository := Repositories.ReportRevenueRepository(db)
 	reportRevenueDetailRepository := Repositories.ReportRevenueDetailRepository(db)
-	userRepository := Repositories.UserRepository(db)
 	hotelRepository := Repositories.HotelRepository(db)
-	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository, userRepository)
+	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository)
 
 	// Khởi động RabbitMQ consumer
 	go RabbitMQ.StartRevenueConsumer(reportRevenueDetailService)
@@ -43,6 +42,7 @@ func main() {
 	Routes.PaymentRouter(r, db)
 	Routes.ReportRevenueRouter(r, db)
 	Routes.ReportRevenueDetailRouter(r, db)
+	Routes.ReportRoomBookingRouter(r, db)
 
 	// Chạy server
 	port := os.Getenv("PORT")

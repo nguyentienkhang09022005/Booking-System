@@ -17,6 +17,10 @@ var (
 	HotelNotFound = ErrorCode{Code: 404, Message: "Không tìm thấy khách sạn!"}
 
 	// Report Revenue
-	RevenueExists         = ErrorCode{Code: 400, Message: "Báo cáo đã tồn tại trong tháng này!"}
+	RevenueExists         = ErrorCode{Code: 409, Message: "Báo cáo đã tồn tại trong tháng này!"}
 	ReportRevenueNotFound = ErrorCode{Code: 404, Message: "Không tìm thấy báo cáo doanh thu!"}
+
+	// Report Room Booking
+	ReportRoomBookingExists   = ErrorCode{Code: 409, Message: "Báo cáo đã tồn tại trong tháng này!"}
+	ReportRoomBookingNotFound = ErrorCode{Code: 404, Message: "Không tìm thấy báo cáo loại phòng!"}
 )

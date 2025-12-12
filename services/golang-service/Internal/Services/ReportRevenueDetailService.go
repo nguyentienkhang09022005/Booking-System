@@ -19,19 +19,16 @@ type reportRevenueDetailService struct {
 	_reportRevenueRepository       Repositories.IReportRevenueRepository
 	_reportRevenueDetailRepository Repositories.IReportRevenueDetailRepository
 	_hotelRepository               Repositories.IHotelRepository
-	_userRepository                Repositories.IUserRepository
 }
 
 func ReportRevenueDetailService(
 	reportRevenueRepository Repositories.IReportRevenueRepository,
 	reportRevenueDetailRepository Repositories.IReportRevenueDetailRepository,
-	hotelRepository Repositories.IHotelRepository,
-	userRepository Repositories.IUserRepository) IReportRevenueDetailService {
+	hotelRepository Repositories.IHotelRepository) IReportRevenueDetailService {
 	return &reportRevenueDetailService{
 		_reportRevenueRepository:       reportRevenueRepository,
 		_reportRevenueDetailRepository: reportRevenueDetailRepository,
 		_hotelRepository:               hotelRepository,
-		_userRepository:                userRepository,
 	}
 }
 

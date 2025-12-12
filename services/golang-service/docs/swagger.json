@@ -109,8 +109,68 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID báo cáo (UUID)",
+                        "description": "ID báo cáo",
                         "name": "idReportRevenue",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/report-type-room-booking/inf-report-type-room-booking-by-month": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Type Room Booking"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Hotel",
+                        "name": "idHotel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Tháng",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Năm",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/report-type-room-booking/{idReportRoomBooking}": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Type Room Booking"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID báo cáo",
+                        "name": "idReportRoomBooking",
                         "in": "path",
                         "required": true
                     }

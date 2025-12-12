@@ -20,20 +20,22 @@ type IReportRevenueService interface {
 type reportRevenueService struct {
 	_reportRevenueRepository Repositories.IReportRevenueRepository
 	_hotelRepository         Repositories.IHotelRepository
-	_userRepository          Repositories.IUserRepository
 }
 
 func ReportRevenueService(reportRevenueRepository Repositories.IReportRevenueRepository,
-	hotelRepository Repositories.IHotelRepository,
-	userRepository Repositories.IUserRepository) IReportRevenueService {
+	hotelRepository Repositories.IHotelRepository) IReportRevenueService {
 	return &reportRevenueService{
 		_reportRevenueRepository: reportRevenueRepository,
 		_hotelRepository:         hotelRepository,
-		_userRepository:          userRepository,
 	}
 }
 
 func (r *reportRevenueService) GetInfReportByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error) {
+	_, err := r._hotelRepository.FindById(idHotel)
+	if err != nil {
+		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+	}
+
 	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(idHotel, month, year)
 
 	if err != nil {
@@ -76,6 +78,16 @@ func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.
 	_, err := r._hotelRepository.FindById(reportRevenueRequest.IDHotel)
 	if err != nil {
 		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+	}
+
+	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(
+		reportRevenueRequest.IDHotel,
+		reportRevenueRequest.Month,
+		reportRevenueRequest.Year,
+	)
+
+	if err != nil || reportRevenueExisted != nil {
+		return nil, Errors.New(http.StatusConflict, Errors.RevenueExists)
 	}
 
 	newReportRevenue := &Models.ReportRevenue{
