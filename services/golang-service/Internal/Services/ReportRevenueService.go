@@ -90,16 +90,70 @@ func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.
 		return nil, Errors.New(http.StatusConflict, Errors.RevenueExists)
 	}
 
+	newIdReportRevenue := uuid.New()
 	newReportRevenue := &Models.ReportRevenue{
-		IDReportRevenue: uuid.New(),
+		IDReportRevenue: newIdReportRevenue,
 		IDHotel:         reportRevenueRequest.IDHotel,
 		Month:           reportRevenueRequest.Month,
 		Year:            reportRevenueRequest.Year,
 	}
 
+	// Quét dữ liệu từ booking và expense
+	bookings, err := r._reportRevenueRepository.GetBookingsByMonth(reportRevenueRequest.IDHotel, reportRevenueRequest.Month, reportRevenueRequest.Year)
+	if err != nil {
+		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
+	}
+
+	expenses, err := r._reportRevenueRepository.GetExpensesByMonth(reportRevenueRequest.IDHotel, reportRevenueRequest.Month, reportRevenueRequest.Year)
+	if err != nil {
+		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
+	}
+
+	var details []Models.ReportRevenueDetail
+	var totalRevenue float64 = 0
+
+	for _, b := range bookings {
+		currentBookingID := b.IDBooking
+
+		detail := Models.ReportRevenueDetail{
+			IDRevenueDetail: uuid.New(),
+			TypeRevenue:     Constants.TypeIncome,
+			Amount:          b.TotalPrice,
+			IDReportRevenue: newIdReportRevenue,
+			IDBooking:       &currentBookingID,
+			IDExpense:       nil,
+		}
+		details = append(details, detail)
+		totalRevenue += b.TotalPrice
+	}
+
+	for _, e := range expenses {
+		currentExpenseID := e.IDExpense
+
+		detail := Models.ReportRevenueDetail{
+			IDRevenueDetail: uuid.New(),
+			TypeRevenue:     Constants.TypeExpense,
+			Amount:          e.Amount,
+			IDReportRevenue: newIdReportRevenue,
+			IDBooking:       nil,
+			IDExpense:       &currentExpenseID,
+		}
+		details = append(details, detail)
+		totalRevenue -= e.Amount
+	}
+
+	newReportRevenue.TotalRevenue = totalRevenue
+
 	createdReportRevenue, err := r._reportRevenueRepository.Create(newReportRevenue)
 	if err != nil {
 		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
+	}
+
+	if len(details) > 0 {
+		err = r._reportRevenueRepository.CreateDetails(details)
+		if err != nil {
+			return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
+		}
 	}
 
 	response := &Response.ReportRevenueResponse{

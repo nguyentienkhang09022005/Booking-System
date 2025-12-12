@@ -12,6 +12,9 @@ type IReportRevenueRepository interface {
 	Delete(idReportRevenue uuid.UUID) error
 	FindById(idReportRevenue uuid.UUID) (*Models.ReportRevenue, error)
 	FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRevenue, error)
+	GetBookingsByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Booking, error)
+	GetExpensesByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Expense, error)
+	CreateDetails(details []Models.ReportRevenueDetail) error
 }
 type reportRevenueRepository struct {
 	_db *gorm.DB
@@ -66,4 +69,25 @@ func (r *reportRevenueRepository) Delete(idReportRevenue uuid.UUID) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func (r *reportRevenueRepository) GetBookingsByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Booking, error) {
+	var bookings []Models.Booking
+	err := r._db.Where("id_hotel = ? AND status = ? AND EXTRACT(MONTH FROM booking_date) = ? AND EXTRACT(YEAR FROM booking_date) = ?", idHotel, "Success", month, year).
+		Find(&bookings).Error
+	return bookings, err
+}
+
+func (r *reportRevenueRepository) GetExpensesByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Expense, error) {
+	var expenses []Models.Expense
+	err := r._db.Where("id_hotel = ? AND EXTRACT(MONTH FROM create_at) = ? AND EXTRACT(YEAR FROM create_at) = ?", idHotel, month, year).
+		Find(&expenses).Error
+	return expenses, err
+}
+
+func (r *reportRevenueRepository) CreateDetails(details []Models.ReportRevenueDetail) error {
+	if len(details) == 0 {
+		return nil
+	}
+	return r._db.Create(&details).Error
 }

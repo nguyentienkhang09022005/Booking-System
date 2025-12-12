@@ -18,7 +18,6 @@ func SwaggerRouter(router *gin.Engine) {
 
 	scheme := os.Getenv("SWAGGER_SCHEME")
 	if scheme == "" {
-		// Railway dùng HTTPS – local thì HTTP
 		if host == "localhost:8081" {
 			scheme = "http"
 		} else {
