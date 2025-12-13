@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"os"
 	"payment-service/Configs"
 	"payment-service/Internal/RabbitMQ"
@@ -31,7 +32,10 @@ func main() {
 	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository)
 
 	// Khởi động RabbitMQ consumer
-	go RabbitMQ.StartRevenueConsumer(reportRevenueDetailService)
+	go func() {
+		log.Println("🚀 Starting Revenue Consumer...")
+		RabbitMQ.StartRevenueConsumer(reportRevenueDetailService)
+	}()
 
 	// Chạy Gin Framework
 	r := gin.Default()
