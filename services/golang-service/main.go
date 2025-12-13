@@ -33,7 +33,7 @@ func main() {
 
 	// Khởi động RabbitMQ consumer
 	go func() {
-		log.Println("🚀 Starting Revenue Consumer...")
+		log.Println("Starting Revenue Consumer...")
 		RabbitMQ.StartRevenueConsumer(reportRevenueDetailService)
 	}()
 

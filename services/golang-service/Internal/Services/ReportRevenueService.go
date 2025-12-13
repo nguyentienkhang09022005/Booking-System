@@ -38,8 +38,16 @@ func (r *reportRevenueService) GetInfReportByMonth(idHotel uuid.UUID, month int,
 
 	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(idHotel, month, year)
 
-	if err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.ReportRevenueNotFound)
+	if err != nil || reportRevenueExisted == nil {
+		return &Response.ReportRevenueResponse{
+			IDReportRevenue: uuid.Nil,
+			Month:           month,
+			Year:            year,
+			TotalRevenue:    0,
+			TotalIncome:     0,
+			TotalExpense:    0,
+			Details:         []Response.ReportRevenueDetailResponse{},
+		}, nil
 	}
 
 	var totalIncome float64 = 0
