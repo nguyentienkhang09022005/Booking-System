@@ -72,7 +72,7 @@ export const initSocket = (httpServer: HTTPServer) => {
           seenBy: data.idReceiver,
         });
       }
-    );
+    );  
 
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
