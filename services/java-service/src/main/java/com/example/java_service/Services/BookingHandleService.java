@@ -339,7 +339,7 @@ public class BookingHandleService
                     .title("Thông báo đặt phòng")
                     .content(String.format("Thông tin đơn đặt phòng khách sạn %s của bạn đã được ghi nhận!", booking.getHotel().getHotelName()))
                     .type("booking")
-                    .idRef(booking.getIdBooking())
+                    .idRef(booking.getIdBooking().toString())
                     .isRead(false)
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -651,7 +651,7 @@ public class BookingHandleService
                 .title("Thông báo đặt phòng")
                 .content(String.format("Bạn đã trả phòng khách sạn %s thành công!", booking.getHotel().getHotelName()))
                 .type("booking")
-                .idRef(booking.getIdBooking())
+                .idRef(booking.getIdBooking().toString())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -692,7 +692,7 @@ public class BookingHandleService
                 .title("Thông báo trạng thái đặt phòng")
                 .content(String.format("Trạng thái đơn đặt phòng khách sạn %s của bạn đã thay đổi!", booking.getHotel().getHotelName()))
                 .type("booking")
-                .idRef(booking.getIdBooking())
+                .idRef(booking.getIdBooking().toString())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();

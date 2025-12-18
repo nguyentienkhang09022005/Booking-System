@@ -17,7 +17,7 @@ public class NotificationCreatedEvent {
     String title;
     String content;
     String type;
-    UUID idRef;
+    String idRef;
     boolean isRead;
     LocalDateTime createdAt;
 }

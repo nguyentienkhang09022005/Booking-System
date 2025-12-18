@@ -1,14 +1,18 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Dto.Request.EvaluateCreationRequest;
 import com.example.java_service.Dto.Request.EvaluateUpdateRequest;
 import com.example.java_service.Dto.Request.MessageHistoryItem;
 import com.example.java_service.Dto.Response.EvaluateResponse;
 import com.example.java_service.Dto.Response.ModerationResult;
+import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.EvaluateMapper;
 import com.example.java_service.Models.Evaluates;
+import com.example.java_service.Models.Hotel;
+import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.HotelRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
@@ -17,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -35,9 +40,11 @@ public class EvaluatesService
     EvaluatesRepository evaluatesRepository;
     HotelRepository hotelRepository;
     UserRepository userRepository;
-    EvaluateMapper evaluateMapper;
     GeminiService geminiService;
     ObjectMapper objectMapper;
+    EvaluateMapper evaluateMapper;
+    RabbitTemplate rabbitTemplate;
+    RabbitConfig rabbitConfig;
 
     // Hàm lấy danh sách đánh giá khách sạn theo phân trang 5
     public Page<EvaluateResponse> getListEvaluateByPaging(Pageable pageable, UUID idHotel)
@@ -64,10 +71,10 @@ public class EvaluatesService
     // Hàm tạo đánh giá
     public EvaluateResponse saveEvaluate(EvaluateCreationRequest request)
     {
-        hotelRepository.findById(UUID.fromString(request.getIdHotel())).orElseThrow(
+        Hotel hotel = hotelRepository.findById(UUID.fromString(request.getIdHotel())).orElseThrow(
                 () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
         );
-        userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
+        Users user = userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
         Boolean checkEvaluate = evaluatesRepository.existsByIdHotelAndIdUser(request.getIdHotel(), request.getIdUser());
@@ -85,6 +92,37 @@ public class EvaluatesService
         evaluatesRepository.save(evaluates);
 
         evaluateMapper.toEvaluateResponse(evaluates);
+
+        String fullName = String.join(" ",
+                user.getFirstName(),
+                user.getLastName()
+        );
+        // Gửi sự kiện vào Exchanges
+        NotificationCreatedEvent event = NotificationCreatedEvent.builder()
+                .idNotification(UUID.randomUUID())
+                .idUser(hotel.getUsers().getIdUser())
+                .title("Thông báo đánh giá khách sạn")
+                .content(String.format(
+                        "Người dùng %s vừa đánh giá khách sạn %s của bạn.",
+                        fullName,
+                        hotel.getHotelName()
+                ))
+                .type("evaluate")
+                .idRef(evaluates.getId())
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            String message = objectMapper.writeValueAsString(event);
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_NOTIFICATION,
+                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                    message
+            );
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return evaluateMapper.toEvaluateResponse(evaluates);
     }
 
