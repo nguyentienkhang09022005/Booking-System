@@ -8,6 +8,7 @@ import route from "./routes/index.ts";
 import { connectMongo } from "./config/mongo.ts";
 import { initSocket } from "./config/socket.ts";
 import swaggerSpec from "./config/swagger.ts";
+import { startNotificationConsumer } from "./services/rabbitmq/NotificationConsumer.ts";
 
 const PORT = process.env.PORT || 3000; 
 
@@ -27,6 +28,7 @@ initSocket(httpServer);
 
 httpServer.listen(Number(PORT), '0.0.0.0', async () => {
   await connectMongo();
+  await startNotificationConsumer();
   console.log(`Node.js service is running on port ${PORT}`);
   console.log(`Swagger docs available at /api-docs`);
   console.log(`Socket.IO is ready for connections`);

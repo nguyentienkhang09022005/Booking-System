@@ -1,8 +1,8 @@
 // src/index.ts
 import express3 from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
+import swaggerUi2 from "swagger-ui-express";
 
 // src/routes/index.ts
 import swaggerUi from "swagger-ui-express";
@@ -92,6 +92,7 @@ import { v4 as uuidv4 } from "uuid";
 // src/config/socket.ts
 import { Server as SocketIOServer } from "socket.io";
 var io;
+var hubs;
 var userSockets = /* @__PURE__ */ new Map();
 var initSocket = (httpServer2) => {
   io = new SocketIOServer(httpServer2, {
@@ -100,8 +101,9 @@ var initSocket = (httpServer2) => {
       methods: ["GET", "POST"]
     }
   });
-  io.on("connection", (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
+  hubs = io.of("/hubs");
+  hubs.on("connection", (socket) => {
+    console.log(`Socket connected (/hubs): ${socket.id}`);
     socket.on("register", (userId) => {
       if (!userId) return;
       const existingSockets = userSockets.get(userId) || [];
@@ -112,44 +114,43 @@ var initSocket = (httpServer2) => {
       socket.join(userId);
       console.log(`User ${userId} registered with socket ${socket.id}`);
     });
-    socket.on("sendMessage", (data) => {
-      const { idSender, idReceiver, message, type = "text" } = data;
-      io.to(idReceiver).emit("newMessage", {
-        idSender,
-        idReceiver,
-        message,
-        type,
-        createdAt: /* @__PURE__ */ new Date()
-      });
-      console.log(`Message sent from ${idSender} to ${idReceiver}`);
-    });
+    socket.on(
+      "sendMessage",
+      (data) => {
+        const { idSender, idReceiver, message, type = "text" } = data;
+        hubs.to(idReceiver).emit("newMessage", {
+          idSender,
+          idReceiver,
+          message,
+          type,
+          createdAt: /* @__PURE__ */ new Date()
+        });
+        console.log(`Message sent from ${idSender} to ${idReceiver}`);
+      }
+    );
     socket.on("typing", (data) => {
-      io.to(data.idReceiver).emit("userTyping", {
-        idSender: data.idSender
-      });
+      hubs.to(data.idReceiver).emit("userTyping", { idSender: data.idSender });
     });
     socket.on("stopTyping", (data) => {
-      io.to(data.idReceiver).emit("userStopTyping", {
-        idSender: data.idSender
-      });
+      hubs.to(data.idReceiver).emit("userStopTyping", { idSender: data.idSender });
     });
-    socket.on("markMessageSeen", (data) => {
-      io.to(data.idSender).emit("messageSeen", {
-        idMessage: data.idMessage,
-        seenBy: data.idReceiver
-      });
-    });
+    socket.on(
+      "markMessageSeen",
+      (data) => {
+        hubs.to(data.idSender).emit("messageSeen", {
+          idMessage: data.idMessage,
+          seenBy: data.idReceiver
+        });
+      }
+    );
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
       userSockets.forEach((sockets, userId) => {
         const index = sockets.indexOf(socket.id);
         if (index !== -1) {
           sockets.splice(index, 1);
-          if (sockets.length === 0) {
-            userSockets.delete(userId);
-          } else {
-            userSockets.set(userId, sockets);
-          }
+          if (sockets.length === 0) userSockets.delete(userId);
+          else userSockets.set(userId, sockets);
         }
       });
     });
@@ -157,14 +158,14 @@ var initSocket = (httpServer2) => {
   return io;
 };
 var emitNotification = (userId, notification) => {
-  if (io) {
-    io.to(userId).emit("newNotification", notification);
+  if (hubs) {
+    hubs.to(userId).emit("newNotification", notification);
     console.log(`Notification sent to user ${userId}`);
   }
 };
 var emitMessage = (idReceiver, message) => {
-  if (io) {
-    io.to(idReceiver).emit("newMessage", message);
+  if (hubs) {
+    hubs.to(idReceiver).emit("newMessage", message);
   }
 };
 
@@ -363,6 +364,9 @@ var notification_default = router2;
 
 // src/config/swagger.ts
 import swaggerJsdoc from "swagger-jsdoc";
+import dotenv2 from "dotenv";
+dotenv2.config();
+var serverUrl = process.env.SERVER_URL || "/";
 var options = {
   definition: {
     openapi: "3.0.0",
@@ -373,8 +377,12 @@ var options = {
     },
     servers: [
       {
+        url: serverUrl,
+        description: "Server"
+      },
+      {
         url: "http://localhost:3000",
-        description: "Development server"
+        description: "Local"
       }
     ],
     components: {
@@ -516,7 +524,7 @@ var options = {
       }
     }
   },
-  apis: ["./src/routes/*.ts"]
+  apis: ["./src/routes/*.ts", "./dist/routes/*.js"]
 };
 var swaggerSpec = swaggerJsdoc(options);
 var swagger_default = swaggerSpec;
@@ -530,8 +538,8 @@ function route(app2) {
 
 // src/config/mongo.ts
 import mongoose3 from "mongoose";
-import dotenv2 from "dotenv";
-dotenv2.config();
+import dotenv3 from "dotenv";
+dotenv3.config();
 var connected = false;
 async function connectMongo() {
   if (connected) return;
@@ -541,18 +549,75 @@ async function connectMongo() {
   connected = true;
 }
 
+// src/services/rabbitmq/NotificationConsumer.ts
+import amqp from "amqplib";
+var RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
+var EXCHANGE_NAME = "notification-exchange";
+var QUEUE_NAME = "notification-queue";
+var ROUTING_KEY = "notification-routing-key";
+var startNotificationConsumer = async () => {
+  try {
+    const connection = await amqp.connect(RABBITMQ_URL);
+    const channel = await connection.createChannel();
+    await channel.assertExchange(EXCHANGE_NAME, "direct", { durable: true });
+    await channel.assertQueue(QUEUE_NAME, { durable: true });
+    await channel.bindQueue(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
+    console.log(`\u{1F430} RabbitMQ Consumer \u0111\xE3 s\u1EB5n s\xE0ng. \u0110ang ch\u1EDD tin nh\u1EAFn t\u1EA1i queue: ${QUEUE_NAME}`);
+    channel.consume(QUEUE_NAME, async (msg) => {
+      if (!msg) return;
+      try {
+        const rawContent = msg.content.toString();
+        const eventData = JSON.parse(rawContent);
+        console.log("\u{1F4E9} Nh\u1EADn th\xF4ng b\xE1o t\u1EEB Java:", eventData);
+        const newNotification = new NotificationModel({
+          idNotification: eventData.idNotification,
+          idUser: eventData.idUser,
+          title: eventData.title,
+          content: eventData.content,
+          type: eventData.type,
+          refId: eventData.idRef,
+          isRead: eventData.isRead,
+          createdAt: new Date(eventData.createdAt)
+        });
+        await newNotification.save();
+        console.log("\u2705 \u0110\xE3 l\u01B0u notification v\xE0o DB");
+        if (emitNotification) {
+          emitNotification(newNotification.idUser, {
+            idNotification: newNotification.idNotification,
+            title: newNotification.title,
+            content: newNotification.content ?? "",
+            type: newNotification.type,
+            refId: newNotification.refId ?? null,
+            createdAt: newNotification.createdAt
+          });
+          console.log("\u{1F4E1} \u0110\xE3 b\u1EAFn socket t\u1EDBi user:", newNotification.idUser);
+        }
+        channel.ack(msg);
+      } catch (error) {
+        console.error("\u274C L\u1ED7i x\u1EED l\xFD tin nh\u1EAFn RabbitMQ:", error);
+        channel.nack(msg, false, false);
+      }
+    });
+  } catch (error) {
+    console.error("\u274C Kh\xF4ng th\u1EC3 k\u1EBFt n\u1ED1i RabbitMQ:", error);
+    setTimeout(startNotificationConsumer, 5e3);
+  }
+};
+
 // src/index.ts
-var PORT = 3e3;
+var PORT = process.env.PORT || 3e3;
 var app = express3();
 var httpServer = createServer(app);
 app.use(express3.urlencoded({ extended: true }));
 app.use(express3.json());
 app.use(cookieParser());
-app.use(cors());
+app.use("/api-docs", swaggerUi2.serve, swaggerUi2.setup(swagger_default));
 route(app);
 initSocket(httpServer);
-httpServer.listen(PORT, async () => {
+httpServer.listen(Number(PORT), "0.0.0.0", async () => {
   await connectMongo();
+  await startNotificationConsumer();
   console.log(`Node.js service is running on port ${PORT}`);
+  console.log(`Swagger docs available at /api-docs`);
   console.log(`Socket.IO is ready for connections`);
 });
