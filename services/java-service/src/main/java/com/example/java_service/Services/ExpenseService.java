@@ -135,8 +135,8 @@ public class ExpenseService
         try {
             String message = objectMapper.writeValueAsString(event);
             rabbitTemplate.convertAndSend(
-                    rabbitConfig.EXCHANGE_NAME,
-                    rabbitConfig.ROUTING_KEY,
+                    rabbitConfig.EXCHANGE_REPORT,
+                    rabbitConfig.ROUTING_KEY_REPORT,
                     message
             );
         } catch (Exception ex) {

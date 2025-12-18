@@ -12,32 +12,63 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig
 {
+    // Report queue config
     @NonFinal
-    @Value("${rabbitmq.exchange.name}")
-    public String EXCHANGE_NAME;
+    @Value("${rabbitmq.exchange.report}")
+    public String EXCHANGE_REPORT;
 
     @NonFinal
-    @Value("${rabbitmq.queue.name}")
-    public String QUEUE_NAME;
+    @Value("${rabbitmq.queue.report}")
+    public String QUEUE_REPORT;
 
     @NonFinal
-    @Value("${rabbitmq.routing.key}")
-    public String ROUTING_KEY;
+    @Value("${rabbitmq.routing.key.report}")
+    public String ROUTING_KEY_REPORT;
 
     @Bean
-    public DirectExchange expenseExchange() {
-        return new DirectExchange(EXCHANGE_NAME);
+    public DirectExchange reportExchange() {
+        return new DirectExchange(EXCHANGE_REPORT);
     }
 
     @Bean
-    public Queue expenseQueue() {
-        return new Queue(QUEUE_NAME, true);
+    public Queue reportQueue() {
+        return new Queue(QUEUE_REPORT, true);
     }
 
     @Bean
-    public Binding binding(Queue expenseQueue, DirectExchange expenseExchange) {
-        return BindingBuilder.bind(expenseQueue)
-                .to(expenseExchange)
-                .with(ROUTING_KEY);
+    public Binding binding(Queue reportQueue, DirectExchange reportExchange) {
+        return BindingBuilder.bind(reportQueue)
+                .to(reportExchange)
+                .with(ROUTING_KEY_REPORT);
+    }
+
+    // Notification queue config
+    @NonFinal
+    @Value("${rabbitmq.exchange.notification}")
+    public String EXCHANGE_NOTIFICATION;
+
+    @NonFinal
+    @Value("${rabbitmq.queue.notification}")
+    public String QUEUE_NOTIFICATION;
+
+    @NonFinal
+    @Value("${rabbitmq.routing.key.notification}")
+    public String ROUTING_KEY_NOTIFICATION;
+
+    @Bean("notificationExchange")
+    public DirectExchange notificationExchange() {
+        return new DirectExchange(EXCHANGE_NOTIFICATION);
+    }
+
+    @Bean("notificationQueue")
+    public Queue notificationQueue() {
+        return new Queue(QUEUE_NOTIFICATION, true);
+    }
+
+    @Bean
+    public Binding notificationBinding(Queue notificationQueue, DirectExchange notificationExchange) {
+        return BindingBuilder.bind(notificationQueue)
+                .to(notificationExchange)
+                .with(ROUTING_KEY_NOTIFICATION);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Constant.PredefinedStatusBooking;
 import com.example.java_service.Constant.PredefinedStatusPayment;
 import com.example.java_service.Constant.PredefinedStatusRoom;
@@ -15,11 +16,13 @@ import com.example.java_service.Mappers.VoucherMapper;
 import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.*;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +33,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -58,10 +62,13 @@ public class BookingHandleService
     RoomMapper roomMapper;
     ServiceMapper serviceMapper;
     VoucherMapper voucherMapper;
+    ObjectMapper objectMapper;
     BookingRoomService bookingRoomService;
     BookingServiceService bookingServiceService;
     UserVoucherService userVoucherService;
     AppliedVoucherService appliedVoucherService;
+    RabbitTemplate rabbitTemplate;
+    RabbitConfig rabbitConfig;
 
     @NonFinal //
     BookingHandleService self;
@@ -324,6 +331,29 @@ public class BookingHandleService
 
             booking.setTotalPrice(totalPrice);
             bookingRepository.save(booking);
+
+            // Gửi sự kiện vào Exchanges
+            NotificationCreatedEvent event = NotificationCreatedEvent.builder()
+                    .idNotification(UUID.randomUUID())
+                    .idUser(booking.getUsers().getIdUser())
+                    .title("Thông báo đặt phòng")
+                    .content(String.format("Thông tin đơn đặt phòng khách sạn %s của bạn đã được ghi nhận!", booking.getHotel().getHotelName()))
+                    .type("booking")
+                    .idRef(booking.getIdBooking())
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            try {
+                String message = objectMapper.writeValueAsString(event);
+                rabbitTemplate.convertAndSend(
+                        rabbitConfig.EXCHANGE_NOTIFICATION,
+                        rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                        message
+                );
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
 
             return booking;
         } catch (Exception e)
@@ -614,6 +644,29 @@ public class BookingHandleService
         booking.setTotalPrice(totalPriceBooking);
         bookingRepository.save(booking);
 
+        // Gửi sự kiện vào Exchanges
+        NotificationCreatedEvent event = NotificationCreatedEvent.builder()
+                .idNotification(UUID.randomUUID())
+                .idUser(booking.getUsers().getIdUser())
+                .title("Thông báo đặt phòng")
+                .content(String.format("Bạn đã trả phòng khách sạn %s thành công!", booking.getHotel().getHotelName()))
+                .type("booking")
+                .idRef(booking.getIdBooking())
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            String message = objectMapper.writeValueAsString(event);
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_NOTIFICATION,
+                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                    message
+            );
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
         return ResponseEntity.ok("Cập nhật trả phòng thành công!");
     }
 
@@ -632,8 +685,32 @@ public class BookingHandleService
         booking.setStatus(request.getStatus());
         bookingRepository.save(booking);
 
+        // Gửi sự kiện vào Exchanges
+        NotificationCreatedEvent event = NotificationCreatedEvent.builder()
+                .idNotification(UUID.randomUUID())
+                .idUser(booking.getUsers().getIdUser())
+                .title("Thông báo trạng thái đặt phòng")
+                .content(String.format("Trạng thái đơn đặt phòng khách sạn %s của bạn đã thay đổi!", booking.getHotel().getHotelName()))
+                .type("booking")
+                .idRef(booking.getIdBooking())
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            String message = objectMapper.writeValueAsString(event);
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_NOTIFICATION,
+                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                    message
+            );
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
         return ResponseEntity.ok("Cập nhật trạng thái thành công!");
     }
+
     // Hàm xóa đặt phòng
     @Transactional
     public ResponseEntity<String> deleteBookingRoom(UUID idBooking)
