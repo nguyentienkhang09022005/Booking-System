@@ -4,7 +4,7 @@ import com.example.java_service.Dto.Response.UserVoucherResponse;
 import com.example.java_service.Models.UserVoucher;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {VoucherMapper.class})
 public interface UserVoucherMapper
 {
     @Mapping(source = "voucher", target = "voucherViewResponse")

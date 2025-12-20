@@ -16,6 +16,7 @@ public interface VoucherMapper
 
     VoucherEditResponse toVoucherEditResponse(Voucher voucher);
 
+    @Mapping(target = "idHotel", source = "hotel.idHotel")
     VoucherViewResponse toVoucherViewResponse(Voucher voucher);
 
     @Mapping(target = "idHotel", source = "hotel.idHotel")

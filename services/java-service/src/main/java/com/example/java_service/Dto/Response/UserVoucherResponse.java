@@ -13,7 +13,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserVoucherResponse
 {
-    UUID idHotel;
     Boolean isUsed;
     LocalDateTime usedAt;
     LocalDateTime savedAt;

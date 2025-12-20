@@ -15,6 +15,7 @@ import java.util.UUID;
 public class VoucherViewResponse
 {
     UUID idVoucher;
+    UUID idHotel;
     String nameVoucher;
     BigDecimal discountPercent;
     LocalDate startDate;
