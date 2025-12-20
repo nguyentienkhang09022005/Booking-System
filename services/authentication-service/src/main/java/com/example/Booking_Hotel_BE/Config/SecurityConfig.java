@@ -77,6 +77,9 @@ public class SecurityConfig
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -99,6 +102,14 @@ public class SecurityConfig
                 )
                 // Cấu hình đăng nhập bằng bên thứ 3(Google)
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/oauth2/authorization")
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                        )
+                        // 3. Cấu hình redirectionEndpoint
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/login/oauth2/code/*")
+                        )
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(customOAuth2UserService())
                         )
