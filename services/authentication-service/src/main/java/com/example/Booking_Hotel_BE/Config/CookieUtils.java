@@ -28,6 +28,9 @@ public class CookieUtils {
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setMaxAge(maxAge);
+
+        cookie.setSecure(true);
+
         response.addCookie(cookie);
     }
 
@@ -45,15 +48,17 @@ public class CookieUtils {
         }
     }
 
-    // --- SỬA Ở ĐÂY ---
-    // Đổi Object -> Serializable
     public static String serialize(Serializable object) {
         return Base64.getUrlEncoder()
                 .encodeToString(SerializationUtils.serialize(object));
     }
 
     public static <T> T deserialize(Cookie cookie, Class<T> cls) {
-        return cls.cast(SerializationUtils.deserialize(
-                Base64.getUrlDecoder().decode(cookie.getValue())));
+        try {
+            return cls.cast(SerializationUtils.deserialize(
+                    Base64.getUrlDecoder().decode(cookie.getValue())));
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
