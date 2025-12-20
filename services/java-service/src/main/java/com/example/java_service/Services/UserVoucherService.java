@@ -72,6 +72,7 @@ public class UserVoucherService
                     if (response.getVoucherViewResponse() != null) {
                         response.getVoucherViewResponse().setUrlImage(voucherImagesMap.get(voucherIdStr));
                     }
+                    response.setIdHotel(userVoucher.getVoucher().getHotel().getIdHotel());
                 return response;
                 })
                 .toList();
