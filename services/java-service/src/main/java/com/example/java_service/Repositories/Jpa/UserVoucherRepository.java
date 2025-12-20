@@ -35,4 +35,12 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, UserVo
     AND uv.voucher.endDate >= CURRENT_TIMESTAMP
 """)
     List<UserVoucher> findUsedVouchersByBookingId(@Param("idBooking") UUID idBooking);
+
+    @Query("""
+    SELECT uv.voucher.idVoucher
+    FROM UserVoucher uv
+    WHERE uv.user.idUser = :idUser AND uv.voucher.idVoucher IN :idVouchers
+""")
+    List<UUID> findSavedVoucherIdsByUserAndVoucherIds(@Param("idUser") UUID idUser,
+                                                      @Param("idVouchers") List<UUID> idVouchers);
 }

@@ -23,5 +23,6 @@ public class VoucherViewAllResponse
     Integer quantity;
     String conditions;
     Boolean approved;
+    Boolean isSaved;
     String urlImage;
 }

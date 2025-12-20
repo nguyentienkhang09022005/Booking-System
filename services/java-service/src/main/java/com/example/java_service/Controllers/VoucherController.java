@@ -28,21 +28,21 @@ public class VoucherController
 
     // Endpoint lấy danh sách voucher của khách sạn đã được duyệt
     @GetMapping("/list-voucher-approved-by-hotel")
-    public ApiResponse<List<VoucherViewResponse>> listVoucherApprovedByHotel(@RequestParam UUID idHotel)
+    public ApiResponse<List<VoucherViewResponse>> listVoucherApprovedByHotel(@RequestParam UUID idHotel, @RequestParam UUID idUser)
     {
         return ApiResponse.<List<VoucherViewResponse>>builder()
                 .message("Lấy danh sách voucher của khách sạn thành công!")
-                .data(voucherService.listVouchersApprovedByHotel(idHotel))
+                .data(voucherService.listVouchersApprovedByHotel(idHotel, idUser))
                 .build();
     }
 
     // Endpoint lấy danh sách voucher đã được duyệt
     @GetMapping("/list-voucher-approved")
-    public ApiResponse<List<VoucherViewAllResponse>> listVoucherApproved()
+    public ApiResponse<List<VoucherViewAllResponse>> listVoucherApproved(@RequestParam UUID idUser)
     {
         return ApiResponse.<List<VoucherViewAllResponse>>builder()
                 .message("Lấy danh sách voucher thành công!")
-                .data(voucherService.listVouchersApproved())
+                .data(voucherService.listVouchersApproved(idUser))
                 .build();
     }
 

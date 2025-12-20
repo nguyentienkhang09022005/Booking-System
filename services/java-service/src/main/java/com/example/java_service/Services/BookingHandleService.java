@@ -584,6 +584,7 @@ public class BookingHandleService
     }
 
     //Hàm checkout đặt phòng cho (company)
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<String> checkoutBooking(BookingCheckoutRequest request, UUID idBooking)
     {
         // Kiểm tra người dùng đã thanh toán chưa
@@ -595,6 +596,7 @@ public class BookingHandleService
                 () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
         );
         List<BookingRoom> bookingRooms = bookingRoomRepository.findAllBookingRoomByBookingIds(List.of(idBooking));
+        List<BookingService> bookingServices = bookingServiceRepository.findByBooking_IdBooking(idBooking);
 
         BigDecimal totalPriceBookingRoom = bookingRooms
                 .stream()
@@ -641,7 +643,43 @@ public class BookingHandleService
 
             totalPriceBooking = totalPriceBooking.add(priceLate);
         }
+
+        // Hoàn lại số lượng room
+        if (!bookingRooms.isEmpty())
+        {
+            // Gom nhóm số lượng room đặt theo từng booking room
+            Map<UUID, Integer> restoreQuantityRooms = bookingRooms.stream()
+                    .collect(Collectors.groupingBy(
+                            br -> br.getRoom().getIdRoom(),
+                            Collectors.summingInt(BookingRoom::getQuantity)
+                    ));
+
+            // Hoàn lại số lượng cho room và cập nhật status nếu số lượng lớn hơn 0
+            restoreQuantityRooms.forEach((idRoom, quantity) -> {
+                roomRepository.restoreRoomQuantity(idRoom, quantity);
+                roomRepository.updateStatusIfAvailable(idRoom, PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
+            });
+        }
+
+        // Hoàn lại số lượng Service
+        if (!bookingServices.isEmpty())
+        {
+            // Gom nhóm số lượng service đặt theo từng booking service
+            Map<UUID, Integer> restoreQuantityServices = bookingServices.stream()
+                    .collect(Collectors.groupingBy(
+                            bs -> bs.getService().getIdService(),
+                            Collectors.summingInt(BookingService::getQuantity)
+                    ));
+
+            // Hoàn lại số lượng cho service và cập nhật status nếu số lượng lớn hơn 0
+            restoreQuantityServices.forEach((idService, quantity) -> {
+                serviceRepository.restoreServiceQuantity(idService, quantity);
+                serviceRepository.updateStatusIfAvailable(idService, PredefinedStatusService.STATUS_SERVICE_AVAILABLE);
+            });
+        }
+
         booking.setTotalPrice(totalPriceBooking);
+        booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_CHECKED_OUT);
         bookingRepository.save(booking);
 
         // Gửi sự kiện vào Exchanges

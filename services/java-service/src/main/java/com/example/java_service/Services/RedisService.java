@@ -115,12 +115,12 @@ public class RedisService
         );
     }
 
-    public List<VoucherViewResponse> getVouchersCached(UUID idHotel) {
+    public List<VoucherViewResponse> getVouchersCached(UUID idHotel, UUID idUser) {
         return getOrSetList(
                 getKeyVoucher(idHotel.toString()),
                 60,
                 new TypeReference<List<VoucherViewResponse>>() {},
-                () -> voucherService.listVouchersApprovedByHotel(idHotel)
+                () -> voucherService.listVouchersApprovedByHotel(idHotel, idUser)
         );
     }
 }

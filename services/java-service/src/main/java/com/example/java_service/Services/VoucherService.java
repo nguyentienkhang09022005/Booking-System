@@ -12,6 +12,8 @@ import com.example.java_service.Models.Hotel;
 import com.example.java_service.Models.Images;
 import com.example.java_service.Models.Voucher;
 import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Repositories.Jpa.UserVoucherRepository;
 import com.example.java_service.Repositories.Jpa.VoucherRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import lombok.AccessLevel;
@@ -22,9 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 public class VoucherService
 {
     VoucherRepository voucherRepository;
+    UserRepository userRepository;
+    UserVoucherRepository userVoucherRepository;
     HotelRepository hotelRepository;
     ImagesRepository imagesRepository;
     VoucherMapper voucherMapper;
@@ -61,10 +63,14 @@ public class VoucherService
     }
 
     // Lấy danh sách voucher của khách sạn đã được phê duyệt và còn hạn (cho user)
-    public List<VoucherViewResponse> listVouchersApprovedByHotel(UUID idHotel)
+    public List<VoucherViewResponse> listVouchersApprovedByHotel(UUID idHotel, UUID idUser)
     {
         if (!hotelRepository.existsByIdHotel(idHotel)){
             throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        }
+
+        if (!userRepository.existsByIdUser(idUser)){
+            throw new ApiException(ErrorCode.USER_NOT_FOUND);
         }
 
         List<Voucher> vouchers = voucherRepository.findVoucherByApprovedTrueAndHotel_IdHotel(idHotel);
@@ -74,23 +80,31 @@ public class VoucherService
         }
 
         // Lấy ID của tất cả voucher
-        List<String> voucherIds = vouchers.stream()
-                .map(voucher -> voucher.getIdVoucher().toString())
+        List<UUID> voucherUUIDs = vouchers.stream()
+                .map(Voucher::getIdVoucher)
+                .toList();
+
+        List<String> voucherIdStrings = voucherUUIDs.stream()
+                .map(UUID::toString)
                 .toList();
 
         // Lấy tất cả ảnh
-        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIdStrings);
         Map<String, String> voucherImagesMap = images.stream()
                 .collect(Collectors.toMap(
                         Images::getRefId,
                         Images::getUrl
                 ));
 
+        List<UUID> savedVoucherIds = userVoucherRepository.findSavedVoucherIdsByUserAndVoucherIds(idUser, voucherUUIDs);
+        Set<UUID> savedVoucherSet = new HashSet<>(savedVoucherIds);
+
         return vouchers.stream()
                 .map(voucher -> {
                     VoucherViewResponse response = voucherMapper.toVoucherViewResponse(voucher);
                     String voucherIdStr = voucher.getIdVoucher().toString();
 
+                    response.setIsSaved(savedVoucherSet.contains(voucher.getIdVoucher()));
                     response.setUrlImage(voucherImagesMap.get(voucherIdStr));
 
                     return response;
@@ -99,8 +113,12 @@ public class VoucherService
     }
 
     // Lấy danh sách voucher
-    public List<VoucherViewAllResponse> listVouchersApproved()
+    public List<VoucherViewAllResponse> listVouchersApproved(UUID idUser)
     {
+        if (!userRepository.existsByIdUser(idUser)){
+            throw new ApiException(ErrorCode.USER_NOT_FOUND);
+        }
+
         List<Voucher> vouchers = voucherRepository.findAll();
 
         if (vouchers.isEmpty()) {
@@ -108,23 +126,31 @@ public class VoucherService
         }
 
         // Lấy ID của tất cả voucher
-        List<String> voucherIds = vouchers.stream()
-                .map(voucher -> voucher.getIdVoucher().toString())
+        List<UUID> voucherUUIDs = vouchers.stream()
+                .map(Voucher::getIdVoucher)
+                .toList();
+
+        List<String> voucherIdStrings = voucherUUIDs.stream()
+                .map(UUID::toString)
                 .toList();
 
         // Lấy tất cả ảnh
-        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIdStrings);
         Map<String, String> voucherImagesMap = images.stream()
                 .collect(Collectors.toMap(
                         Images::getRefId,
                         Images::getUrl
                 ));
 
+        List<UUID> savedVoucherIds = userVoucherRepository.findSavedVoucherIdsByUserAndVoucherIds(idUser, voucherUUIDs);
+        Set<UUID> savedVoucherSet = new HashSet<>(savedVoucherIds);
+
         return vouchers.stream()
                 .map(voucher -> {
                     VoucherViewAllResponse response = voucherMapper.toVoucherViewAllResponse(voucher);
                     String voucherIdStr = voucher.getIdVoucher().toString();
 
+                    response.setIsSaved(savedVoucherSet.contains(voucher.getIdVoucher()));
                     response.setUrlImage(voucherImagesMap.get(voucherIdStr));
 
                     return response;

@@ -53,7 +53,7 @@ public class ChatWithAIService
                 .toList();
 
         List<List<VoucherViewResponse>> vouchers = hotels.stream()
-                .map(h -> redisService.getVouchersCached(h.getIdHotel()))
+                .map(h -> redisService.getVouchersCached(h.getIdHotel(), user.getIdUser()))
                 .toList();
 
         String systemIntroduction = String.format("""
