@@ -68,7 +68,7 @@ public class ChatHistoryService
             return new ArrayList<>();
         }    }
 
-    public void deleteRefreshToken(String idUser) {
+    public void deleteHistoryChat(String idUser) {
         redisTemplate.delete(getKey(idUser));
     }
 }

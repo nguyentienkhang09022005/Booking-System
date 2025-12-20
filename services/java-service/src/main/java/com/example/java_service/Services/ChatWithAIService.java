@@ -148,7 +148,7 @@ public class ChatWithAIService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        chatHistoryService.deleteRefreshToken(idUser);
+        chatHistoryService.deleteHistoryChat(idUser);
         return ResponseEntity.ok("Xóa lịch sử trò chuyện với AI thành công!");
     }
 
