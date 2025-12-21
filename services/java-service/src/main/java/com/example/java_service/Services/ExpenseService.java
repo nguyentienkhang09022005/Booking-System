@@ -6,6 +6,7 @@ import com.example.java_service.Dto.Request.ExpenseUpdateRequest;
 import com.example.java_service.Dto.Response.RevenueCreatedEvent;
 import com.example.java_service.Dto.Response.ExpenseResponse;
 import com.example.java_service.Dto.Response.InfUserCreatedExpenseResponse;
+import com.example.java_service.Dto.Response.RevenueUpdateEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.ExpenseMapper;
@@ -161,7 +162,7 @@ public class ExpenseService
         return expenseResponse;
     }
 
-    //  Hàm xóa chi tiêu
+    //  Hàm xóa chi tiêu thêm xữ lý bên report
     public ResponseEntity<String> deleteExpense(UUID idExpense)
     {
         Expense expense = expenseRepository.findById(idExpense).orElseThrow(
@@ -172,7 +173,7 @@ public class ExpenseService
         return ResponseEntity.ok("Xóa chi tiêu thành công!");
     }
 
-    // Hàm thay đổi thông tin chi tiêu
+    // Hàm thay đổi thông tin chi tiêu thêm xữ lý bên report
     public ExpenseResponse updateExpense(ExpenseUpdateRequest request, UUID idExpense)
     {
         Expense expense = expenseRepository.findById(idExpense).orElseThrow(
@@ -202,6 +203,22 @@ public class ExpenseService
                 .build();
 
         expenseResponse.setInfUserCreatedExpenseResponse(infUserCreatedExpenseResponse);
+
+        RevenueUpdateEvent event = RevenueUpdateEvent.builder()
+                .idExpense(updatedExpense.getIdExpense())
+                .amount(updatedExpense.getAmount())
+                .build();
+
+        try {
+            String message = objectMapper.writeValueAsString(event);
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_UPDATE_REPORT,
+                    rabbitConfig.ROUTING_KEY_UPDATE_REPORT,
+                    message
+            );
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return expenseResponse;
     }
 }

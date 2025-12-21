@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig
 {
-    // Report queue config
+    // Report Creation Queue Config
     @NonFinal
     @Value("${rabbitmq.exchange.report}")
     public String EXCHANGE_REPORT;
@@ -40,6 +40,36 @@ public class RabbitConfig
         return BindingBuilder.bind(reportQueue)
                 .to(reportExchange)
                 .with(ROUTING_KEY_REPORT);
+    }
+
+    // Report Update Queue Config
+    @NonFinal
+    @Value("${rabbitmq.exchange.update.report}")
+    public String EXCHANGE_UPDATE_REPORT;
+
+    @NonFinal
+    @Value("${rabbitmq.queue.update.report}")
+    public String QUEUE_UPDATE_REPORT;
+
+    @NonFinal
+    @Value("${rabbitmq.routing.key.update.report}")
+    public String ROUTING_KEY_UPDATE_REPORT;
+
+    @Bean
+    public DirectExchange updateReportExchange() {
+        return new DirectExchange(EXCHANGE_UPDATE_REPORT);
+    }
+
+    @Bean
+    public Queue updateReportQueue() {
+        return new Queue(QUEUE_UPDATE_REPORT, true);
+    }
+
+    @Bean
+    public Binding updateReportBinding(Queue updateReportQueue, DirectExchange updateReportExchange) {
+        return BindingBuilder.bind(updateReportQueue)
+                .to(updateReportExchange)
+                .with(ROUTING_KEY_UPDATE_REPORT);
     }
 
     // Notification queue config
