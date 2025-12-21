@@ -78,6 +78,7 @@ public class UserVoucherService
     }
 
     // Hàm lưu voucher (cho user)
+    @Transactional
     public ResponseEntity<String> saveUserVoucher(UserVoucherRequest userVoucherRequest)
     {
         Users user = userRepository.findById(userVoucherRequest.getIdUser()).orElseThrow(
@@ -165,6 +166,8 @@ public class UserVoucherService
             existUserVoucher.setIsUsed(true);
             existUserVoucher.setUsedAt(LocalDateTime.now());
             userVoucherRepository.save(existUserVoucher);
+
+            return;
         }
 
         // Xữ lý race condition bằng Atomistic
