@@ -1,6 +1,7 @@
 package Repositories
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"payment-service/Internal/Models"
@@ -9,6 +10,7 @@ import (
 type IReportRevenueDetailRepository interface {
 	Create(reportRevenueDetail *Models.ReportRevenueDetail) (*Models.ReportRevenueDetail, error)
 	FindById(idReportRevenueDetail uuid.UUID) (*Models.ReportRevenueDetail, error)
+	UpdateAmountByExpenseID(idExpense uuid.UUID, newAmount float64) error
 }
 type reportRevenueDetailRepository struct {
 	_db *gorm.DB
@@ -34,4 +36,20 @@ func (r *reportRevenueDetailRepository) Create(reportRevenueDetail *Models.Repor
 		return nil, err
 	}
 	return reportRevenueDetail, nil
+}
+
+func (r *reportRevenueDetailRepository) UpdateAmountByExpenseID(idExpense uuid.UUID, newAmount float64) error {
+	result := r._db.Model(&Models.ReportRevenueDetail{}).
+		Where("id_expense = ?", idExpense).
+		Update("amount", newAmount)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("Không tìm thấy chi tiết chi để cập nhật!")
+	}
+
+	return nil
 }

@@ -13,6 +13,7 @@ import (
 
 type IReportRevenueDetailService interface {
 	CreateReportRevenueDetail(revenueCreatedEvent Request.RevenueCreatedEvent) (*Response.ReportRevenueDetailResponse, error)
+	UpdateReportRevenueDetail(revenueUpdateEvent Request.RevenueUpdateEvent) error
 }
 
 type reportRevenueDetailService struct {
@@ -93,4 +94,18 @@ func (r *reportRevenueDetailService) CreateReportRevenueDetail(revenueCreatedEve
 	}
 
 	return response, nil
+}
+
+// Hàm thay đổi chi tiết báo cáo doanh thu (có thể bổ sung thêm logic handle booking -> income)
+func (r *reportRevenueDetailService) UpdateReportRevenueDetail(revenueUpdateEvent Request.RevenueUpdateEvent) error {
+	err := r._reportRevenueDetailRepository.UpdateAmountByExpenseID(
+		revenueUpdateEvent.IDExpense,
+		revenueUpdateEvent.Amount,
+	)
+
+	if err != nil {
+		return Errors.New(http.StatusInternalServerError, Errors.InternalError)
+	}
+
+	return nil
 }
