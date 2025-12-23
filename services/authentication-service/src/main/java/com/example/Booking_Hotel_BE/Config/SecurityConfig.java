@@ -7,6 +7,7 @@ import com.example.Booking_Hotel_BE.Services.CustomOAuth2UserService;
 import com.example.Booking_Hotel_BE.Services.RefreshTokenService;
 import com.example.Booking_Hotel_BE.Services.RegisterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.util.UriComponentsBuilder;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 @EnableWebSecurity
@@ -39,6 +43,9 @@ public class SecurityConfig
     @NonFinal
     @Value("${jwt.refreshable-duration}")
     protected Long REFRESHABLE_DURATION;
+
+    @Value("${app.frontend.url}")
+    private String FRONTEND_URL;
 
     public SecurityConfig(CustomJwtDecoder customJwtDecoder,
                           @Lazy RegisterService registerService,
@@ -106,7 +113,7 @@ public class SecurityConfig
                                 .baseUri("/oauth2/authorization")
                                 .authorizationRequestRepository(cookieAuthorizationRequestRepository)
                         )
-                        // 3. Cấu hình redirectionEndpoint
+                        // Cấu hình redirectionEndpoint
                         .redirectionEndpoint(redirection -> redirection
                                 .baseUri("/login/oauth2/code/*")
                         )
@@ -125,14 +132,22 @@ public class SecurityConfig
                             );
                             response.addHeader("Set-Cookie", cookieHeader);
 
-                            AuthenResponse safeResponse = AuthenResponse.builder()
-                                    .token(authResponse.getToken())
-                                    .infUser(authResponse.getInfUser())
-                                    .build();
+                            String infUserEncoded = "";
+                            try {
+                                String infUserJson = objectMapper.writeValueAsString(authResponse.getInfUser());
 
-                            response.setContentType("application/json");
-                            response.setCharacterEncoding("UTF-8");
-                            objectMapper.writeValue(response.getWriter(), safeResponse);
+                                infUserEncoded = Base64.getUrlEncoder()
+                                        .encodeToString(infUserJson.getBytes(StandardCharsets.UTF_8));
+                            } catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                            }
+
+                            String targetUrl = UriComponentsBuilder.fromUriString(FRONTEND_URL + "/oauth2/redirect")
+                                    .queryParam("token", authResponse.getToken())
+                                    .queryParam("user", infUserEncoded)
+                                    .build().toUriString();
+
+                            response.sendRedirect(targetUrl);
                         })
                 )
                 .csrf(AbstractHttpConfigurer::disable);
