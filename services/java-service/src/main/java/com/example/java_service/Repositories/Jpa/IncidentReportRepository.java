@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface IncidentReportRepository extends JpaRepository<IncidentReport, UUID>
 {
     List<IncidentReport> findByBooking_Hotel_IdHotel(UUID idHotel);
-}
+
+    List<IncidentReport> findByUser_IdUser(UUID idUser);}

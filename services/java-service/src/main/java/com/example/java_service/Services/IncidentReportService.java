@@ -30,6 +30,7 @@ public class IncidentReportService
     BookingRepository bookingRepository;
     UserRepository userRepository;
     HotelRepository hotelRepository;
+    UserRepository hotelUserRepository;
     IncidentReportMapper incidentReportMapper;
 
     private static final Set<String> VALID_STATUS = Set.of(
@@ -44,6 +45,25 @@ public class IncidentReportService
             PredefinedSeverityIncident.SEVERITY_INCIDENT_MEDIUM,
             PredefinedSeverityIncident.SEVERITY_INCIDENT_HIGH
     );
+
+    // Hàm lấy danh sách báo cáo sự cố của người dùng
+    public List<IncidentReportResponse> getListIncidentReportByUser(UUID idUser)
+    {
+        userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        List<IncidentReport> incidentReportList = incidentReportRepository.findByUser_IdUser(idUser);
+        if (incidentReportList.isEmpty()) {
+            return List.of();
+        }
+
+        return incidentReportList.stream()
+                .map(incidentReport -> {
+                    IncidentReportResponse incidentReportResponse = incidentReportMapper.toIncidentReportResponse(incidentReport);
+                    return incidentReportResponse;
+                }).toList();
+    }
 
     // Hàm lấy danh sách báo cáo sự cố của khách sạn
     public List<IncidentReportResponse> getListIncidentReport(UUID idHotel)
@@ -159,6 +179,26 @@ public class IncidentReportService
         );
 
         incidentReportRepository.delete(incidentReport);
+        return ResponseEntity.ok("Xóa báo cáo sự cố thành công!");
+    }
+
+    // Hàm xóa báo cáo sự cố dành cho User (chỉ xóa được khi còn pending và đúng chủ sở hữu)
+    public ResponseEntity<String> deletePendingIncidentReport(UUID idIncidentReport, UUID idUser)
+    {
+        IncidentReport incidentReport = incidentReportRepository.findById(idIncidentReport).orElseThrow(
+                () -> new ApiException(ErrorCode.INCIDENT_REPORT_NOT_FOUND)
+        );
+
+        if (!incidentReport.getUser().getIdUser().equals(idUser)) {
+            throw new ApiException(ErrorCode.INCIDENT_REPORT_NOT_FOUND);
+        }
+
+        if (!incidentReport.getStatus().equals(PredefinedStatusIncident.STATUS_INCIDENT_PENDING)) {
+            throw new ApiException(ErrorCode.INVALID_INCIDENT_REPORT);
+        }
+
+        incidentReportRepository.delete(incidentReport);
+
         return ResponseEntity.ok("Xóa báo cáo sự cố thành công!");
     }
 

@@ -43,6 +43,16 @@ public class IncidentReportController
                 .build();
     }
 
+    // Endpoint lấy danh sách báo cáo sự cố của khách sạn
+    @GetMapping("/get-list-incident-report-of-user")
+    public ApiResponse<List<IncidentReportResponse>> getIncidentReportsOfUser(@RequestParam UUID idUser)
+    {
+        return ApiResponse.<List<IncidentReportResponse>>builder()
+                .message("Lấy danh sách báo cáo sự cố thành công!")
+                .data(incidentReportService.getListIncidentReportByUser(idUser))
+                .build();
+    }
+
     // Endpoint lấy thông tin chi tiết báo cáo sự cố
     @GetMapping( "/get-inf-incident-report")
     public ApiResponse<IncidentReportResponse> getInfIncidentReport(@RequestParam UUID idIncidentReport)
@@ -58,6 +68,17 @@ public class IncidentReportController
     public ApiResponse<ResponseEntity<String>> deleteIncidentReport(@RequestParam UUID idIncidentReport)
     {
         var response = incidentReportService.deleteIncidentReport(idIncidentReport);
+        return ApiResponse.<ResponseEntity<String>>builder()
+                .message(response.getBody())
+                .build();
+    }
+
+    // Endpoint xóa báo cáo sự cố
+    @DeleteMapping( "/delele-by-user")
+    public ApiResponse<ResponseEntity<String>> deleteIncidentReportByUser(@RequestParam UUID idIncidentReport,
+                                                                          @RequestParam UUID idUser)
+    {
+        var response = incidentReportService.deletePendingIncidentReport(idIncidentReport, idUser);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();
