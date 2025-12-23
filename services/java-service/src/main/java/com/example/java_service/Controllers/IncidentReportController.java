@@ -45,11 +45,11 @@ public class IncidentReportController
 
     // Endpoint lấy danh sách báo cáo sự cố của khách sạn
     @GetMapping("/get-list-incident-report-of-user")
-    public ApiResponse<List<IncidentReportResponse>> getIncidentReportsOfUser(@RequestParam UUID idUser)
+    public ApiResponse<List<IncidentReportResponse>> getIncidentReportsOfUser(@RequestParam UUID idUser, @RequestParam UUID idBooking)
     {
         return ApiResponse.<List<IncidentReportResponse>>builder()
                 .message("Lấy danh sách báo cáo sự cố thành công!")
-                .data(incidentReportService.getListIncidentReportByUser(idUser))
+                .data(incidentReportService.getListIncidentReportByUser(idUser, idBooking))
                 .build();
     }
 

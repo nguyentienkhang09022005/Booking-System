@@ -12,4 +12,5 @@ public interface IncidentReportRepository extends JpaRepository<IncidentReport, 
 {
     List<IncidentReport> findByBooking_Hotel_IdHotel(UUID idHotel);
 
-    List<IncidentReport> findByUser_IdUser(UUID idUser);}
+    List<IncidentReport> findByUser_IdUserAndBooking_IdBooking(UUID idUser, UUID idBooking);
+}

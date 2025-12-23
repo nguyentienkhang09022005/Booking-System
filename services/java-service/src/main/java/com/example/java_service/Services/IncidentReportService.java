@@ -47,13 +47,17 @@ public class IncidentReportService
     );
 
     // Hàm lấy danh sách báo cáo sự cố của người dùng
-    public List<IncidentReportResponse> getListIncidentReportByUser(UUID idUser)
+    public List<IncidentReportResponse> getListIncidentReportByUser(UUID idUser, UUID idBooking)
     {
         userRepository.findById(idUser).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        List<IncidentReport> incidentReportList = incidentReportRepository.findByUser_IdUser(idUser);
+        bookingRepository.findById(idBooking).orElseThrow(
+                () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
+        );
+
+        List<IncidentReport> incidentReportList = incidentReportRepository.findByUser_IdUserAndBooking_IdBooking(idUser, idBooking);
         if (incidentReportList.isEmpty()) {
             return List.of();
         }
