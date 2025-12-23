@@ -75,10 +75,9 @@ public class IncidentReportController
 
     // Endpoint xóa báo cáo sự cố
     @DeleteMapping( "/delele-by-user")
-    public ApiResponse<ResponseEntity<String>> deleteIncidentReportByUser(@RequestParam UUID idIncidentReport,
-                                                                          @RequestParam UUID idUser)
+    public ApiResponse<ResponseEntity<String>> deleteIncidentReportByUser(@RequestParam UUID idIncidentReport)
     {
-        var response = incidentReportService.deletePendingIncidentReport(idIncidentReport, idUser);
+        var response = incidentReportService.deletePendingIncidentReport(idIncidentReport);
         return ApiResponse.<ResponseEntity<String>>builder()
                 .message(response.getBody())
                 .build();

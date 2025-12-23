@@ -187,15 +187,11 @@ public class IncidentReportService
     }
 
     // Hàm xóa báo cáo sự cố dành cho User (chỉ xóa được khi còn pending và đúng chủ sở hữu)
-    public ResponseEntity<String> deletePendingIncidentReport(UUID idIncidentReport, UUID idUser)
+    public ResponseEntity<String> deletePendingIncidentReport(UUID idIncidentReport)
     {
         IncidentReport incidentReport = incidentReportRepository.findById(idIncidentReport).orElseThrow(
                 () -> new ApiException(ErrorCode.INCIDENT_REPORT_NOT_FOUND)
         );
-
-        if (!incidentReport.getUser().getIdUser().equals(idUser)) {
-            throw new ApiException(ErrorCode.INCIDENT_REPORT_NOT_FOUND);
-        }
 
         if (!incidentReport.getStatus().equals(PredefinedStatusIncident.STATUS_INCIDENT_PENDING)) {
             throw new ApiException(ErrorCode.INVALID_INCIDENT_REPORT);
