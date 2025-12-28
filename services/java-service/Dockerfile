@@ -11,4 +11,7 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-XX:+UseSerialGC", "-XX:MaxRAMPercentage=75.0", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+# CẤU HÌNH TỐI ƯU
+# -XX:MaxRAMPercentage=75.0: Java sẽ dùng 75% RAM của Container cho Heap,
+# 25% còn lại dành cho Non-Heap (Metaspace, Threads...) để tránh bị OS kill.
+ENTRYPOINT ["java", "-XX:+UseSerialGC", "-XX:MaxRAMPercentage=50.0", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
