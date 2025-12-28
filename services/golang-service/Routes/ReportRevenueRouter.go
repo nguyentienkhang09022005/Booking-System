@@ -21,5 +21,6 @@ func ReportRevenueRouter(router *gin.Engine, db *gorm.DB) {
 		reportRevenueRoutes.GET("/inf-report-revenue-by-month", reportRevenueController.GetInfReportByMonth)
 		reportRevenueRoutes.POST("/create", reportRevenueController.CreateReportRevenue)
 		reportRevenueRoutes.DELETE("/:idReportRevenue", reportRevenueController.DeleteReportRevenue)
+		reportRevenueRoutes.GET("/yearly-stats", reportRevenueController.GetYearlyRevenueStats)
 	}
 }

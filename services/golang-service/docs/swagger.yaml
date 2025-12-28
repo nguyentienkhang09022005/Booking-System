@@ -156,6 +156,26 @@ paths:
       responses: {}
       tags:
       - Report Revenue
+  /report-revenues/yearly-stats:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID Hotel
+        in: query
+        name: idHotel
+        required: true
+        type: string
+      - description: Năm
+        in: query
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue
   /report-type-room-booking/{idReportRoomBooking}:
     delete:
       consumes:

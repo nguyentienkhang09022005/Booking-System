@@ -152,6 +152,36 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/report-revenues/yearly-stats": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Hotel",
+                        "name": "idHotel",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Năm",
+                        "name": "year",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/report-revenues/{idReportRevenue}": {
             "delete": {
                 "consumes": [

@@ -15,6 +15,7 @@ type IReportRevenueService interface {
 	GetInfReportByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error)
 	CreateReportRevenue(reportRevenueRequest Request.ReportRevenueRequest) (*Response.ReportRevenueResponse, error)
 	DeleteReportRevenue(idReportRevenue uuid.UUID) error
+	GetYearlyRevenueStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error)
 }
 
 type reportRevenueService struct {
@@ -180,4 +181,34 @@ func (r *reportRevenueService) DeleteReportRevenue(idReportRevenue uuid.UUID) er
 	}
 
 	return r._reportRevenueRepository.Delete(idReportRevenue)
+}
+
+func (r *reportRevenueService) GetYearlyRevenueStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error) {
+	_, err := r._hotelRepository.FindById(idHotel)
+	if err != nil {
+		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+	}
+
+	rawStats, err := r._reportRevenueRepository.GetYearlyStats(idHotel, year)
+	if err != nil {
+		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
+	}
+
+	finalStats := make([]Response.MonthlyRevenueStatResponse, 12)
+	for i := 0; i < 12; i++ {
+		finalStats[i] = Response.MonthlyRevenueStatResponse{
+			Month:        i + 1,
+			TotalIncome:  0,
+			TotalExpense: 0,
+		}
+	}
+
+	for _, stat := range rawStats {
+		if stat.Month >= 1 && stat.Month <= 12 {
+			finalStats[stat.Month-1].TotalIncome = stat.TotalIncome
+			finalStats[stat.Month-1].TotalExpense = stat.TotalExpense
+		}
+	}
+
+	return finalStats, nil
 }

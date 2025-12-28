@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"payment-service/Constants"
+	"payment-service/Internal/Dtos/Response"
 	"payment-service/Internal/Models"
 )
 
@@ -15,6 +17,7 @@ type IReportRevenueRepository interface {
 	GetBookingsByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Booking, error)
 	GetExpensesByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Expense, error)
 	CreateDetails(details []Models.ReportRevenueDetail) error
+	GetYearlyStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error)
 }
 type reportRevenueRepository struct {
 	_db *gorm.DB
@@ -90,4 +93,26 @@ func (r *reportRevenueRepository) CreateDetails(details []Models.ReportRevenueDe
 		return nil
 	}
 	return r._db.Create(&details).Error
+}
+
+func (r *reportRevenueRepository) GetYearlyStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error) {
+	var results []Response.MonthlyRevenueStatResponse
+
+	err := r._db.Table("report_revenue").
+		Select(`
+            report_revenue.month, 
+            COALESCE(SUM(CASE WHEN report_revenue_detail.type_revenue = ? THEN report_revenue_detail.amount ELSE 0 END), 0) as total_income,
+            COALESCE(SUM(CASE WHEN report_revenue_detail.type_revenue = ? THEN report_revenue_detail.amount ELSE 0 END), 0) as total_expense
+        `, Constants.TypeIncome, Constants.TypeExpense).
+		Joins("JOIN report_revenue_detail ON report_revenue.id_report_revenue = report_revenue_detail.id_report_revenue").
+		Where("report_revenue.id_hotel = ? AND report_revenue.year = ?", idHotel, year).
+		Group("report_revenue.month").
+		Order("report_revenue.month ASC").
+		Scan(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
