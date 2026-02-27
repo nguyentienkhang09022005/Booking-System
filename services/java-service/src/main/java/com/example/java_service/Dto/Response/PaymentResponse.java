@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -28,4 +29,11 @@ public class PaymentResponse
 
     @JsonProperty("order_url")
     String orderUrl;
+
+    // VNDStablecoin fields — null for ZaloPay payments
+    @JsonProperty("typed_data")
+    Map<String, Object> typedData;
+
+    @JsonProperty("order_id")
+    String orderId;
 }

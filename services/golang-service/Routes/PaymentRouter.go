@@ -23,12 +23,23 @@ func PaymentRouter(router *gin.Engine, db *gorm.DB) {
 		hotelRepository)
 
 	paymentService := Services.PaymentService(paymentRepository, reportRevenueDetailService)
+	blockchainService := Services.BlockchainService()
 
 	paymentController := Controllers.PaymentController(paymentService)
+	vndPaymentController := Controllers.VndPaymentController(blockchainService, paymentRepository, reportRevenueDetailService)
 
+	// ZaloPay routes (existing)
 	paymentRoutes := router.Group("/api/v1/payments")
 	{
 		paymentRoutes.POST("/", paymentController.CreatePayment)
 		paymentRoutes.POST("/callback", paymentController.HandleCallBack)
+	}
+
+	// VND Stablecoin routes (new)
+	vndRoutes := router.Group("/api/v1/payments/vnd")
+	{
+		vndRoutes.POST("/prepare", vndPaymentController.PrepareVndPayment)
+		vndRoutes.POST("/execute", vndPaymentController.ExecuteVndPayment)
+		vndRoutes.GET("/nonce/:address", vndPaymentController.GetNonce)
 	}
 }

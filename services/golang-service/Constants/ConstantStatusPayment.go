@@ -1,7 +1,8 @@
 package Constants
 
 const (
-	StatusSuccess = "Success"
-	StatusFailed  = "Failed"
-	StatusPending = "Pending"
+	StatusSuccess    = "Success"
+	StatusFailed     = "Failed"
+	StatusPending    = "Pending"
+	StatusProcessing = "Processing"
 )

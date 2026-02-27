@@ -13,6 +13,7 @@ type Payment struct {
 	Status     string    `gorm:"type:varchar(20)" json:"status"`
 	IDAppTrans string    `gorm:"type:varchar(100)" json:"id_app_trans"`
 	IDZpTrans  string    `gorm:"type:varchar(100)" json:"id_zp_trans"`
+	TxHash     *string   `gorm:"type:varchar(66)" json:"tx_hash,omitempty"` // Blockchain tx hash (VNDStablecoin)
 	CreateAt   time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại

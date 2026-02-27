@@ -22,4 +22,9 @@ public class BookingRequest
     List<BookingRoomRequest> bookingRooms;
     List<BookingServiceRequest> bookingServices;
     List<UserVoucherRequest> userVoucherRequests;
+
+    // Payment method: "ZaloPay" (default) or "VNDStablecoin"
+    String paymentMethod;
+    // Required when paymentMethod == "VNDStablecoin"
+    String payerAddress;
 }

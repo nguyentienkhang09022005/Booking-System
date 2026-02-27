@@ -26,6 +26,11 @@ func main() {
 		return
 	}
 
+	// Kết nối Blockchain (Sepolia)
+	if err := Configs.BlockchainConfig(); err != nil {
+		log.Printf("Warning: Blockchain config failed (%v) — VND Stablecoin payment unavailable", err)
+	}
+
 	reportRevenueRepository := Repositories.ReportRevenueRepository(db)
 	reportRevenueDetailRepository := Repositories.ReportRevenueDetailRepository(db)
 	hotelRepository := Repositories.HotelRepository(db)

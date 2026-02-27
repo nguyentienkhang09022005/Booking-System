@@ -232,7 +232,7 @@ public class BookingHandleService
     {
         Booking booking = self.createBookingTransactional(bookingRequest);
 
-        return self.callPaymentApi(booking);
+        return self.callPaymentApi(booking, bookingRequest.getPaymentMethod(), bookingRequest.getPayerAddress());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -364,30 +364,73 @@ public class BookingHandleService
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public PaymentResponse callPaymentApi(Booking booking)
+    public PaymentResponse callPaymentApi(Booking booking, String paymentMethod, String payerAddress)
     {
-        // Call api thanh toán
-        PaymentRequest paymentRequest = new PaymentRequest(
-                booking.getUsers().getIdUser(),
-                booking.getIdBooking(),
-                booking.getTotalPrice().doubleValue()
-        );
         try
         {
-            PaymentResponse paymentResponse = webClient
-                    .post()
-                    .uri("/api/v1/payments/")
-                    .header("Content-Type", "application/json")
-                    .bodyValue(paymentRequest)
-                    .retrieve()
-                    .bodyToMono(PaymentResponse.class)
-                    .block();
+            // Branch on payment method
+            if ("VNDStablecoin".equals(paymentMethod) && payerAddress != null && !payerAddress.isBlank())
+            {
+                // Call Go service VND payment prepare endpoint
+                Map<String, Object> vndRequest = Map.of(
+                        "id_user", booking.getUsers().getIdUser(),
+                        "id_booking", booking.getIdBooking(),
+                        "amount", booking.getTotalPrice().doubleValue(),
+                        "payer_address", payerAddress
+                );
 
-            if (paymentResponse == null) {
-                throw new ApiException(ErrorCode.PAYMENT_FAILED);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> vndResponse = webClient
+                        .post()
+                        .uri("/api/v1/payments/vnd/prepare")
+                        .header("Content-Type", "application/json")
+                        .bodyValue(vndRequest)
+                        .retrieve()
+                        .bodyToMono(Map.class)
+                        .block();
+
+                if (vndResponse == null) {
+                    throw new ApiException(ErrorCode.PAYMENT_FAILED);
+                }
+
+                return PaymentResponse.builder()
+                        .idPayment(vndResponse.get("id_payment") != null
+                                ? UUID.fromString(vndResponse.get("id_payment").toString())
+                                : null)
+                        .amount(booking.getTotalPrice())
+                        .method("VNDStablecoin")
+                        .status("Pending")
+                        .typedData((Map<String, Object>) vndResponse.get("typed_data"))
+                        .orderId(vndResponse.get("order_id") != null ? vndResponse.get("order_id").toString() : null)
+                        .build();
             }
-            
-            return paymentResponse;
+            else
+            {
+                // Default: ZaloPay flow (existing behaviour)
+                PaymentRequest paymentRequest = new PaymentRequest(
+                        booking.getUsers().getIdUser(),
+                        booking.getIdBooking(),
+                        booking.getTotalPrice().doubleValue()
+                );
+
+                PaymentResponse paymentResponse = webClient
+                        .post()
+                        .uri("/api/v1/payments/")
+                        .header("Content-Type", "application/json")
+                        .bodyValue(paymentRequest)
+                        .retrieve()
+                        .bodyToMono(PaymentResponse.class)
+                        .block();
+
+                if (paymentResponse == null) {
+                    throw new ApiException(ErrorCode.PAYMENT_FAILED);
+                }
+
+                return paymentResponse;
+            }
+        }
+        catch (ApiException e) {
+            throw e;
         }
         catch (Exception e) {
             log.error("Lỗi khi gọi API thanh toán: {}", e.getMessage(), e);
@@ -553,34 +596,8 @@ public class BookingHandleService
 
         paymentRepository.deleteByBooking_IdBooking(idBooking); // Xóa payment cũ
 
-        // Call api thanh toán
-        PaymentRequest paymentRequest = new PaymentRequest(
-                booking.getUsers().getIdUser(),
-                booking.getIdBooking(),
-                booking.getTotalPrice().doubleValue()
-        );
-        try
-        {
-            PaymentResponse paymentResponse = webClient
-                    .post()
-                    .uri("/api/v1/payments/")
-                    .header("Content-Type", "application/json")
-                    .bodyValue(paymentRequest)
-                    .retrieve()
-                    .bodyToMono(PaymentResponse.class)
-                    .block();
-
-            if (paymentResponse == null) {
-                throw new ApiException(ErrorCode.PAYMENT_FAILED);
-            }
-
-            return paymentResponse;
-        }
-        catch (Exception e) {
-            booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_FAILED);
-            bookingRepository.save(booking);
-            throw new ApiException(ErrorCode.BOOKING_FAILED);
-        }
+        // updateBooking always uses ZaloPay (VNDStablecoin updates are not supported)
+        return self.callPaymentApi(booking, "ZaloPay", null);
     }
 
     //Hàm checkout đặt phòng cho (company)
