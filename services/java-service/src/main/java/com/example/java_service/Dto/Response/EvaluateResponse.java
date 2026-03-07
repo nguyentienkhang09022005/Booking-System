@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class EvaluateResponse
 {
     String id;
-    String idHotel;
+    String idAccommodation;
     String idUser;
     Integer stars;
     String comment;

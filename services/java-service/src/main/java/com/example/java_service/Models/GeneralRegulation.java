@@ -25,8 +25,6 @@ public class GeneralRegulation {
     private String regulationContent;
 
     @ManyToOne
-    @JoinColumn(name = "id_hotel",
-            referencedColumnName = "id_hotel",
-            foreignKey = @ForeignKey(name = "FK_REGULATION_HOTEL"))
-    private Hotel hotel;
+    @JoinColumn(name = "id_accommodation", referencedColumnName = "id_accommodation", foreignKey = @ForeignKey(name = "FK_REGULATION_HOTEL"))
+    private Accommodation accommodation;
 }

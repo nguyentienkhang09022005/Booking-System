@@ -7,9 +7,9 @@ import com.example.java_service.Dto.Response.ServiceResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.ServiceMapper;
-import com.example.java_service.Models.Hotel;
+import com.example.java_service.Models.Accommodation;
 import com.example.java_service.Models.Service;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.ServiceRepository;
 import com.example.java_service.Repositories.Jpa.TypeServiceRepository;
 import lombok.AccessLevel;
@@ -28,18 +28,18 @@ import java.util.UUID;
 public class ServiceService
 {
     ServiceRepository serviceRepository;
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     TypeServiceRepository typeServiceRepository;
     ServiceMapper serviceMapper;
 
     // Hàm lấy danh sách dịch vụ
-    public List<ServiceResponse> getListService(UUID idHotel)
+    public List<ServiceResponse> getListService(UUID idAccommodation)
     {
-        hotelRepository.findById(idHotel).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
-        List<Service> servicesList = serviceRepository.findByHotel_IdHotel(idHotel);
+        List<Service> servicesList = serviceRepository.findByAccommodation_IdAccommodation(idAccommodation);
         if (servicesList.isEmpty()) {
             return List.of();
         }
@@ -56,8 +56,8 @@ public class ServiceService
     // Hàm thêm dịch vụ mới
     public ServiceResponse saveService(ServiceCreationRequest request)
     {
-        Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        Accommodation accommodation = accommodationRepository.findById(request.getIdAccommodation()).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
         // Kiểm tra số lượng
@@ -66,7 +66,7 @@ public class ServiceService
         }
 
         Service service = serviceMapper.toService(request);
-        service.setHotel(hotel);
+        service.setAccommodation(accommodation);
         service.setTypeService(typeServiceRepository.findById(request.getTypeService()).orElseThrow(
                 () -> new ApiException(ErrorCode.TYPE_SERVICE_NOT_FOUND)
         ));

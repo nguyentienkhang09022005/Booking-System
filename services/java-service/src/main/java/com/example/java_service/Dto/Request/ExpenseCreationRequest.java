@@ -14,7 +14,7 @@ import java.util.UUID;
 public class ExpenseCreationRequest
 {
     UUID idUser;
-    UUID idHotel;
+    UUID idAccommodation;
     String expenseTitle;
     BigDecimal amount;
     String description;

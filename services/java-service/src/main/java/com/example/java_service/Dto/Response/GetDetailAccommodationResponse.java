@@ -1,6 +1,5 @@
-package com.example.java_service.Dto.Request;
+package com.example.java_service.Dto.Response;
 
-import com.example.java_service.Models.FacilityCategory;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,26 +11,33 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class HotelCreationRequest
+public class GetDetailAccommodationResponse
 {
-    UUID idUser;
-    String hotelName;
+    UUID idAccommodation;
+    OwnerAccommodationResponse ownerAccommodationResponse;
+    String accommodationName;
     String street;
     String ward;
     String city;
     String description;
-    List<String> listImageHotel;
-    List<FacilityCategoryRequest> facilityCategories;
-    List<GeneralRegulationRequest> generalRegulations;
+    Boolean favorite;
+    Integer allEvaluates;
+    Double averageStar;
+    List<String> imageAccommodation;
+    List<GetRoomResponse> roomResponses;
+    List<EvaluateResponse> evaluates;
+    List<FacilityCategoryResponse> facilityCategoryResponses;
+    List<GeneralRegulationResponse> generalRegulationResponses;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class FacilityCategoryRequest {
+    public static class FacilityCategoryResponse {
+        UUID idCategory;
         String categoryName;
-        List<FacilityRequest> facilities;
+        List<FacilityResponse> facilities;
     }
 
     @Data
@@ -39,7 +45,8 @@ public class HotelCreationRequest
     @AllArgsConstructor
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class FacilityRequest {
+    public static class FacilityResponse {
+        UUID idFacility;
         String facilityName;
         Boolean isFree;
     }
@@ -49,8 +56,10 @@ public class HotelCreationRequest
     @AllArgsConstructor
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class GeneralRegulationRequest {
+    public static class GeneralRegulationResponse {
+        UUID idRegulation;
         String regulationName;
         String regulationContent;
     }
 }
+

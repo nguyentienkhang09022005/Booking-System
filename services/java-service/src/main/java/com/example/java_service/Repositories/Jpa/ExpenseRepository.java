@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, UUID>
 {
-    List<Expense> findByHotel_IdHotel(UUID idHotel);
+    List<Expense> findByAccommodation_IdAccommodation(UUID idAccommodation);
 }

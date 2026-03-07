@@ -23,10 +23,8 @@ public class Service
     private UUID idService;
 
     @ManyToOne
-    @JoinColumn(name = "id_hotel",
-            referencedColumnName = "id_hotel",
-            foreignKey = @ForeignKey(name = "FK_SERVICE_HOTEL"))
-    private Hotel hotel;
+    @JoinColumn(name = "id_accommodation", referencedColumnName = "id_accommodation", foreignKey = @ForeignKey(name = "FK_SERVICE_HOTEL"))
+    private Accommodation accommodation;
 
     @ManyToOne
     @JoinColumn(name = "type_service",

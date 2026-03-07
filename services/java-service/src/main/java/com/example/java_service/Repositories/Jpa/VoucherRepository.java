@@ -15,11 +15,11 @@ public interface VoucherRepository extends JpaRepository<Voucher, UUID>
 {
     Boolean existsVoucherByCode(String code);
 
-    List<Voucher> findVoucherByApprovedTrueAndHotel_IdHotel(UUID idHotel);
+    List<Voucher> findVoucherByApprovedTrueAndAccommodation_IdAccommodation(UUID idAccommodation);
 
     List<Voucher> findVoucherByApprovedFalse();
 
-    List<Voucher> findVoucherByHotel_IdHotel(UUID idHotel);
+    List<Voucher> findVoucherByAccommodation_IdAccommodation(UUID idAccommodation);
 
     // Giảm số lượng voucher khi lưu
     @Modifying

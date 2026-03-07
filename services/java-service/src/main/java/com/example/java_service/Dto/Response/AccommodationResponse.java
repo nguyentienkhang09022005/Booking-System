@@ -11,16 +11,16 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class HotelResponse
+public class AccommodationResponse
 {
-    UUID idHotel;
-    OwnerHotelResponse ownerHotelResponse;
-    String hotelName;
+    UUID idAccommodation;
+    OwnerAccommodationResponse ownerAccommodationResponse;
+    String accommodationName;
     String street;
     String ward;
     String city;
     String description;
     Boolean approved;
-    List<GetDetailHotelResponse.FacilityCategoryResponse> facilityCategoryResponses;
-    List<GetDetailHotelResponse.GeneralRegulationResponse> generalRegulationResponses;
+    List<GetDetailAccommodationResponse.FacilityCategoryResponse> facilityCategoryResponses;
+    List<GetDetailAccommodationResponse.GeneralRegulationResponse> generalRegulationResponses;
 }

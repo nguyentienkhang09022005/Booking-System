@@ -47,8 +47,6 @@ public class Expense {
     private Users user;
 
     @ManyToOne
-    @JoinColumn(name = "id_hotel",
-            referencedColumnName = "id_hotel",
-            foreignKey = @ForeignKey(name = "FK_EXPENSE_HOTEL"))
-    private Hotel hotel;
+    @JoinColumn(name = "id_accommodation", referencedColumnName = "id_accommodation", foreignKey = @ForeignKey(name = "FK_EXPENSE_HOTEL"))
+    private Accommodation accommodation;
 }

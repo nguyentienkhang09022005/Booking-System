@@ -19,6 +19,6 @@ public class Favorite
     @Id
     private String id;
     private String idUser;
-    private String idHotel;
+    private String idAccommodation;
     private LocalDateTime createdAt;
 }

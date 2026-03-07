@@ -1,7 +1,7 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Dto.Response.GetDetailHotelResponse;
-import com.example.java_service.Dto.Response.GetListHotelResponse;
+import com.example.java_service.Dto.Response.GetDetailAccommodationResponse;
+import com.example.java_service.Dto.Response.GetListAccommodationResponse;
 import com.example.java_service.Dto.Response.ServiceResponse;
 import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,22 +25,22 @@ import java.util.function.Supplier;
 public class RedisService
 {
     final RedisTemplate<String, String> redisTemplate;
-    HotelService hotelService;
+    AccommodationService accommodationService;
     ServiceService serviceService;
     VoucherService voucherService;
 
-    static final String PREFIX_HOTEL = "hotel:";
-    static final String PREFIX_DETAIL_HOTEL = "detail_hotel:";
+    static final String PREFIX_ACCOMMODATION = "accommodation:";
+    static final String PREFIX_DETAIL_ACCOMMODATION = "detail_accommodation:";
     static final String PREFIX_SERVICE = "service:";
     static final String PREFIX_VOUCHER = "voucher:";
 
     ObjectMapper objectMapper;
 
-    private String getKeyHotel(String idUser) {
-        return PREFIX_HOTEL + idUser;
+    private String getKeyAccommodation(String idUser) {
+        return PREFIX_ACCOMMODATION + idUser;
     }
-    private String getKeyDetailHotel(String idUser) {
-        return PREFIX_DETAIL_HOTEL + idUser;
+    private String getKeyDetailAccommodation(String idUser) {
+        return PREFIX_DETAIL_ACCOMMODATION + idUser;
     }
     private String getKeyService(String idUser) {
         return PREFIX_SERVICE + idUser;
@@ -88,39 +88,39 @@ public class RedisService
         }
     }
 
-    public List<GetListHotelResponse> getHotelsCached(UUID idUser) {
+    public List<GetListAccommodationResponse> getAccommodationsCached(UUID idUser) {
         return getOrSetList(
-                getKeyHotel(idUser.toString()),
+                getKeyAccommodation(idUser.toString()),
                 86400,
-                new TypeReference<List<GetListHotelResponse>>() {},
-                () -> hotelService.getListHotelApproved(idUser)
+                new TypeReference<List<GetListAccommodationResponse>>() {},
+                () -> accommodationService.getListAccommodationApproved(idUser)
         );
     }
 
-    public GetDetailHotelResponse getHotelDetailCached(UUID idHotel, UUID idUser) {
+    public GetDetailAccommodationResponse getAccommodationDetailCached(UUID idAccommodation, UUID idUser) {
         return getOrSet(
-                getKeyDetailHotel(idHotel.toString()),
+                getKeyDetailAccommodation(idAccommodation.toString()),
                 86400,
-                GetDetailHotelResponse.class,
-                () -> hotelService.getHotelDetail(idHotel, idUser)
+                GetDetailAccommodationResponse.class,
+                () -> accommodationService.getAccommodationDetail(idAccommodation, idUser)
         );
     }
 
-    public List<ServiceResponse> getServicesCached(UUID idHotel) {
+    public List<ServiceResponse> getServicesCached(UUID idAccommodation) {
         return getOrSetList(
-                getKeyService(idHotel.toString()),
+                getKeyService(idAccommodation.toString()),
                 21600,
                 new TypeReference<List<ServiceResponse>>() {},
-                () -> serviceService.getListService(idHotel)
+                () -> serviceService.getListService(idAccommodation)
         );
     }
 
-    public List<VoucherViewResponse> getVouchersCached(UUID idHotel, UUID idUser) {
+    public List<VoucherViewResponse> getVouchersCached(UUID idAccommodation, UUID idUser) {
         return getOrSetList(
-                getKeyVoucher(idHotel.toString()),
+                getKeyVoucher(idAccommodation.toString()),
                 60,
                 new TypeReference<List<VoucherViewResponse>>() {},
-                () -> voucherService.listVouchersApprovedByHotel(idHotel, idUser)
+                () -> voucherService.listVouchersApprovedByAccommodation(idAccommodation, idUser)
         );
     }
 }

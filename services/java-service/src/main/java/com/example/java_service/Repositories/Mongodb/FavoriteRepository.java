@@ -11,11 +11,11 @@ public interface FavoriteRepository extends MongoRepository<Favorite, String>
 {
     List<Favorite> findByIdUser(String idUser);
 
-    Boolean existsByIdUserAndIdHotel(String idUser, String idHotel);
+    Boolean existsByIdUserAndIdAccommodation(String idUser, String idAccommodation);
 
     void deleteByIdUser(String idUser);
 
-    void deleteByIdHotel(String idHotel);
+    void deleteByIdAccommodation(String idAccommodation);
 
-    void deleteByIdUserAndIdHotel(String idUser, String idHotel);
+    void deleteByIdUserAndIdAccommodation(String idUser, String idAccommodation);
 }

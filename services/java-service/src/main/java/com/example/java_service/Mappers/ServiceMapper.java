@@ -10,7 +10,7 @@ import org.mapstruct.*;
 public interface ServiceMapper
 {
     @Mapping(target = "typeService", ignore = true)
-    @Mapping(target = "hotel", ignore = true)
+    @Mapping(target = "accommodation", ignore = true)
     Service toService(ServiceCreationRequest request);
 
     ServiceResponse toServiceResponse(Service service);

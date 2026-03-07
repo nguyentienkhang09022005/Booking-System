@@ -29,8 +29,7 @@ public class IncidentReportService
     IncidentReportRepository incidentReportRepository;
     BookingRepository bookingRepository;
     UserRepository userRepository;
-    HotelRepository hotelRepository;
-    UserRepository hotelUserRepository;
+    AccommodationRepository accommodationRepository;
     IncidentReportMapper incidentReportMapper;
 
     private static final Set<String> VALID_STATUS = Set.of(
@@ -69,14 +68,14 @@ public class IncidentReportService
                 }).toList();
     }
 
-    // Hàm lấy danh sách báo cáo sự cố của khách sạn
-    public List<IncidentReportResponse> getListIncidentReport(UUID idHotel)
+    // Hàm lấy danh sách báo cáo sự cố của nơi cư trú
+    public List<IncidentReportResponse> getListIncidentReport(UUID idAccommodation)
     {
-        hotelRepository.findById(idHotel).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
-        List<IncidentReport> incidentReportList = incidentReportRepository.findByBooking_Hotel_IdHotel(idHotel);
+        List<IncidentReport> incidentReportList = incidentReportRepository.findByBooking_Accommodation_IdAccommodation(idAccommodation);
         if (incidentReportList.isEmpty()) {
             return List.of();
         }

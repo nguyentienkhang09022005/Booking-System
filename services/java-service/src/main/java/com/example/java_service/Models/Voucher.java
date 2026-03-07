@@ -18,18 +18,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "voucher")
-public class Voucher
-{
+public class Voucher {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_voucher", nullable = false, updatable = false)
     private UUID idVoucher;
 
     @ManyToOne
-    @JoinColumn(name = "id_hotel",
-            referencedColumnName = "id_hotel",
-            foreignKey = @ForeignKey(name = "FK_VOUCHER_HOTEL"))
-    private Hotel hotel;
+    @JoinColumn(name = "id_accommodation", referencedColumnName = "id_accommodation", foreignKey = @ForeignKey(name = "FK_VOUCHER_HOTEL"))
+    private Accommodation accommodation;
 
     @Column(name = "name_voucher", length = 100)
     private String nameVoucher;
@@ -39,6 +37,15 @@ public class Voucher
 
     @Column(name = "discount_percent", precision = 5, scale = 2)
     private BigDecimal discountPercent;
+
+    @Column(name = "min_discount_amount", precision = 12, scale = 2)
+    private BigDecimal minDiscountAmount;
+
+    @Column(name = "max_discount_amount", precision = 12, scale = 2)
+    private BigDecimal maxDiscountAmount;
+
+    @Column(name = "sponsor_type", length = 50)
+    private String sponsorType;
 
     @Column(name = "start_date")
     private LocalDate startDate;

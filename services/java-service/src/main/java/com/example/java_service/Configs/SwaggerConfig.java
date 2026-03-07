@@ -26,7 +26,7 @@ public class SwaggerConfig {
                 ))
                 .info(new Info()
                         .title("Booking API")
-                        .version("1.0")
+                        .version("2.0")
                         .description("API Documentation with JWT Auth"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new io.swagger.v3.oas.models.Components()

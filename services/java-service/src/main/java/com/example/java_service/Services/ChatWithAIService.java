@@ -8,7 +8,7 @@ import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Models.Users;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +31,8 @@ public class ChatWithAIService
     GeminiService geminiService;
     UserRepository userRepository;
     RedisService redisService;
-    HotelService hotelService;
-    HotelRepository hotelRepository;
+    AccommodationService accommodationService;
+    AccommodationRepository accommodationRepository;
 
     static final Long DURATION_HISTORY_CHAT_WITH_AI = 604800L;
 
@@ -42,32 +42,32 @@ public class ChatWithAIService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        List<GetListHotelResponse> hotels = redisService.getHotelsCached(user.getIdUser());
+        List<GetListAccommodationResponse> accommodations = redisService.getAccommodationsCached(user.getIdUser());
 
-        List<GetDetailHotelResponse> detailHotels = hotels.stream()
-                .map(h -> redisService.getHotelDetailCached(h.getIdHotel(), user.getIdUser()))
+        List<GetDetailAccommodationResponse> detailAccommodations = accommodations.stream()
+                .map(h -> redisService.getAccommodationDetailCached(h.getIdAccommodation(), user.getIdUser()))
                 .toList();
 
-        List<List<ServiceResponse>> services = hotels.stream()
-                .map(h -> redisService.getServicesCached(h.getIdHotel()))
+        List<List<ServiceResponse>> services = accommodations.stream()
+                .map(h -> redisService.getServicesCached(h.getIdAccommodation()))
                 .toList();
 
-        List<List<VoucherViewResponse>> vouchers = hotels.stream()
-                .map(h -> redisService.getVouchersCached(h.getIdHotel(), user.getIdUser()))
+        List<List<VoucherViewResponse>> vouchers = accommodations.stream()
+                .map(h -> redisService.getVouchersCached(h.getIdAccommodation(), user.getIdUser()))
                 .toList();
 
         String systemIntroduction = String.format("""
-        Bạn là **BookingNext**, trợ lý khách sạn thông minh, chuyên nghiệp, thân thiện và trung lập.
+        Bạn là **BookingNext**, trợ lý nơi cưu trú thông minh, chuyên nghiệp, thân thiện và trung lập.
         
         Nhiệm vụ:
-        1. Dựa trên dữ liệu khách sạn đã được phê duyệt, bao gồm:
-           - Khách sạn: id, tên, địa chỉ, vị trí (tọa độ hoặc gần địa điểm nổi bật), số sao, mô tả tổng quan, đánh giá.
+        1. Dựa trên dữ liệu nơi cư trú đã được phê duyệt, bao gồm:
+           - Nơi cư trú: id, tên, địa chỉ, vị trí (tọa độ hoặc gần địa điểm nổi bật), số sao, mô tả tổng quan, đánh giá.
            - Phòng: loại phòng, giá, tiện nghi, hình ảnh.
            - Dịch vụ: các dịch vụ nổi bật (spa, gym, đưa đón, ăn sáng…)
            - Voucher & ưu đãi: mã giảm giá, điều kiện sử dụng.
         
         2. Khi người dùng hỏi:
-           - Tư vấn khách sạn phù hợp theo yêu cầu (giá tiền, vị trí, tiện nghi, chất lượng, ưu đãi)
+           - Tư vấn nơi cư trú phù hợp theo yêu cầu (giá tiền, vị trí, tiện nghi, chất lượng, ưu đãi)
            - So sánh nhiều khách sạn nếu cần, nêu rõ ưu/nhược điểm
            - Trả URL chi tiết nếu có trong dữ liệu JSON (URL được trả theo http://localhost:3000/hotel/*idHotel*) phần idHotel lấy từ database
            - Tóm tắt review nếu yêu cầu
@@ -98,8 +98,8 @@ public class ChatWithAIService
         - Trả kết quả chi tiết nhưng thân thiện, lịch sự và trung lập
         """,
                 user,
-                hotels,
-                detailHotels,
+                accommodations,
+                detailAccommodations,
                 services,
                 vouchers
         );
@@ -158,11 +158,11 @@ public class ChatWithAIService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        hotelRepository.findById(UUID.fromString(summarizeTheCommentRequest.getIdHotel().toString())).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        accommodationRepository.findById(UUID.fromString(summarizeTheCommentRequest.getIdAccommodation().toString())).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
-        GetDetailHotelResponse detailHotel = hotelService.getHotelDetail(summarizeTheCommentRequest.getIdHotel(),
+        GetDetailAccommodationResponse detailAccommodation = accommodationService.getAccommodationDetail(summarizeTheCommentRequest.getIdAccommodation(),
                                                                          summarizeTheCommentRequest.getIdUser());
 
         String systemIntroduction = String.format("""
@@ -200,7 +200,7 @@ public class ChatWithAIService
         4. *Kết luận ngắn gọn*
         """,
                 user,
-                detailHotel
+                detailAccommodation
         );
 
         List<MessageHistoryItem> historyItems = new ArrayList<>();

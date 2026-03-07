@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface FacilityCategoryRepository extends JpaRepository<FacilityCategory, UUID>
 {
-    List<FacilityCategory> findByHotel_IdHotel(UUID hotelIdHotel);
+    List<FacilityCategory> findByAccommodation_IdAccommodation(UUID IdAccommodation);
 
-    void deleteByHotel_IdHotel(UUID idHotel);
+    void deleteByAccommodation_IdAccommodation(UUID idAccommodation);
 }

@@ -11,9 +11,9 @@ import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.EvaluateMapper;
 import com.example.java_service.Models.Evaluates;
-import com.example.java_service.Models.Hotel;
+import com.example.java_service.Models.Accommodation;
 import com.example.java_service.Models.Users;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +38,7 @@ import java.util.UUID;
 public class EvaluatesService
 {
     EvaluatesRepository evaluatesRepository;
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     UserRepository userRepository;
     GeminiService geminiService;
     ObjectMapper objectMapper;
@@ -46,11 +46,11 @@ public class EvaluatesService
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
 
-    // Hàm lấy danh sách đánh giá khách sạn theo phân trang 5
-    public Page<EvaluateResponse> getListEvaluateByPaging(Pageable pageable, UUID idHotel)
+    // Hàm lấy danh sách đánh giá nơi cư trú theo phân trang 5
+    public Page<EvaluateResponse> getListEvaluateByPaging(Pageable pageable, UUID idAccommodation)
     {
-        if (!hotelRepository.existsById(idHotel)) {
-            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        if (!accommodationRepository.existsById(idAccommodation)) {
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
 
         Pageable sortedPageable = PageRequest.of(
@@ -58,7 +58,7 @@ public class EvaluatesService
                 3,
                 Sort.by("createdAt").descending()
         );
-        Page<Evaluates> evaluatesPage = evaluatesRepository.findByIdHotel(idHotel.toString(), sortedPageable);
+        Page<Evaluates> evaluatesPage = evaluatesRepository.findByIdAccommodation(idAccommodation.toString(), sortedPageable);
 
         // Map kết quả của trang hiện tại sang EvaluateResponse
         List<EvaluateResponse> responses = evaluatesPage.getContent().stream()
@@ -71,15 +71,15 @@ public class EvaluatesService
     // Hàm tạo đánh giá
     public EvaluateResponse saveEvaluate(EvaluateCreationRequest request)
     {
-        Hotel hotel = hotelRepository.findById(UUID.fromString(request.getIdHotel())).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        Accommodation accommodation = accommodationRepository.findById(UUID.fromString(request.getIdAccommodation())).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
         Users user = userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
-        Boolean checkEvaluate = evaluatesRepository.existsByIdHotelAndIdUser(request.getIdHotel(), request.getIdUser());
+        Boolean checkEvaluate = evaluatesRepository.existsByIdAccommodationAndIdUser(request.getIdAccommodation(), request.getIdUser());
         if (checkEvaluate)
-            throw new ApiException(ErrorCode.USER_EVALUATED_HOTEL);
+            throw new ApiException(ErrorCode.USER_EVALUATED_ACCOMMODATION);
 
         ModerationResult moderation = moderate(request.getComment());
 
@@ -100,12 +100,12 @@ public class EvaluatesService
         // Gửi sự kiện vào Exchanges
         NotificationCreatedEvent event = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
-                .idUser(hotel.getUsers().getIdUser())
-                .title("Thông báo đánh giá khách sạn")
+                .idUser(accommodation.getUsers().getIdUser())
+                .title("Thông báo đánh giá nơi cư trú")
                 .content(String.format(
-                        "Người dùng %s vừa đánh giá khách sạn %s của bạn.",
+                        "Người dùng %s vừa đánh giá nơi cư trú %s của bạn.",
                         fullName,
-                        hotel.getHotelName()
+                        accommodation.getAccommodationName()
                 ))
                 .type("evaluate")
                 .idRef(evaluates.getId())
@@ -161,24 +161,24 @@ public class EvaluatesService
         return ResponseEntity.ok("Xóa đánh giá thành công!");
     }
 
-    // Hàm lấy tất cả số đánh giá của khách sạn
-    public Integer getAllEvaluateOfHotel(UUID idHotel)
+    // Hàm lấy tất cả số đánh giá của nơi cư trú
+    public Integer getAllEvaluateOfAccommodation(UUID idAccommodation)
     {
-        if (!hotelRepository.existsById(idHotel)) {
-            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        if (!accommodationRepository.existsById(idAccommodation)) {
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
-        return (int) evaluatesRepository.countByIdHotel(idHotel.toString());
+        return (int) evaluatesRepository.countByIdAccommodation(idAccommodation.toString());
     }
 
-    // Hàm lấy trung bình số sao của khách sạn
-    public Double getAverageStarOfHotel(UUID idHotel)
+    // Hàm lấy trung bình số sao của nơi cư trú
+    public Double getAverageStarOfAccommodation(UUID idAccommodation)
     {
-        if (!hotelRepository.existsById(idHotel)) {
-            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        if (!accommodationRepository.existsById(idAccommodation)) {
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
 
-        Double averageOfHotel = evaluatesRepository.getAverageRatingByIdHotel(idHotel.toString());
-        return averageOfHotel != null ? averageOfHotel : 0.0;
+        Double averageOfAccommodation = evaluatesRepository.getAverageRatingByIdAccommodation(idAccommodation.toString());
+        return averageOfAccommodation != null ? averageOfAccommodation : 0.0;
     }
 
     public String automaticNegativeCommentModeration(String comment)

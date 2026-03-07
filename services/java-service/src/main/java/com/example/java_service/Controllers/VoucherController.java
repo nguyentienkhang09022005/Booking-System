@@ -26,13 +26,13 @@ public class VoucherController
 {
     VoucherService voucherService;
 
-    // Endpoint lấy danh sách voucher của khách sạn đã được duyệt
-    @GetMapping("/list-voucher-approved-by-hotel")
-    public ApiResponse<List<VoucherViewResponse>> listVoucherApprovedByHotel(@RequestParam UUID idHotel, @RequestParam UUID idUser)
+    // Endpoint lấy danh sách voucher của nơi cư trú đã được duyệt
+    @GetMapping("/list-voucher-approved-by-accommodation")
+    public ApiResponse<List<VoucherViewResponse>> listVoucherApprovedByAccommodation(@RequestParam UUID idAccommodation, @RequestParam UUID idUser)
     {
         return ApiResponse.<List<VoucherViewResponse>>builder()
-                .message("Lấy danh sách voucher của khách sạn thành công!")
-                .data(voucherService.listVouchersApprovedByHotel(idHotel, idUser))
+                .message("Lấy danh sách voucher của nơi cư trú thành công!")
+                .data(voucherService.listVouchersApprovedByAccommodation(idAccommodation, idUser))
                 .build();
     }
 
@@ -56,13 +56,13 @@ public class VoucherController
                 .build();
     }
 
-    // Endpoint lấy danh sách voucher của khách sạn
+    // Endpoint lấy danh sách voucher của nơi cư trú
     @GetMapping("/list-voucher")
-    public ApiResponse<List<VoucherEditResponse>> listVoucher(@RequestParam UUID idHotel)
+    public ApiResponse<List<VoucherEditResponse>> listVoucher(@RequestParam UUID idAccommodation)
     {
         return ApiResponse.<List<VoucherEditResponse>>builder()
-                .message("Lấy danh sách voucher của khách sạn thành công!")
-                .data(voucherService.listVouchersOfHotel(idHotel))
+                .message("Lấy danh sách voucher của nơi cư trú thành công!")
+                .data(voucherService.listVouchersOfAccommodation(idAccommodation))
                 .build();
     }
 

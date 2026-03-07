@@ -49,7 +49,7 @@ public class ImageService
         }
     }
 
-    // Hàm sủa nhiều ảnh (Hotel, Room,...)
+    // Hàm sủa nhiều ảnh (Accommodation, Room,...)
     @Transactional
     public List<String> updateImages(List<MultipartFile> files, String refId) {
         if (files == null || files.isEmpty()) {

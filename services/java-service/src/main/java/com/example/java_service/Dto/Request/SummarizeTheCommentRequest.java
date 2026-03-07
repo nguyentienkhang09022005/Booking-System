@@ -13,5 +13,5 @@ import java.util.UUID;
 public class SummarizeTheCommentRequest
 {
     UUID idUser;
-    UUID idHotel;
+    UUID idAccommodation;
 }

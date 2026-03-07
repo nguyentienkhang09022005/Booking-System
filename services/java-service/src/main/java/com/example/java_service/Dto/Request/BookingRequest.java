@@ -15,7 +15,7 @@ import java.util.UUID;
 public class BookingRequest
 {
     UUID idUser;
-    UUID idHotel;
+    UUID idAccommodation;
     LocalDateTime checkinDate;
     LocalDateTime checkoutDate;
     String note;

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,23 +17,19 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class Users
-{
+public class Users {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_user", nullable = false, updatable = false)
     private UUID idUser;
 
     @ManyToOne
-    @JoinColumn(name = "role_name",
-            referencedColumnName = "role_name",
-            foreignKey = @ForeignKey(name = "FK_USER_ROLE"))
+    @JoinColumn(name = "role_name", referencedColumnName = "role_name", foreignKey = @ForeignKey(name = "FK_USER_ROLE"))
     private Roles role;
 
     @ManyToOne
-    @JoinColumn(name = "type_user",
-            referencedColumnName = "type_user",
-            foreignKey = @ForeignKey(name = "FK_USER_TYPE_USER"))
+    @JoinColumn(name = "type_user", referencedColumnName = "type_user", foreignKey = @ForeignKey(name = "FK_USER_TYPE_USER"))
     private TypeUser typeUser;
 
     @Column(name = "first_name", length = 20)
@@ -47,11 +42,11 @@ public class Users
     private String phone;
 
     @Column(length = 5)
-    private String gender; // "Nam" hoặc "Nữ"
+    private String gender;
 
     private LocalDate dob;
 
-    @Column(name = "address_user",columnDefinition = "TEXT")
+    @Column(name = "address_user", columnDefinition = "TEXT")
     private String address;
 
     @Column(unique = true)
@@ -59,6 +54,12 @@ public class Users
 
     @Column(name = "password_user")
     private String passwordUser;
+
+    @Column(name = "loyalty_points", columnDefinition = "INT DEFAULT 0")
+    private Integer loyaltyPoints;
+
+    @Column(name = "customer_segment", length = 50)
+    private String customerSegment;
 
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

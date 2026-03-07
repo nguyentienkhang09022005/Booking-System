@@ -1,4 +1,4 @@
-package com.example.java_service.Dto.Response;
+package com.example.java_service.Dto.Request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -11,33 +11,26 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GetDetailHotelResponse
+public class AccommodationCreationRequest
 {
-    UUID idHotel;
-    OwnerHotelResponse ownerHotelResponse;
-    String hotelName;
+    UUID idUser;
+    String accommodationName;
     String street;
     String ward;
     String city;
     String description;
-    Boolean favorite;
-    Integer allEvaluates;
-    Double averageStar;
-    List<String> imageHotel;
-    List<GetRoomResponse> roomResponses;
-    List<EvaluateResponse> evaluates;
-    List<FacilityCategoryResponse> facilityCategoryResponses;
-    List<GeneralRegulationResponse> generalRegulationResponses;
+    List<String> listImageAccommodation;
+    List<FacilityCategoryRequest> facilityCategories;
+    List<GeneralRegulationRequest> generalRegulations;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class FacilityCategoryResponse {
-        UUID idCategory;
+    public static class FacilityCategoryRequest {
         String categoryName;
-        List<FacilityResponse> facilities;
+        List<FacilityRequest> facilities;
     }
 
     @Data
@@ -45,8 +38,7 @@ public class GetDetailHotelResponse
     @AllArgsConstructor
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class FacilityResponse {
-        UUID idFacility;
+    public static class FacilityRequest {
         String facilityName;
         Boolean isFree;
     }
@@ -56,10 +48,8 @@ public class GetDetailHotelResponse
     @AllArgsConstructor
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
-    public static class GeneralRegulationResponse {
-        UUID idRegulation;
+    public static class GeneralRegulationRequest {
         String regulationName;
         String regulationContent;
     }
 }
-

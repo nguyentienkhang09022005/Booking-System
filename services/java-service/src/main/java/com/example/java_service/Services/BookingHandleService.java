@@ -53,7 +53,7 @@ public class BookingHandleService
     RoomRepository roomRepository;
     ServiceRepository serviceRepository;
     UserRepository userRepository;
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     VoucherRepository voucherRepository;
     UserVoucherRepository userVoucherRepository;
     AppliedVoucherRepository appliedVoucherRepository;
@@ -82,14 +82,14 @@ public class BookingHandleService
     }
 
     // Hàm lấy danh sách đặt phòng của khách sạn (cho company)
-    public List<BookingListResponse> getListBooking(UUID idHotel)
+    public List<BookingListResponse> getListBooking(UUID idAccommodation)
     {
-        hotelRepository.findById(idHotel).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
         // Lấy tất cả danh sách booking
-        List<Booking> bookingList = bookingRepository.findByHotel_IdHotel(idHotel);
+        List<Booking> bookingList = bookingRepository.findByAccommodation_IdAccommodation(idAccommodation);
         if (bookingList.isEmpty()) {
             return List.of();
         }
@@ -243,8 +243,8 @@ public class BookingHandleService
                     () -> new ApiException(ErrorCode.USER_NOT_FOUND)
             );
 
-            Hotel hotel = hotelRepository.findById(bookingRequest.getIdHotel()).orElseThrow(
-                    () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+            Accommodation accommodation = accommodationRepository.findById(bookingRequest.getIdAccommodation()).orElseThrow(
+                    () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
             );
 
             if (!bookingRequest.getCheckoutDate().isAfter(bookingRequest.getCheckinDate())) {
@@ -254,7 +254,7 @@ public class BookingHandleService
             Booking booking = bookingMapper.toBooking(bookingRequest);
             booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_PENDING);
             booking.setUsers(user);
-            booking.setHotel(hotel);
+            booking.setAccommodation(accommodation);
             Booking savedBooking = bookingRepository.save(booking);
 
             BookingRoomResponse bookingRoomResponse = bookingRoomService.saveBookingRoom(bookingRequest.getBookingRooms(),
@@ -305,9 +305,9 @@ public class BookingHandleService
                     Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
                             .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
 
-                    // Kiểm tra voucher có thuộc hotel của booking
-                    if (voucher.getHotel() == null || !voucher.getHotel().getIdHotel().equals(bookingRequest.getIdHotel())) {
-                        throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_HOTEL);
+                    // Kiểm tra voucher có thuộc Accommodation của booking
+                    if (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(bookingRequest.getIdAccommodation())) {
+                        throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_ACCOMMODATION);
                     }
 
                     // Lưu voucher
@@ -337,7 +337,7 @@ public class BookingHandleService
                     .idNotification(UUID.randomUUID())
                     .idUser(booking.getUsers().getIdUser())
                     .title("Thông báo đặt phòng")
-                    .content(String.format("Thông tin đơn đặt phòng khách sạn %s của bạn đã được ghi nhận!", booking.getHotel().getHotelName()))
+                    .content(String.format("Thông tin đơn đặt phòng nơi cư trú %s của bạn đã được ghi nhận!", booking.getAccommodation().getAccommodationName()))
                     .type("booking")
                     .idRef(booking.getIdBooking().toString())
                     .isRead(false)
@@ -566,9 +566,9 @@ public class BookingHandleService
                 Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
                         .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
 
-                // Kiểm tra voucher có thuộc hotel của booking
-                if (voucher.getHotel() == null || !voucher.getHotel().getIdHotel().equals(booking.getHotel().getIdHotel())) {
-                    throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_HOTEL);
+                // Kiểm tra voucher có thuộc Accommodation của booking
+                if (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(booking.getAccommodation().getIdAccommodation())) {
+                    throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_ACCOMMODATION);
                 }
 
                 //----------Xữ lý lưu danh sách voucher mới-----------------
@@ -704,7 +704,7 @@ public class BookingHandleService
                 .idNotification(UUID.randomUUID())
                 .idUser(booking.getUsers().getIdUser())
                 .title("Thông báo đặt phòng")
-                .content(String.format("Bạn đã trả phòng khách sạn %s thành công!", booking.getHotel().getHotelName()))
+                .content(String.format("Bạn đã trả phòng nơi cư trú %s thành công!", booking.getAccommodation().getAccommodationName()))
                 .type("booking")
                 .idRef(booking.getIdBooking().toString())
                 .isRead(false)
@@ -745,7 +745,7 @@ public class BookingHandleService
                 .idNotification(UUID.randomUUID())
                 .idUser(booking.getUsers().getIdUser())
                 .title("Thông báo trạng thái đặt phòng")
-                .content(String.format("Trạng thái đơn đặt phòng khách sạn %s của bạn đã thay đổi!", booking.getHotel().getHotelName()))
+                .content(String.format("Trạng thái đơn đặt phòng nơi cư trú %s của bạn đã thay đổi!", booking.getAccommodation().getAccommodationName()))
                 .type("booking")
                 .idRef(booking.getIdBooking().toString())
                 .isRead(false)

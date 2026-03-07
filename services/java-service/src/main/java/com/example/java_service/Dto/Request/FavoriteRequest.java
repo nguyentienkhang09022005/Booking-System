@@ -11,5 +11,5 @@ import lombok.experimental.FieldDefaults;
 public class FavoriteRequest
 {
     String idUser;
-    String idHotel;
+    String idAccommodation;
 }

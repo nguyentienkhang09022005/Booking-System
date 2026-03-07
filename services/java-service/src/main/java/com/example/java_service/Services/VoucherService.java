@@ -8,10 +8,10 @@ import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.VoucherMapper;
-import com.example.java_service.Models.Hotel;
+import com.example.java_service.Models.Accommodation;
 import com.example.java_service.Models.Images;
 import com.example.java_service.Models.Voucher;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Jpa.UserVoucherRepository;
 import com.example.java_service.Repositories.Jpa.VoucherRepository;
@@ -36,7 +36,7 @@ public class VoucherService
     VoucherRepository voucherRepository;
     UserRepository userRepository;
     UserVoucherRepository userVoucherRepository;
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     ImagesRepository imagesRepository;
     VoucherMapper voucherMapper;
 
@@ -62,18 +62,18 @@ public class VoucherService
         return code;
     }
 
-    // Lấy danh sách voucher của khách sạn đã được phê duyệt và còn hạn (cho user)
-    public List<VoucherViewResponse> listVouchersApprovedByHotel(UUID idHotel, UUID idUser)
+    // Lấy danh sách voucher của nơi cư trú đã được phê duyệt và còn hạn (cho user)
+    public List<VoucherViewResponse> listVouchersApprovedByAccommodation(UUID idAccommodation, UUID idUser)
     {
-        if (!hotelRepository.existsByIdHotel(idHotel)){
-            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        if (!accommodationRepository.existsByIdAccommodation(idAccommodation)){
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
 
         if (!userRepository.existsByIdUser(idUser)){
             throw new ApiException(ErrorCode.USER_NOT_FOUND);
         }
 
-        List<Voucher> vouchers = voucherRepository.findVoucherByApprovedTrueAndHotel_IdHotel(idHotel);
+        List<Voucher> vouchers = voucherRepository.findVoucherByApprovedTrueAndAccommodation_IdAccommodation(idAccommodation);
 
         if (vouchers.isEmpty()) {
             return List.of();
@@ -192,14 +192,14 @@ public class VoucherService
                 .toList();
     }
 
-    // Lấy danh sách voucher của khách sạn (cho company)
-    public List<VoucherEditResponse> listVouchersOfHotel(UUID idHotel)
+    // Lấy danh sách voucher của nơi cư trú (cho company)
+    public List<VoucherEditResponse> listVouchersOfAccommodation(UUID idAccommodation)
     {
-        if (!hotelRepository.existsByIdHotel(idHotel)){
-            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        if (!accommodationRepository.existsByIdAccommodation(idAccommodation)){
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
 
-        List<Voucher> vouchers = voucherRepository.findVoucherByHotel_IdHotel(idHotel);
+        List<Voucher> vouchers = voucherRepository.findVoucherByAccommodation_IdAccommodation(idAccommodation);
 
         if (vouchers.isEmpty()) {
             return List.of();
@@ -249,12 +249,12 @@ public class VoucherService
             throw new ApiException(ErrorCode.PERCENT_NOT_NEGATIVE);
         }
 
-        Hotel hotel = hotelRepository.findById(voucherCreationRequest.getIdHotel()).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        Accommodation accommodation = accommodationRepository.findById(voucherCreationRequest.getIdAccommodation()).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
         Voucher voucher = voucherMapper.toVoucher(voucherCreationRequest);
-        voucher.setHotel(hotel);
+        voucher.setAccommodation(accommodation);
         voucher.setCode(generateUniqueVoucherCode());
         voucher.setApproved(false);
         Voucher savedVoucher = voucherRepository.save(voucher);

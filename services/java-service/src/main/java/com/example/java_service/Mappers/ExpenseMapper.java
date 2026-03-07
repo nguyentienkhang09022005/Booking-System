@@ -9,7 +9,7 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface ExpenseMapper
 {
-    @Mapping(target = "hotel", ignore = true)
+    @Mapping(target = "accommodation", ignore = true)
     @Mapping(target = "user", ignore = true)
     Expense toExpense(ExpenseCreationRequest request);
 

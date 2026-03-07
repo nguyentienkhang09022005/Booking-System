@@ -14,7 +14,7 @@ import java.util.UUID;
 public class RevenueCreatedEvent {
     UUID idExpense;
     UUID idBooking;
-    UUID idHotel;
+    UUID idAccommodation;
     BigDecimal amount;
     int month;
     int year;

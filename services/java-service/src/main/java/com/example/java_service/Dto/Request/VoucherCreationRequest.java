@@ -14,7 +14,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VoucherCreationRequest
 {
-    UUID idHotel;
+    UUID idAccommodation;
     String nameVoucher;
     BigDecimal discountPercent;
     LocalDate startDate;

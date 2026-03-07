@@ -11,10 +11,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GetListHotelResponse
+public class GetListAccommodationResponse
 {
-    UUID idHotel;
-    String hotelName;
+    UUID idAccommodation;
+    String accommodationName;
     String street;
     String ward;
     String city;
@@ -23,5 +23,5 @@ public class GetListHotelResponse
     Integer allEvaluates;
     Double averageStar;
     Boolean approved;
-    List<String> imageHotelUrl;
+    List<String> imageAccommodationUrl;
 }

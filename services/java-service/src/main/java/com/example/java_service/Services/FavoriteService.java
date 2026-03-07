@@ -6,10 +6,9 @@ import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.FavoriteMapper;
-import com.example.java_service.Models.Favorite;
-import com.example.java_service.Models.Hotel;
+import com.example.java_service.Models.Accommodation;
 import com.example.java_service.Models.Users;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +29,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FavoriteService
 {
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     UserRepository userRepository;
     FavoriteRepository favoriteRepository;
     FavoriteMapper favoriteMapper;
@@ -38,19 +37,19 @@ public class FavoriteService
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
 
-    // Hàm tạo yêu thích khách sạn
+    // Hàm tạo yêu thích nơi cư trú
     public ResponseEntity<String> saveFavorite(FavoriteRequest request)
     {
-        Hotel hotel = hotelRepository.findById(UUID.fromString(request.getIdHotel())).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        Accommodation accommodation = accommodationRepository.findById(UUID.fromString(request.getIdAccommodation())).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
         Users user = userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        Boolean checkFavorite = favoriteRepository.existsByIdUserAndIdHotel(request.getIdUser(), request.getIdHotel());
+        Boolean checkFavorite = favoriteRepository.existsByIdUserAndIdAccommodation(request.getIdUser(), request.getIdAccommodation());
         if (checkFavorite)
-            throw new ApiException(ErrorCode.USER_LIKED_HOTEL);
+            throw new ApiException(ErrorCode.USER_LIKED_ACCOMMODATION);
 
         var favorite = favoriteMapper.toFavorite(request);
         favorite.setCreatedAt(LocalDateTime.now());
@@ -63,12 +62,12 @@ public class FavoriteService
         // Gửi sự kiện vào Exchanges
         NotificationCreatedEvent event = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
-                .idUser(hotel.getUsers().getIdUser())
-                .title("Thông báo yêu thích khách sạn")
+                .idUser(accommodation.getUsers().getIdUser())
+                .title("Thông báo yêu thích nơi cư trú")
                 .content(String.format(
-                        "Người dùng %s vừa thêm khách sạn %s vào danh sách yêu thích.",
+                        "Người dùng %s vừa thêm nơi cư trú %s vào danh sách yêu thích.",
                         fullName,
-                        hotel.getHotelName()
+                        accommodation.getAccommodationName()
                 ))
                 .type("favorite")
                 .idRef(favorite.getId())
@@ -89,16 +88,16 @@ public class FavoriteService
         return ResponseEntity.ok("Tạo yêu thích thành công!");
     }
 
-    // Hàm xóa yêu thích khách sạn
+    // Hàm xóa yêu thích nơi cư trú
     public ResponseEntity<String> deleteFavorite(FavoriteRequest request)
     {
         if (!userRepository.existsById(UUID.fromString(request.getIdUser())))
             throw new ApiException(ErrorCode.USER_NOT_FOUND);
 
-        if (!hotelRepository.existsById(UUID.fromString(request.getIdHotel())))
-            throw new ApiException(ErrorCode.HOTEL_NOT_FOUND);
+        if (!accommodationRepository.existsById(UUID.fromString(request.getIdAccommodation())))
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
 
-        favoriteRepository.deleteByIdUserAndIdHotel(request.getIdUser(), request.getIdHotel());
+        favoriteRepository.deleteByIdUserAndIdAccommodation(request.getIdUser(), request.getIdAccommodation());
         return ResponseEntity.ok("Bỏ yêu thích thành công!");
     }
 }

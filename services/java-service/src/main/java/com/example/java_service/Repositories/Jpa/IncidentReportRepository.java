@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface IncidentReportRepository extends JpaRepository<IncidentReport, UUID>
 {
-    List<IncidentReport> findByBooking_Hotel_IdHotel(UUID idHotel);
+    List<IncidentReport> findByBooking_Accommodation_IdAccommodation(UUID idAccommodation);
 
     List<IncidentReport> findByUser_IdUserAndBooking_IdBooking(UUID idUser, UUID idBooking);
 }

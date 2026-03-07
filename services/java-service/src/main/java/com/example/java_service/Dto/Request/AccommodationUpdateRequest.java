@@ -10,15 +10,15 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class HotelUpdateRequest
+public class AccommodationUpdateRequest
 {
-    String hotelName;
+    String accommodationName;
     String street;
     String ward;
     String city;
     String description;
     Boolean approved;
-    List<String> listImageHotel;
-    List<HotelCreationRequest.FacilityCategoryRequest> facilityCategories;
-    List<HotelCreationRequest.GeneralRegulationRequest> generalRegulations;
+    List<String> listImageAccommodation;
+    List<AccommodationCreationRequest.FacilityCategoryRequest> facilityCategories;
+    List<AccommodationCreationRequest.GeneralRegulationRequest> generalRegulations;
 }

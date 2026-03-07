@@ -12,7 +12,7 @@ import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.ExpenseMapper;
 import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.ExpenseRepository;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +36,7 @@ import java.util.UUID;
 public class ExpenseService
 {
     ExpenseRepository expenseRepository;
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     UserRepository userRepository;
     ImagesRepository imagesRepository;
     ExpenseMapper expenseMapper;
@@ -44,14 +44,14 @@ public class ExpenseService
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
 
-    // Hàm lấy danh sách chi tiêu của khách sạn
-    public List<ExpenseResponse> getListExpense(UUID idHotel)
+    // Hàm lấy danh sách chi tiêu của nơi cư trú
+    public List<ExpenseResponse> getListExpense(UUID idAccommodation)
     {
-        hotelRepository.findById(idHotel).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
-        List<Expense> expenseList = expenseRepository.findByHotel_IdHotel(idHotel);
+        List<Expense> expenseList = expenseRepository.findByAccommodation_IdAccommodation(idAccommodation);
         if (expenseList.isEmpty()) {
             return List.of();
         }
@@ -110,8 +110,8 @@ public class ExpenseService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        Accommodation accommodation = accommodationRepository.findById(request.getIdAccommodation()).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
         if (request.getAmount().compareTo(BigDecimal.ZERO) < 0){
@@ -119,7 +119,7 @@ public class ExpenseService
         }
 
         Expense expense = expenseMapper.toExpense(request);
-        expense.setHotel(hotel);
+        expense.setAccommodation(accommodation);
         expense.setUser(user);
 
         Expense savedExpense = expenseRepository.save(expense);
@@ -127,7 +127,7 @@ public class ExpenseService
         // Gửi sự kiện vào Exchanges
         RevenueCreatedEvent event = RevenueCreatedEvent.builder()
                 .idExpense(savedExpense.getIdExpense())
-                .idHotel(savedExpense.getHotel().getIdHotel())
+                .idAccommodation(savedExpense.getAccommodation().getIdAccommodation())
                 .amount(savedExpense.getAmount())
                 .month(savedExpense.getCreateAt().getMonthValue())
                 .year(savedExpense.getCreateAt().getYear())

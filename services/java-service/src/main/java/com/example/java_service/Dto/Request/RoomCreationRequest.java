@@ -14,7 +14,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoomCreationRequest
 {
-    UUID idHotel;
+    UUID idAccommodation;
     String typeRoom;
     String roomName;
     BigDecimal roomPrice;

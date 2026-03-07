@@ -13,7 +13,7 @@ import java.util.UUID;
 @Repository
 public interface RoomRepository extends JpaRepository<Room, UUID>
 {
-    List<Room> findByHotel_IdHotel(UUID idHotel);
+    List<Room> findByAccommodation_IdAccommodation(UUID idAccommodation);
 
     // Update status nếu số lượng bằng 0
     @Modifying

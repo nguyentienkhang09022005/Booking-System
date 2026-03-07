@@ -11,15 +11,15 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface VoucherMapper
 {
-    @Mapping(target = "hotel", ignore = true)
+    @Mapping(target = "accommodation", ignore = true)
     Voucher toVoucher(VoucherCreationRequest request);
 
     VoucherEditResponse toVoucherEditResponse(Voucher voucher);
 
-    @Mapping(target = "idHotel", source = "hotel.idHotel")
+    @Mapping(target = "idAccommodation", source = "accommodation.idAccommodation")
     VoucherViewResponse toVoucherViewResponse(Voucher voucher);
 
-    @Mapping(target = "idHotel", source = "hotel.idHotel")
+    @Mapping(target = "idAccommodation", source = "accommodation.idAccommodation")
     VoucherViewAllResponse toVoucherViewAllResponse(Voucher voucher);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

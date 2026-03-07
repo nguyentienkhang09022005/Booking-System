@@ -10,7 +10,7 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface RoomMapper
 {
-    @Mapping(target = "hotel", ignore = true)
+    @Mapping(target = "accommodation", ignore = true)
     @Mapping(target = "typeRoom", ignore = true)
     Room toRoom(RoomCreationRequest request);
 

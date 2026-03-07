@@ -1,6 +1,6 @@
 package com.example.java_service.Repositories.Mongodb;
 
-import com.example.java_service.Dto.Response.HotelStatsResponse;
+import com.example.java_service.Dto.Response.AccommodationStatsResponse;
 import com.example.java_service.Models.Evaluates;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,31 +13,31 @@ import java.util.List;
 @Repository
 public interface EvaluatesRepository extends MongoRepository<Evaluates, String>
 {
-    Boolean existsByIdHotelAndIdUser(String idHotel, String idUser);
+    Boolean existsByIdAccommodationAndIdUser(String idAccommodation, String idUser);
 
     // Lấy 5 đánh giá sớm nhất
-    List<Evaluates> findTop3ByIdHotelOrderByCreatedAtAsc(String idHotel);
+    List<Evaluates> findTop3ByIdAccommodationOrderByCreatedAtAsc(String idAccommodation);
 
-    Page<Evaluates> findByIdHotel(String idHotel, Pageable pageable);
+    Page<Evaluates> findByIdAccommodation(String idAccommodation, Pageable pageable);
 
-    // Đếm số lượng đánh giá của hotel
-    long countByIdHotel(String idHotel);
+    // Đếm số lượng đánh giá của Accommodation
+    long countByIdAccommodation(String idAccommodation);
 
-    // Tính trung bình số sao của hotel
+    // Tính trung bình số sao của Accommodation
     @Aggregation(pipeline = {
-            "{ '$match': { 'idHotel': ?0 } }",
+            "{ '$match': { 'idAccommodation': ?0 } }",
             "{ '$group': { '_id': null, 'avgStars': { '$avg': '$stars' } } }"
     })
-    Double getAverageRatingByIdHotel(String idHotel);
+    Double getAverageRatingByIdAccommodation(String idAccommodation);
 
     @Aggregation(pipeline = {
-            "{ $match: { idHotel: { $in: ?0 } } }",
-            "{ $group: { _id: '$idHotel', allEvaluates: { $sum: 1 }, averageStar: { $avg: '$stars' } } }",
-            "{ $project: { idHotel: '$_id', allEvaluates: 1, averageStar: 1, _id: 0 } }"
+            "{ $match: { idAccommodation: { $in: ?0 } } }",
+            "{ $group: { _id: '$idAccommodation', allEvaluates: { $sum: 1 }, averageStar: { $avg: '$stars' } } }",
+            "{ $project: { idAccommodation: '$_id', allEvaluates: 1, averageStar: 1, _id: 0 } }"
     })
-    List<HotelStatsResponse> findHotelStatsByHotelIds(List<String> hotelIds);
+    List<AccommodationStatsResponse> findAccommodationStatsByAccommodationIds(List<String> accommodationIds);
 
     void deleteByIdUser(String idUser);
 
-    void deleteByIdHotel(String idHotel);
+    void deleteByIdAccommodation(String idAccommodation);
 }

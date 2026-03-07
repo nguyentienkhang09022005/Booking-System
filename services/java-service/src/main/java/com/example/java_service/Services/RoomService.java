@@ -9,7 +9,7 @@ import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.RoomMapper;
 import com.example.java_service.Models.*;
-import com.example.java_service.Repositories.Jpa.HotelRepository;
+import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.RoomRepository;
 import com.example.java_service.Repositories.Jpa.TypeRoomRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
@@ -33,19 +33,19 @@ import java.util.stream.Collectors;
 public class RoomService
 {
     RoomRepository roomRepository;
-    HotelRepository hotelRepository;
+    AccommodationRepository accommodationRepository;
     ImagesRepository imagesRepository;
     TypeRoomRepository typeRoomRepository;
     RoomMapper roomMapper;
 
     // Hàm lấy danh sách phòng
-    public List<GetRoomResponse> getListRoom(UUID idHotel)
+    public List<GetRoomResponse> getListRoom(UUID idAccommodation)
     {
-        hotelRepository.findById(idHotel).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
-        List<Room> roomList = roomRepository.findByHotel_IdHotel(idHotel);
+        List<Room> roomList = roomRepository.findByAccommodation_IdAccommodation(idAccommodation);
         if (roomList.isEmpty()) {
             return List.of();
         }
@@ -96,12 +96,12 @@ public class RoomService
     @Transactional
     public ResponseEntity<String> saveRoom(RoomCreationRequest request)
     {
-        Hotel hotel = hotelRepository.findById(request.getIdHotel()).orElseThrow(
-                () -> new ApiException(ErrorCode.HOTEL_NOT_FOUND)
+        Accommodation accommodation = accommodationRepository.findById(request.getIdAccommodation()).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
         Room room = roomMapper.toRoom(request);
-        room.setHotel(hotel);
+        room.setAccommodation(accommodation);
         room.setTypeRoom(typeRoomRepository.getReferenceById(request.getTypeRoom()));
         room.setStatus(PredefinedStatusRoom.STATUS_ROOM_AVAILABLE);
         Room savedRoom = roomRepository.save(room);

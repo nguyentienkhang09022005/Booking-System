@@ -4,7 +4,6 @@ import com.example.java_service.Dto.Request.EvaluateCreationRequest;
 import com.example.java_service.Dto.Request.EvaluateUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.EvaluateResponse;
-import com.example.java_service.Dto.Response.GetListHotelResponse;
 import com.example.java_service.Services.EvaluatesService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

@@ -10,7 +10,7 @@ import java.util.UUID;
 @Repository
 public interface GeneralRegulationRepository extends JpaRepository<GeneralRegulation, UUID>
 {
-    List<GeneralRegulation> findByHotel_IdHotel(UUID idHotel);
+    List<GeneralRegulation> findByAccommodation_IdAccommodation(UUID idAccommodation);
 
-    void deleteByHotel_IdHotel(UUID idHotel);
+    void deleteByAccommodation_IdAccommodation(UUID idAccommodation);
 }

@@ -13,7 +13,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ServiceCreationRequest
 {
-    UUID idHotel;
+    UUID idAccommodation;
     String typeService;
     String serviceName;
     BigDecimal servicePrice;

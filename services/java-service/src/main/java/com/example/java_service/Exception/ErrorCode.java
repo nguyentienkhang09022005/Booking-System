@@ -50,8 +50,8 @@ public enum ErrorCode
     INVALID_IMAGE_REFID("INVALID_IMAGE_REFID", "Thiếu id đối tượng sở hữu hình ảnh", HttpStatus.BAD_REQUEST),
 
     // Lỗi khách sạn
-    HOTEL_NOT_FOUND("HOTEL_NOT_FOUND", "Không tìm thấy khách sạn!", HttpStatus.NOT_FOUND),
-    USER_CREATED_HOTEL("USER_CREATED_HOTEL", "Tài khoản này đã tạo khách sạn rồi!", HttpStatus.CONFLICT),
+    ACCOMMODATION_NOT_FOUND("ACCOMMODATION_NOT_FOUND", "Không tìm thấy nơi cư trú!", HttpStatus.NOT_FOUND),
+    USER_CREATED_ACCOMMODATION("USER_CREATED_ACCOMMODATION", "Tài khoản này đã tạo nơi cư trú rồi!", HttpStatus.CONFLICT),
 
     // Lỗi phòng
     ROOM_NOT_FOUND("ROOM_NOT_FOUND", "Không tìm thấy phòng!", HttpStatus.NOT_FOUND),
@@ -63,12 +63,12 @@ public enum ErrorCode
     SERVICE_NOT_ENOUGH_QUANTITY("SERVICE_NOT_ENOUGH_QUANTITY", "Không đủ số lượng dịch vụ!", HttpStatus.BAD_REQUEST),
 
     // Lỗi yêu thích
-    FAVORITE_NOT_FOUND("FAVORITE_NOT_FOUND", "Lỗi không tìm thấy khách sạn yêu thích!", HttpStatus.NOT_FOUND),
-    USER_LIKED_HOTEL("USER_LIKED_HOTEL", "Bạn đã yêu thích khách sạn này rồi!", HttpStatus.CONFLICT),
+    FAVORITE_NOT_FOUND("FAVORITE_NOT_FOUND", "Lỗi không tìm thấy nơi cư trú yêu thích!", HttpStatus.NOT_FOUND),
+    USER_LIKED_ACCOMMODATION("USER_LIKED_ACCOMMODATION", "Bạn đã yêu thích nơi cư trú này rồi!", HttpStatus.CONFLICT),
 
     // Lỗi đánh giá
     EVALUATE_NOT_FOUND("EVALUATE_NOT_FOUND", "Lỗi không tìm thấy đánh giá!", HttpStatus.NOT_FOUND),
-    USER_EVALUATED_HOTEL("USER_EVALUATED_HOTEL", "Bạn đã đánh giá khách sạn này rồi!", HttpStatus.CONFLICT),
+    USER_EVALUATED_ACCOMMODATION("USER_EVALUATED_ACCOMMODATION", "Bạn đã đánh giá nơi cư trú này rồi!", HttpStatus.CONFLICT),
     EVALUATE_UPDATE_TIME_EXPIRED("EVALUATE_UPDATE_TIME_EXPIRED", "Chỉ được thay đổi đánh giá trong 30 phút!", HttpStatus.BAD_REQUEST),
     COMMENT_REJECTED_BY_AI("COMMENT_REJECTED_BY_AI", "Bình luận có phát ngôn không chuẩn mực, đã bị loại bỏ", HttpStatus.BAD_REQUEST),
 
@@ -91,7 +91,7 @@ public enum ErrorCode
     CODE_REQUIRED("CODE_REQUIRED", "Vui lòng nhập code!", HttpStatus.BAD_REQUEST),
     VOUCHER_NOT_ENOUGH_QUANTITY("VOUCHER_NOT_ENOUGH_QUANTITY", "Không đủ số lượng voucher!", HttpStatus.BAD_REQUEST),
     VOUCHER_EXPIRED("VOUCHER_EXPIRED", "Voucher đã hết hạn!", HttpStatus.BAD_REQUEST),
-    VOUCHER_NOT_BELONG_TO_HOTEL("VOUCHER_NOT_BELONG_TO_HOTEL", "Voucher không thuộc về khách sạn!", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_BELONG_TO_ACCOMMODATION("VOUCHER_NOT_BELONG_TO_ACCOMMODATION", "Voucher không thuộc về nơi cư trú!", HttpStatus.BAD_REQUEST),
 
     // Lỗi UserVoucher
     VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),

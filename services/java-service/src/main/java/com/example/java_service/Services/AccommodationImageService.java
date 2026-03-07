@@ -4,7 +4,7 @@ import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Impl.ImageUploadData;
 import com.example.java_service.Impl.UploadImageFile;
-import com.example.java_service.Models.Hotel;
+import com.example.java_service.Models.Accommodation;
 import com.example.java_service.Models.Images;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import lombok.AccessLevel;
@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class HotelImageService
+public class AccommodationImageService
 {
     private final ImagesRepository imagesRepository;
     private final UploadImageFile uploadImageFile;
 
     @Async
-    public void uploadImageHotelAsync(List<MultipartFile> files, Hotel hotel)
+    public void uploadImageAccommodationAsync(List<MultipartFile> files, Accommodation accommodation)
     {
         List<ImageUploadData> imageUploadDataList;
         try {
@@ -47,11 +47,11 @@ public class HotelImageService
         } catch (Exception e) {
             return; // Dừng lại nếu có lỗi khi đọc file
         }
-        processAndSaveImages(imageUploadDataList, hotel);
+        processAndSaveImages(imageUploadDataList, accommodation);
     }
 
     @Async
-    public void processAndSaveImages(List<ImageUploadData> imageUploadDataList, Hotel hotel) {
+    public void processAndSaveImages(List<ImageUploadData> imageUploadDataList, Accommodation accommodation) {
         try {
             List<String> urls = imageUploadDataList.stream().map(data -> {
                 try {
@@ -65,7 +65,7 @@ public class HotelImageService
             List<Images> imagesList = urls.stream().map(url -> {
                 Images image = new Images();
                 image.setUrl(url);
-                image.setRefId(hotel.getIdHotel().toString());
+                image.setRefId(accommodation.getIdAccommodation().toString());
                 image.setUploadedAt(LocalDateTime.now());
                 return image;
             }).collect(Collectors.toList());
@@ -73,7 +73,7 @@ public class HotelImageService
             imagesRepository.saveAll(imagesList);
 
         } catch (Exception e) {
-            log.error("Hệ thống xữ lý lưu ảnh cho khách sạn thất bại: {}. Error: {}", hotel.getIdHotel(), e.getMessage());
+            log.error("Hệ thống xữ lý lưu ảnh cho nơi cư trú thất bại: {}. Error: {}", accommodation.getIdAccommodation(), e.getMessage());
         }
     }
 }

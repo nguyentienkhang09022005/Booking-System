@@ -18,7 +18,7 @@ public class Evaluates {
 
     @Id
     private String id;
-    private String idHotel;
+    private String idAccommodation;
     private String idUser;
     private Integer stars;
     private String comment;

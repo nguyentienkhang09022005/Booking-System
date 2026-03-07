@@ -15,7 +15,7 @@ public interface BookingMapper
     @Mapping(target = "totalPrice", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "users", ignore = true)
-    @Mapping(target = "hotel", ignore = true)
+    @Mapping(target = "accommodation", ignore = true)
     @Mapping(target = "bookingDate", ignore = true)
     Booking toBooking(BookingRequest request);
 
