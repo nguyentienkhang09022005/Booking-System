@@ -2,20 +2,20 @@ import swaggerJsdoc from "swagger-jsdoc";
 import dotenv from "dotenv";
 dotenv.config();
 
-const serverUrl = process.env.SERVER_URL || "/";
+// const serverUrl = process.env.SERVER_URL || "/";
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "Node.js Chat Service API",
-      version: "1.0.0",
+      version: "2.0.0",
       description: "API documentation for the Chat Service",
     },
     servers: [
-      {
-        url: serverUrl, 
-        description: "Server",
-      },
+      // {
+      //   url: serverUrl, 
+      //   description: "Server",
+      // },
       {
         url: "http://localhost:3000",
         description: "Local",

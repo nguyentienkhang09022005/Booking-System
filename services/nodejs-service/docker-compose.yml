@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  nodejs-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nodejs-service:lite
+    container_name: nodejs_service_app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'      
+          memory: 256M     
+        reservations:
+          cpus: '0.1'
+          memory: 128M
