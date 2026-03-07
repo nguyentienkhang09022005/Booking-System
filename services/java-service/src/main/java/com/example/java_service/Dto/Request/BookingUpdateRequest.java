@@ -16,6 +16,9 @@ public class BookingUpdateRequest
     LocalDateTime checkinDate;
     LocalDateTime checkoutDate;
     String note;
+    String currency;
+    String paymentMethod;
+    String payerAddress;
     List<BookingRoomRequest> bookingRooms;
     List<BookingServiceRequest> bookingServices;
     List<UserVoucherRequest> userVoucherRequests;

@@ -14,5 +14,6 @@ public class PaymentRequest
 {
     UUID id_user;
     UUID id_booking;
+    String currency;
     double amount;
 }

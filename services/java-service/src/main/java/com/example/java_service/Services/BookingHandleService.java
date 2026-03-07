@@ -232,7 +232,7 @@ public class BookingHandleService
     {
         Booking booking = self.createBookingTransactional(bookingRequest);
 
-        return self.callPaymentApi(booking, bookingRequest.getPaymentMethod(), bookingRequest.getPayerAddress());
+        return self.callPaymentApi(booking, bookingRequest);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -364,19 +364,19 @@ public class BookingHandleService
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public PaymentResponse callPaymentApi(Booking booking, String paymentMethod, String payerAddress)
+    public PaymentResponse callPaymentApi(Booking booking, BookingRequest bookingRequest)
     {
         try
         {
             // Branch on payment method
-            if ("VNDStablecoin".equals(paymentMethod) && payerAddress != null && !payerAddress.isBlank())
+            if ("VNDStablecoin".equals(bookingRequest.getPaymentMethod()) && bookingRequest.getPayerAddress() != null && !bookingRequest.getPayerAddress().isBlank())
             {
                 // Call Go service VND payment prepare endpoint
                 Map<String, Object> vndRequest = Map.of(
                         "id_user", booking.getUsers().getIdUser(),
                         "id_booking", booking.getIdBooking(),
                         "amount", booking.getTotalPrice().doubleValue(),
-                        "payer_address", payerAddress
+                        "payer_address", bookingRequest.getPayerAddress()
                 );
 
                 @SuppressWarnings("unchecked")
@@ -410,6 +410,7 @@ public class BookingHandleService
                 PaymentRequest paymentRequest = new PaymentRequest(
                         booking.getUsers().getIdUser(),
                         booking.getIdBooking(),
+                        bookingRequest.getCurrency(),
                         booking.getTotalPrice().doubleValue()
                 );
 
@@ -596,8 +597,13 @@ public class BookingHandleService
 
         paymentRepository.deleteByBooking_IdBooking(idBooking); // Xóa payment cũ
 
-        // updateBooking always uses ZaloPay (VNDStablecoin updates are not supported)
-        return self.callPaymentApi(booking, "ZaloPay", null);
+        BookingRequest tempPaymentRequest = BookingRequest.builder()
+                .currency(bookingUpdateRequest.getCurrency() != null ? bookingUpdateRequest.getCurrency() : "VND")
+                .paymentMethod(bookingUpdateRequest.getPaymentMethod())
+                .payerAddress(bookingUpdateRequest.getPayerAddress())
+                .build();
+
+        return self.callPaymentApi(booking, tempPaymentRequest);
     }
 
     //Hàm checkout đặt phòng cho (company)
