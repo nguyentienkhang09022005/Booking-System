@@ -15,12 +15,12 @@ type Expense struct {
 	CreateAt     time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại
-	IDUser  uuid.UUID `gorm:"type:uuid" json:"id_user"`
-	IDHotel uuid.UUID `gorm:"type:uuid" json:"id_hotel"`
+	IDUser          uuid.UUID `gorm:"type:uuid" json:"id_user"`
+	IDAccommodation uuid.UUID `gorm:"type:uuid" json:"id_accommodation"`
 
 	// Quan hệ
-	User  User  `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE" json:"user,omitempty"`
-	Hotel Hotel `gorm:"foreignKey:IDHotel;constraint:OnDelete:CASCADE" json:"hotel,omitempty"`
+	User          User          `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	Accommodation Accommodation `gorm:"foreignKey:IDAccommodation;constraint:OnDelete:CASCADE" json:"accommodation,omitempty"`
 }
 
 func (Expense) TableName() string {

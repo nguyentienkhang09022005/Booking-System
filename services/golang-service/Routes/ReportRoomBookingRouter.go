@@ -10,9 +10,9 @@ import (
 
 func ReportRoomBookingRouter(router *gin.Engine, db *gorm.DB) {
 	reportRoomBookingRepository := Repositories.ReportRoomBookingRepository(db)
-	hotelRepository := Repositories.HotelRepository(db)
+	accommodationRepository := Repositories.AccommodationRepository(db)
 
-	reportRoomBookingService := Services.ReportRoomBookingService(reportRoomBookingRepository, hotelRepository)
+	reportRoomBookingService := Services.ReportRoomBookingService(reportRoomBookingRepository, accommodationRepository)
 
 	reportRoomBookingController := Controllers.ReportRoomBookingController(reportRoomBookingService)
 

@@ -12,7 +12,7 @@ type ReportRoomBooking struct {
 	CreateAt            time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại
-	IDHotel uuid.UUID `gorm:"type:uuid" json:"id_hotel"`
+	IDAccommodation uuid.UUID `gorm:"type:uuid" json:"id_accommodation"`
 
 	// Quna hệ
 	Details []ReportRoomBookingDetail `gorm:"foreignKey:IDReportRoomBooking;constraint:OnDelete:CASCADE" json:"details,omitempty"`

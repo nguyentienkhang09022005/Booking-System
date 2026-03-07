@@ -12,32 +12,32 @@ import (
 )
 
 type IReportRevenueService interface {
-	GetInfReportByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error)
+	GetInfReportByMonth(idAccommodation uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error)
 	CreateReportRevenue(reportRevenueRequest Request.ReportRevenueRequest) (*Response.ReportRevenueResponse, error)
 	DeleteReportRevenue(idReportRevenue uuid.UUID) error
-	GetYearlyRevenueStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error)
+	GetYearlyRevenueStats(idAccommodation uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error)
 }
 
 type reportRevenueService struct {
 	_reportRevenueRepository Repositories.IReportRevenueRepository
-	_hotelRepository         Repositories.IHotelRepository
+	_accommodationRepository Repositories.IAccommodationRepository
 }
 
 func ReportRevenueService(reportRevenueRepository Repositories.IReportRevenueRepository,
-	hotelRepository Repositories.IHotelRepository) IReportRevenueService {
+	accommodationRepository Repositories.IAccommodationRepository) IReportRevenueService {
 	return &reportRevenueService{
 		_reportRevenueRepository: reportRevenueRepository,
-		_hotelRepository:         hotelRepository,
+		_accommodationRepository: accommodationRepository,
 	}
 }
 
-func (r *reportRevenueService) GetInfReportByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error) {
-	_, err := r._hotelRepository.FindById(idHotel)
+func (r *reportRevenueService) GetInfReportByMonth(idAccommodation uuid.UUID, month int, year int) (*Response.ReportRevenueResponse, error) {
+	_, err := r._accommodationRepository.FindById(idAccommodation)
 	if err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+		return nil, Errors.New(http.StatusNotFound, Errors.AccommodationNotFound)
 	}
 
-	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(idHotel, month, year)
+	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(idAccommodation, month, year)
 
 	if err != nil || reportRevenueExisted == nil {
 		return &Response.ReportRevenueResponse{
@@ -84,13 +84,13 @@ func (r *reportRevenueService) GetInfReportByMonth(idHotel uuid.UUID, month int,
 }
 
 func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.ReportRevenueRequest) (*Response.ReportRevenueResponse, error) {
-	_, err := r._hotelRepository.FindById(reportRevenueRequest.IDHotel)
+	_, err := r._accommodationRepository.FindById(reportRevenueRequest.IDAccommodation)
 	if err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+		return nil, Errors.New(http.StatusNotFound, Errors.AccommodationNotFound)
 	}
 
 	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(
-		reportRevenueRequest.IDHotel,
+		reportRevenueRequest.IDAccommodation,
 		reportRevenueRequest.Month,
 		reportRevenueRequest.Year,
 	)
@@ -102,18 +102,18 @@ func (r *reportRevenueService) CreateReportRevenue(reportRevenueRequest Request.
 	newIdReportRevenue := uuid.New()
 	newReportRevenue := &Models.ReportRevenue{
 		IDReportRevenue: newIdReportRevenue,
-		IDHotel:         reportRevenueRequest.IDHotel,
+		IDAccommodation: reportRevenueRequest.IDAccommodation,
 		Month:           reportRevenueRequest.Month,
 		Year:            reportRevenueRequest.Year,
 	}
 
 	// Quét dữ liệu từ booking và expense
-	bookings, err := r._reportRevenueRepository.GetBookingsByMonth(reportRevenueRequest.IDHotel, reportRevenueRequest.Month, reportRevenueRequest.Year)
+	bookings, err := r._reportRevenueRepository.GetBookingsByMonth(reportRevenueRequest.IDAccommodation, reportRevenueRequest.Month, reportRevenueRequest.Year)
 	if err != nil {
 		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
 	}
 
-	expenses, err := r._reportRevenueRepository.GetExpensesByMonth(reportRevenueRequest.IDHotel, reportRevenueRequest.Month, reportRevenueRequest.Year)
+	expenses, err := r._reportRevenueRepository.GetExpensesByMonth(reportRevenueRequest.IDAccommodation, reportRevenueRequest.Month, reportRevenueRequest.Year)
 	if err != nil {
 		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
 	}
@@ -183,13 +183,13 @@ func (r *reportRevenueService) DeleteReportRevenue(idReportRevenue uuid.UUID) er
 	return r._reportRevenueRepository.Delete(idReportRevenue)
 }
 
-func (r *reportRevenueService) GetYearlyRevenueStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error) {
-	_, err := r._hotelRepository.FindById(idHotel)
+func (r *reportRevenueService) GetYearlyRevenueStats(idAccommodation uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error) {
+	_, err := r._accommodationRepository.FindById(idAccommodation)
 	if err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+		return nil, Errors.New(http.StatusNotFound, Errors.AccommodationNotFound)
 	}
 
-	rawStats, err := r._reportRevenueRepository.GetYearlyStats(idHotel, year)
+	rawStats, err := r._reportRevenueRepository.GetYearlyStats(idAccommodation, year)
 	if err != nil {
 		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
 	}

@@ -299,8 +299,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
+                        "description": "ID Accommodation",
+                        "name": "idAccommodation",
                         "in": "query",
                         "required": true
                     },
@@ -336,8 +336,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
+                        "description": "ID Accommodation",
+                        "name": "idAccommodation",
                         "in": "query",
                         "required": true
                     },
@@ -389,8 +389,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
+                        "description": "ID Accommodation",
+                        "name": "idAccommodation",
                         "in": "query",
                         "required": true
                     },
@@ -484,12 +484,16 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
+                "currency",
                 "id_booking",
                 "id_user"
             ],
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "currency": {
+                    "type": "string"
                 },
                 "id_booking": {
                     "type": "string"
@@ -525,7 +529,7 @@ const docTemplate = `{
         "Request.ReportRevenueRequest": {
             "type": "object",
             "properties": {
-                "idHotel": {
+                "idAccommodation": {
                     "type": "string"
                 },
                 "month": {
@@ -542,13 +546,13 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "idAccommodation": {
+                    "type": "string"
+                },
                 "idBooking": {
                     "type": "string"
                 },
                 "idExpense": {
-                    "type": "string"
-                },
-                "idHotel": {
                     "type": "string"
                 },
                 "month": {

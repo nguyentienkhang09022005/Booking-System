@@ -14,7 +14,7 @@ type ReportRevenue struct {
 	CreateAt        time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại
-	IDHotel uuid.UUID `gorm:"type:uuid" json:"id_hotel"`
+	IDAccommodation uuid.UUID `gorm:"type:uuid" json:"id_accommodation"`
 
 	// Quan hệ
 	Details []ReportRevenueDetail `gorm:"foreignKey:IDReportRevenue;constraint:OnDelete:CASCADE" json:"details,omitempty"`

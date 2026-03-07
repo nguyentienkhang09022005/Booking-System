@@ -5,7 +5,7 @@ import (
 )
 
 type ReportRevenueRequest struct {
-	IDHotel uuid.UUID `json:"idHotel"`
-	Month   int       `json:"month"`
-	Year    int       `json:"year"`
+	IDAccommodation uuid.UUID `json:"idAccommodation"`
+	Month           int       `json:"month"`
+	Year            int       `json:"year"`
 }

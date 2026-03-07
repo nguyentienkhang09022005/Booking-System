@@ -33,12 +33,15 @@ definitions:
     properties:
       amount:
         type: number
+      currency:
+        type: string
       id_booking:
         type: string
       id_user:
         type: string
     required:
     - amount
+    - currency
     - id_booking
     - id_user
     type: object
@@ -60,7 +63,7 @@ definitions:
     type: object
   Request.ReportRevenueRequest:
     properties:
-      idHotel:
+      idAccommodation:
         type: string
       month:
         type: integer
@@ -71,11 +74,11 @@ definitions:
     properties:
       amount:
         type: number
+      idAccommodation:
+        type: string
       idBooking:
         type: string
       idExpense:
-        type: string
-      idHotel:
         type: string
       month:
         type: integer
@@ -350,9 +353,9 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: ID Hotel
+      - description: ID Accommodation
         in: query
-        name: idHotel
+        name: idAccommodation
         required: true
         type: string
       - description: Tháng
@@ -375,9 +378,9 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: ID Hotel
+      - description: ID Accommodation
         in: query
-        name: idHotel
+        name: idAccommodation
         required: true
         type: string
       - description: Năm
@@ -410,9 +413,9 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: ID Hotel
+      - description: ID Accommodation
         in: query
-        name: idHotel
+        name: idAccommodation
         required: true
         type: string
       - description: Tháng

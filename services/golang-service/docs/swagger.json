@@ -291,8 +291,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
+                        "description": "ID Accommodation",
+                        "name": "idAccommodation",
                         "in": "query",
                         "required": true
                     },
@@ -328,8 +328,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
+                        "description": "ID Accommodation",
+                        "name": "idAccommodation",
                         "in": "query",
                         "required": true
                     },
@@ -381,8 +381,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID Hotel",
-                        "name": "idHotel",
+                        "description": "ID Accommodation",
+                        "name": "idAccommodation",
                         "in": "query",
                         "required": true
                     },
@@ -476,12 +476,16 @@
             "type": "object",
             "required": [
                 "amount",
+                "currency",
                 "id_booking",
                 "id_user"
             ],
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "currency": {
+                    "type": "string"
                 },
                 "id_booking": {
                     "type": "string"
@@ -517,7 +521,7 @@
         "Request.ReportRevenueRequest": {
             "type": "object",
             "properties": {
-                "idHotel": {
+                "idAccommodation": {
                     "type": "string"
                 },
                 "month": {
@@ -534,13 +538,13 @@
                 "amount": {
                     "type": "number"
                 },
+                "idAccommodation": {
+                    "type": "string"
+                },
                 "idBooking": {
                     "type": "string"
                 },
                 "idExpense": {
-                    "type": "string"
-                },
-                "idHotel": {
                     "type": "string"
                 },
                 "month": {

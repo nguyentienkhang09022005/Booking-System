@@ -19,28 +19,28 @@ type IReportRevenueDetailService interface {
 type reportRevenueDetailService struct {
 	_reportRevenueRepository       Repositories.IReportRevenueRepository
 	_reportRevenueDetailRepository Repositories.IReportRevenueDetailRepository
-	_hotelRepository               Repositories.IHotelRepository
+	_accommodationRepository       Repositories.IAccommodationRepository
 }
 
 func ReportRevenueDetailService(
 	reportRevenueRepository Repositories.IReportRevenueRepository,
 	reportRevenueDetailRepository Repositories.IReportRevenueDetailRepository,
-	hotelRepository Repositories.IHotelRepository) IReportRevenueDetailService {
+	accommodationRepository Repositories.IAccommodationRepository) IReportRevenueDetailService {
 	return &reportRevenueDetailService{
 		_reportRevenueRepository:       reportRevenueRepository,
 		_reportRevenueDetailRepository: reportRevenueDetailRepository,
-		_hotelRepository:               hotelRepository,
+		_accommodationRepository:       accommodationRepository,
 	}
 }
 
 func (r *reportRevenueDetailService) CreateReportRevenueDetail(revenueCreatedEvent Request.RevenueCreatedEvent,
 ) (*Response.ReportRevenueDetailResponse, error) {
-	if _, err := r._hotelRepository.FindById(revenueCreatedEvent.IDHotel); err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+	if _, err := r._accommodationRepository.FindById(revenueCreatedEvent.IDAccommodation); err != nil {
+		return nil, Errors.New(http.StatusNotFound, Errors.AccommodationNotFound)
 	}
 
 	reportRevenueExisted, err := r._reportRevenueRepository.FindByMonthAndYear(
-		revenueCreatedEvent.IDHotel,
+		revenueCreatedEvent.IDAccommodation,
 		revenueCreatedEvent.Month,
 		revenueCreatedEvent.Year,
 	)
@@ -50,7 +50,7 @@ func (r *reportRevenueDetailService) CreateReportRevenueDetail(revenueCreatedEve
 	if err != nil || reportRevenueExisted == nil {
 		reportRevenue = &Models.ReportRevenue{
 			IDReportRevenue: uuid.New(),
-			IDHotel:         revenueCreatedEvent.IDHotel,
+			IDAccommodation: revenueCreatedEvent.IDAccommodation,
 			Month:           revenueCreatedEvent.Month,
 			Year:            revenueCreatedEvent.Year,
 		}

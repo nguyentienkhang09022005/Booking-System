@@ -33,8 +33,8 @@ func main() {
 
 	reportRevenueRepository := Repositories.ReportRevenueRepository(db)
 	reportRevenueDetailRepository := Repositories.ReportRevenueDetailRepository(db)
-	hotelRepository := Repositories.HotelRepository(db)
-	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, hotelRepository)
+	accommodationRepository := Repositories.AccommodationRepository(db)
+	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, accommodationRepository)
 
 	// Khởi động RabbitMQ consumer
 	go func() {

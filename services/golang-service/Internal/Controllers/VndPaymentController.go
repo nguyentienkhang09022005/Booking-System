@@ -165,15 +165,15 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 	}
 
 	// Trigger revenue creation (mirrors ZaloPay callback flow)
-	if payment.Booking.IDHotel != uuid.Nil {
+	if payment.Booking.IDAccommodation != uuid.Nil {
 		now := time.Now()
 		revenueEvent := Request.RevenueCreatedEvent{
-			IDBooking: &payment.IDBooking,
-			IDExpense: nil,
-			IDHotel:   payment.Booking.IDHotel,
-			Amount:    payment.Amount,
-			Month:     int(now.Month()),
-			Year:      now.Year(),
+			IDBooking:       &payment.IDBooking,
+			IDExpense:       nil,
+			IDAccommodation: payment.Booking.IDAccommodation,
+			Amount:          payment.Amount,
+			Month:           int(now.Month()),
+			Year:            now.Year(),
 		}
 		if _, err := vc._reportRevenueDetailService.CreateReportRevenueDetail(revenueEvent); err != nil {
 			fmt.Printf("Revenue creation failed for payment %s: %v\n", idPayment, err)

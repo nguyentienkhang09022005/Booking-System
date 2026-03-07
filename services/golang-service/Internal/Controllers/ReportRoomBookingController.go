@@ -22,23 +22,23 @@ func ReportRoomBookingController(reportRoomBookingService Services.IReportRoomBo
 // @Tags Report Type Room Booking
 // @Accept json
 // @Produce json
-// @Param idHotel query string true "ID Hotel" format:uuid
+// @Param idAccommodation query string true "ID Accommodation" format:uuid
 // @Param month query int true "Tháng"
 // @Param year query int true "Năm"
 // @Router /report-type-room-booking/inf-report-type-room-booking-by-month [get]
 func (r *reportRoomBookingController) GetInfReportRoomBookingByMonth(c *gin.Context) {
-	idHotelStr := c.Query("idHotel")
+	idAccommodationStr := c.Query("idAccommodation")
 	monthStr := c.Query("month")
 	yearStr := c.Query("year")
 
-	if idHotelStr == "" || monthStr == "" || yearStr == "" {
-		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idHotel, month và year!")
+	if idAccommodationStr == "" || monthStr == "" || yearStr == "" {
+		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idAccommodation, month và year!")
 		return
 	}
 
-	idHotelUUID, err := uuid.Parse(idHotelStr)
+	idAccommodationUUID, err := uuid.Parse(idAccommodationStr)
 	if err != nil {
-		Helper.Error(c, http.StatusBadRequest, "ID Hotel không đúng định dạng UUID!")
+		Helper.Error(c, http.StatusBadRequest, "ID Accommodation không đúng định dạng UUID!")
 		return
 	}
 
@@ -54,7 +54,7 @@ func (r *reportRoomBookingController) GetInfReportRoomBookingByMonth(c *gin.Cont
 		return
 	}
 
-	reportRoomBookingResponse, err := r._reportRoomBookingService.GetInfReportRoomBookingByMonth(idHotelUUID, month, year)
+	reportRoomBookingResponse, err := r._reportRoomBookingService.GetInfReportRoomBookingByMonth(idAccommodationUUID, month, year)
 	if err != nil {
 		if customErr, ok := err.(*Errors.ApiError); ok {
 			Helper.Error(c, customErr.Status, customErr.Message)

@@ -23,23 +23,23 @@ func ReportRevenueController(reportRevenueService Services.IReportRevenueService
 // @Tags Report Revenue
 // @Accept json
 // @Produce json
-// @Param idHotel query string true "ID Hotel" format:uuid
+// @Param idAccommodation query string true "ID Accommodation" format:uuid
 // @Param month query int true "Tháng"
 // @Param year query int true "Năm"
 // @Router /report-revenues/inf-report-revenue-by-month [get]
 func (r *reportRevenueController) GetInfReportByMonth(c *gin.Context) {
-	idHotelStr := c.Query("idHotel")
+	idAccommodationStr := c.Query("idAccommodation")
 	monthStr := c.Query("month")
 	yearStr := c.Query("year")
 
-	if idHotelStr == "" || monthStr == "" || yearStr == "" {
-		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idHotel, month và year!")
+	if idAccommodationStr == "" || monthStr == "" || yearStr == "" {
+		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idAccommodation, month và year!")
 		return
 	}
 
-	idHotelUUID, err := uuid.Parse(idHotelStr)
+	idAccommodationUUID, err := uuid.Parse(idAccommodationStr)
 	if err != nil {
-		Helper.Error(c, http.StatusBadRequest, "ID Hotel không đúng định dạng UUID!")
+		Helper.Error(c, http.StatusBadRequest, "ID Accommodation không đúng định dạng UUID!")
 		return
 	}
 
@@ -55,7 +55,7 @@ func (r *reportRevenueController) GetInfReportByMonth(c *gin.Context) {
 		return
 	}
 
-	reportRevenueResponse, err := r._reportRevenueService.GetInfReportByMonth(idHotelUUID, month, year)
+	reportRevenueResponse, err := r._reportRevenueService.GetInfReportByMonth(idAccommodationUUID, month, year)
 	if err != nil {
 		if customErr, ok := err.(*Errors.ApiError); ok {
 			Helper.Error(c, customErr.Status, customErr.Message)
@@ -126,21 +126,21 @@ func (r *reportRevenueController) DeleteReportRevenue(c *gin.Context) {
 // @Tags Report Revenue
 // @Accept json
 // @Produce json
-// @Param idHotel query string true "ID Hotel" format:uuid
+// @Param idAccommodation query string true "ID Accommodation" format:uuid
 // @Param year query int true "Năm"
 // @Router /report-revenues/yearly-stats [get]
 func (r *reportRevenueController) GetYearlyRevenueStats(c *gin.Context) {
-	idHotelStr := c.Query("idHotel")
+	idAccommodationStr := c.Query("idAccommodation")
 	yearStr := c.Query("year")
 
-	if idHotelStr == "" || yearStr == "" {
-		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idHotel và year!")
+	if idAccommodationStr == "" || yearStr == "" {
+		Helper.Error(c, http.StatusBadRequest, "Vui lòng cung cấp đầy đủ idAccommodation và year!")
 		return
 	}
 
-	idHotelUUID, err := uuid.Parse(idHotelStr)
+	idAccommodationUUID, err := uuid.Parse(idAccommodationStr)
 	if err != nil {
-		Helper.Error(c, http.StatusBadRequest, "ID Hotel không đúng định dạng UUID!")
+		Helper.Error(c, http.StatusBadRequest, "ID Accommodation không đúng định dạng UUID!")
 		return
 	}
 
@@ -150,7 +150,7 @@ func (r *reportRevenueController) GetYearlyRevenueStats(c *gin.Context) {
 		return
 	}
 
-	stats, err := r._reportRevenueService.GetYearlyRevenueStats(idHotelUUID, year)
+	stats, err := r._reportRevenueService.GetYearlyRevenueStats(idAccommodationUUID, year)
 	if err != nil {
 		if customErr, ok := err.(*Errors.ApiError); ok {
 			Helper.Error(c, customErr.Status, customErr.Message)

@@ -16,12 +16,12 @@ type Booking struct {
 	TotalPrice   float64   `gorm:"type:numeric(12,2)" json:"total_price"`
 
 	// Khóa ngoại
-	IDUser  uuid.UUID `gorm:"type:uuid" json:"id_user"`
-	IDHotel uuid.UUID `gorm:"type:uuid" json:"id_hotel"`
+	IDUser          uuid.UUID `gorm:"type:uuid" json:"id_user"`
+	IDAccommodation uuid.UUID `gorm:"type:uuid" json:"id_accommodation"`
 
 	// Quan hệ
-	User  User  `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE" json:"user,omitempty"`
-	Hotel Hotel `gorm:"foreignKey:IDHotel;constraint:OnDelete:CASCADE" json:"hotel,omitempty"`
+	User          User          `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	Accommodation Accommodation `gorm:"foreignKey:IDAccommodation;constraint:OnDelete:CASCADE" json:"accommodation,omitempty"`
 }
 
 func (Booking) TableName() string {

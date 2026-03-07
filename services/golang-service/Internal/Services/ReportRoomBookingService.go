@@ -10,32 +10,32 @@ import (
 )
 
 type IReportRoomBookingService interface {
-	GetInfReportRoomBookingByMonth(idHotel uuid.UUID, month int, year int) (*Response.ReportRoomBookingResponse, error)
+	GetInfReportRoomBookingByMonth(idAccommodation uuid.UUID, month int, year int) (*Response.ReportRoomBookingResponse, error)
 	DeleteReportRoomBooking(idReportRoomBooking uuid.UUID) error
 }
 
 type reportRoomBookingService struct {
 	_reportRoomBookingRepository Repositories.IReportRoomBookingRepository
-	_hotelRepository             Repositories.IHotelRepository
+	_accommodationRepository     Repositories.IAccommodationRepository
 }
 
 func ReportRoomBookingService(reportRoomBookingRepository Repositories.IReportRoomBookingRepository,
-	hotelRepository Repositories.IHotelRepository) IReportRoomBookingService {
+	accommodationRepository Repositories.IAccommodationRepository) IReportRoomBookingService {
 	return &reportRoomBookingService{
 		_reportRoomBookingRepository: reportRoomBookingRepository,
-		_hotelRepository:             hotelRepository,
+		_accommodationRepository:     accommodationRepository,
 	}
 }
 
-func (r *reportRoomBookingService) GetInfReportRoomBookingByMonth(idHotel uuid.UUID, month int, year int,
+func (r *reportRoomBookingService) GetInfReportRoomBookingByMonth(idAccommodation uuid.UUID, month int, year int,
 ) (*Response.ReportRoomBookingResponse, error) {
 
-	_, err := r._hotelRepository.FindById(idHotel)
+	_, err := r._accommodationRepository.FindById(idAccommodation)
 	if err != nil {
-		return nil, Errors.New(http.StatusNotFound, Errors.HotelNotFound)
+		return nil, Errors.New(http.StatusNotFound, Errors.AccommodationNotFound)
 	}
 
-	report, err := r._reportRoomBookingRepository.FindByMonthAndYear(idHotel, month, year)
+	report, err := r._reportRoomBookingRepository.FindByMonthAndYear(idAccommodation, month, year)
 	if err != nil {
 		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
 	}
@@ -43,7 +43,7 @@ func (r *reportRoomBookingService) GetInfReportRoomBookingByMonth(idHotel uuid.U
 	if report == nil {
 		report = &Models.ReportRoomBooking{
 			IDReportRoomBooking: uuid.New(),
-			IDHotel:             idHotel,
+			IDAccommodation:     idAccommodation,
 			Month:               month,
 			Year:                year,
 		}
@@ -54,7 +54,7 @@ func (r *reportRoomBookingService) GetInfReportRoomBookingByMonth(idHotel uuid.U
 		}
 	}
 
-	typeRooms, err := r._hotelRepository.FindTypeRoomsByHotel(idHotel)
+	typeRooms, err := r._accommodationRepository.FindTypeRoomsByAccommodation(idAccommodation)
 	if err != nil {
 		return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
 	}
@@ -70,7 +70,7 @@ func (r *reportRoomBookingService) GetInfReportRoomBookingByMonth(idHotel uuid.U
 	// Duyệt từng TypeRoom và tính tổng booking
 	for _, tr := range typeRooms {
 
-		totalBooking, err := r._reportRoomBookingRepository.CountBookingByTypeRoom(idHotel, tr.TypeRoom, month, year)
+		totalBooking, err := r._reportRoomBookingRepository.CountBookingByTypeRoom(idAccommodation, tr.TypeRoom, month, year)
 		if err != nil {
 			return nil, Errors.New(http.StatusInternalServerError, Errors.InternalError)
 		}

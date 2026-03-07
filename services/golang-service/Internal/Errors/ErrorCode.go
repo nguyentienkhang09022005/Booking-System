@@ -13,8 +13,8 @@ var (
 	// User
 	UserNotFound = ErrorCode{Code: 404, Message: "Không tìm thấy người dùng!"}
 
-	// Hotel
-	HotelNotFound = ErrorCode{Code: 404, Message: "Không tìm thấy khách sạn!"}
+	// Accommodation
+	AccommodationNotFound = ErrorCode{Code: 404, Message: "Không tìm thấy nơi cư trú!"}
 
 	// Report Revenue
 	RevenueExists         = ErrorCode{Code: 409, Message: "Báo cáo đã tồn tại trong tháng này!"}
