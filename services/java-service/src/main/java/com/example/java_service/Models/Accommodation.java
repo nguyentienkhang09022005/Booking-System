@@ -1,5 +1,6 @@
 package com.example.java_service.Models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,9 +45,11 @@ public class Accommodation {
     @Column(name = "province", length = 50)
     private String province;
 
+    @JsonFormat(pattern = "HH:mm:ss")
     @Column(name = "checkin_time")
     private LocalTime checkinTime;
 
+    @JsonFormat(pattern = "HH:mm:ss")
     @Column(name = "checkout_time")
     private LocalTime checkoutTime;
 

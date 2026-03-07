@@ -3,6 +3,7 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -13,9 +14,13 @@ import java.util.List;
 public class AccommodationUpdateRequest
 {
     String accommodationName;
+    String accommodationType;
     String street;
     String ward;
     String city;
+    String province;
+    LocalTime checkinTime;
+    LocalTime checkoutTime;
     String description;
     Boolean approved;
     List<String> listImageAccommodation;
