@@ -1,5 +1,34 @@
 basePath: /
 definitions:
+  Request.ExecuteVndPaymentRequest:
+    properties:
+      id_payment:
+        type: string
+      order:
+        $ref: '#/definitions/Request.PaymentOrderData'
+      signature:
+        type: string
+    required:
+    - id_payment
+    - order
+    - signature
+    type: object
+  Request.PaymentOrderData:
+    properties:
+      amount:
+        example: "0"
+        type: string
+      booking_id:
+        type: string
+      deadline:
+        type: integer
+      nonce:
+        type: integer
+      order_id:
+        type: string
+      payer:
+        type: string
+    type: object
   Request.PaymentRequest:
     properties:
       amount:
@@ -12,6 +41,22 @@ definitions:
     - amount
     - id_booking
     - id_user
+    type: object
+  Request.PrepareVndPaymentRequest:
+    properties:
+      amount:
+        type: number
+      id_booking:
+        type: string
+      id_user:
+        type: string
+      payer_address:
+        type: string
+    required:
+    - amount
+    - id_booking
+    - id_user
+    - payer_address
     type: object
   Request.ReportRevenueRequest:
     properties:
@@ -46,6 +91,60 @@ definitions:
     required:
     - data
     - mac
+    type: object
+  Response.EIP712Domain:
+    properties:
+      chainId:
+        type: integer
+      name:
+        type: string
+      verifyingContract:
+        type: string
+      version:
+        type: string
+    type: object
+  Response.EIP712TypedData:
+    properties:
+      domain:
+        $ref: '#/definitions/Response.EIP712Domain'
+      message:
+        additionalProperties: true
+        type: object
+      primaryType:
+        type: string
+      types:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/Response.TypeField'
+          type: array
+        type: object
+    type: object
+  Response.ExecuteVndPaymentResponse:
+    properties:
+      explorer_url:
+        type: string
+      id_payment:
+        type: string
+      status:
+        type: string
+      tx_hash:
+        type: string
+    type: object
+  Response.PrepareVndPaymentResponse:
+    properties:
+      id_payment:
+        type: string
+      order_id:
+        type: string
+      typed_data:
+        $ref: '#/definitions/Response.EIP712TypedData'
+    type: object
+  Response.TypeField:
+    properties:
+      name:
+        type: string
+      type:
+        type: string
     type: object
 info:
   contact: {}
@@ -84,6 +183,121 @@ paths:
       responses: {}
       tags:
       - Payment
+  /api/v1/payments/vnd/execute:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the signature and submits the on-chain transaction to
+        Sepolia.
+      parameters:
+      - description: Execute Payment Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.ExecuteVndPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Response.ExecuteVndPaymentResponse'
+        "400":
+          description: Bad Request or Invalid Signature
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Payment record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict - Already being processed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Execute VND Payment
+      tags:
+      - VndPayment
+  /api/v1/payments/vnd/nonce/{address}:
+    get:
+      description: Returns the current on-chain nonce for a specific Ethereum wallet
+        address.
+      parameters:
+      - description: Ethereum Wallet Address
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request - Invalid Address
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Wallet Nonce
+      tags:
+      - VndPayment
+  /api/v1/payments/vnd/prepare:
+    post:
+      consumes:
+      - application/json
+      description: Prepares EIP-712 typed data for the user to sign before executing
+        the payment.
+      parameters:
+      - description: Prepare Payment Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.PrepareVndPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Response.PrepareVndPaymentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Prepare VND Payment
+      tags:
+      - VndPayment
   /report-revenues-detail/create:
     post:
       consumes:

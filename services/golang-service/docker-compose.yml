@@ -1,0 +1,16 @@
+services:
+  api-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: golang-service
+    ports:
+      - "8083:8081"
+    env_file:
+      - .env
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M

@@ -35,7 +35,16 @@ func VndPaymentController(
 }
 
 // PrepareVndPayment prepares EIP-712 typed data for the user to sign.
-// POST /api/v1/payments/vnd/prepare
+// @Summary Prepare VND Payment
+// @Description Prepares EIP-712 typed data for the user to sign before executing the payment.
+// @Tags VndPayment
+// @Accept json
+// @Produce json
+// @Param request body Request.PrepareVndPaymentRequest true "Prepare Payment Request"
+// @Success 201 {object} Response.PrepareVndPaymentResponse
+// @Failure 400 {object} map[string]string "Bad Request"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/payments/vnd/prepare [post]
 func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 	var req Request.PrepareVndPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -71,7 +80,18 @@ func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 }
 
 // ExecuteVndPayment verifies the signature and submits the on-chain transaction.
-// POST /api/v1/payments/vnd/execute
+// @Summary Execute VND Payment
+// @Description Verifies the signature and submits the on-chain transaction to Sepolia.
+// @Tags VndPayment
+// @Accept json
+// @Produce json
+// @Param request body Request.ExecuteVndPaymentRequest true "Execute Payment Request"
+// @Success 200 {object} Response.ExecuteVndPaymentResponse
+// @Failure 400 {object} map[string]string "Bad Request or Invalid Signature"
+// @Failure 404 {object} map[string]string "Payment record not found"
+// @Failure 409 {object} map[string]string "Conflict - Already being processed"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/payments/vnd/execute [post]
 func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 	var req Request.ExecuteVndPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -171,7 +191,15 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 }
 
 // GetNonce returns the current on-chain nonce for a wallet address.
-// GET /api/v1/payments/vnd/nonce/:address
+// @Summary Get Wallet Nonce
+// @Description Returns the current on-chain nonce for a specific Ethereum wallet address.
+// @Tags VndPayment
+// @Produce json
+// @Param address path string true "Ethereum Wallet Address"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string "Bad Request - Invalid Address"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/payments/vnd/nonce/{address} [get]
 func (vc *vndPaymentController) GetNonce(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {

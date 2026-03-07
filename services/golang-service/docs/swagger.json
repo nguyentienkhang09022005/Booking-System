@@ -57,6 +57,176 @@
                 "responses": {}
             }
         },
+        "/api/v1/payments/vnd/execute": {
+            "post": {
+                "description": "Verifies the signature and submits the on-chain transaction to Sepolia.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "VndPayment"
+                ],
+                "summary": "Execute VND Payment",
+                "parameters": [
+                    {
+                        "description": "Execute Payment Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.ExecuteVndPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Response.ExecuteVndPaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request or Invalid Signature",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Payment record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict - Already being processed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payments/vnd/nonce/{address}": {
+            "get": {
+                "description": "Returns the current on-chain nonce for a specific Ethereum wallet address.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "VndPayment"
+                ],
+                "summary": "Get Wallet Nonce",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ethereum Wallet Address",
+                        "name": "address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid Address",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/payments/vnd/prepare": {
+            "post": {
+                "description": "Prepares EIP-712 typed data for the user to sign before executing the payment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "VndPayment"
+                ],
+                "summary": "Prepare VND Payment",
+                "parameters": [
+                    {
+                        "description": "Prepare Payment Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.PrepareVndPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Response.PrepareVndPaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/report-revenues-detail/create": {
             "post": {
                 "consumes": [
@@ -259,6 +429,49 @@
         }
     },
     "definitions": {
+        "Request.ExecuteVndPaymentRequest": {
+            "type": "object",
+            "required": [
+                "id_payment",
+                "order",
+                "signature"
+            ],
+            "properties": {
+                "id_payment": {
+                    "type": "string"
+                },
+                "order": {
+                    "$ref": "#/definitions/Request.PaymentOrderData"
+                },
+                "signature": {
+                    "type": "string"
+                }
+            }
+        },
+        "Request.PaymentOrderData": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "booking_id": {
+                    "type": "string"
+                },
+                "deadline": {
+                    "type": "integer"
+                },
+                "nonce": {
+                    "type": "integer"
+                },
+                "order_id": {
+                    "type": "string"
+                },
+                "payer": {
+                    "type": "string"
+                }
+            }
+        },
         "Request.PaymentRequest": {
             "type": "object",
             "required": [
@@ -274,6 +487,29 @@
                     "type": "string"
                 },
                 "id_user": {
+                    "type": "string"
+                }
+            }
+        },
+        "Request.PrepareVndPaymentRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "id_booking",
+                "id_user",
+                "payer_address"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "id_booking": {
+                    "type": "string"
+                },
+                "id_user": {
+                    "type": "string"
+                },
+                "payer_address": {
                     "type": "string"
                 }
             }
@@ -326,6 +562,89 @@
                     "type": "string"
                 },
                 "mac": {
+                    "type": "string"
+                }
+            }
+        },
+        "Response.EIP712Domain": {
+            "type": "object",
+            "properties": {
+                "chainId": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "verifyingContract": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "Response.EIP712TypedData": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "$ref": "#/definitions/Response.EIP712Domain"
+                },
+                "message": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "primaryType": {
+                    "type": "string"
+                },
+                "types": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/Response.TypeField"
+                        }
+                    }
+                }
+            }
+        },
+        "Response.ExecuteVndPaymentResponse": {
+            "type": "object",
+            "properties": {
+                "explorer_url": {
+                    "type": "string"
+                },
+                "id_payment": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tx_hash": {
+                    "type": "string"
+                }
+            }
+        },
+        "Response.PrepareVndPaymentResponse": {
+            "type": "object",
+            "properties": {
+                "id_payment": {
+                    "type": "string"
+                },
+                "order_id": {
+                    "type": "string"
+                },
+                "typed_data": {
+                    "$ref": "#/definitions/Response.EIP712TypedData"
+                }
+            }
+        },
+        "Response.TypeField": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
