@@ -1,6 +1,7 @@
 package com.example.Booking_Hotel_BE.Config;
 
 import com.example.Booking_Hotel_BE.Dto.Response.AuthenResponse;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -12,15 +13,12 @@ import java.util.Map;
 public class CustomOAuth2User implements OidcUser
 {
     private final OidcUser oidcUser;
+    @Getter
     private final AuthenResponse authResponse;
 
     public CustomOAuth2User(OidcUser oidcUser, AuthenResponse authResponse) {
         this.oidcUser = oidcUser;
         this.authResponse = authResponse;
-    }
-
-    public AuthenResponse getAuthResponse() {
-        return authResponse;
     }
 
     @Override

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/health")
-public class HotelController
+public class HeathController
 {
     @GetMapping
     public String healthCheck() {

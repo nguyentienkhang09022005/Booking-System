@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -24,14 +23,14 @@ public class Users {
 
     @ManyToOne
     @JoinColumn(name = "role_name",
-                referencedColumnName = "role_name",
-                foreignKey = @ForeignKey(name = "FK_USER_ROLE"))
+            referencedColumnName = "role_name",
+            foreignKey = @ForeignKey(name = "FK_USER_ROLE"))
     private Roles role;
 
     @ManyToOne
     @JoinColumn(name = "type_user",
-                referencedColumnName = "type_user",
-                foreignKey = @ForeignKey(name = "FK_USER_TYPE_USER"))
+            referencedColumnName = "type_user",
+            foreignKey = @ForeignKey(name = "FK_USER_TYPE_USER"))
     private TypeUser typeUser;
 
     @Column(name = "first_name", length = 20)
@@ -48,16 +47,23 @@ public class Users {
 
     private LocalDate dob;
 
-    @Column(name = "address_user",columnDefinition = "TEXT")
+    @Column(name = "address_user", columnDefinition = "TEXT")
     private String address;
 
-    @Column(unique = true)
+    @Column(unique = true, columnDefinition = "TEXT")
     private String email;
 
-    @Column(name = "password_user")
+    @Column(name = "password_user", columnDefinition = "TEXT")
     private String passwordUser;
+
+    @Column(name = "loyalty_points", columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
+    private Integer loyaltyPoints = 0;
+
+    @Column(name = "customer_segment", length = 50)
+    private String customerSegment;
 
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime createAt = LocalDateTime.now();
+    private LocalDateTime createAt;
 }

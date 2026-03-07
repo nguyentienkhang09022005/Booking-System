@@ -5,7 +5,6 @@ import com.example.Booking_Hotel_BE.Models.TypeUser;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -29,4 +28,6 @@ public class UserResponse
     String email;
     LocalDateTime createAt;
     String avatar;
+    Integer loyaltyPoints;
+    String customerSegment;
 }
