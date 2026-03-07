@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  java-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking_java_service
+    ports:
+      - "8082:8080"
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -10,4 +10,4 @@ FROM gcr.io/distroless/java17-debian12
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xms256m", "-Xmx256m", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xms512m", "-Xmx512m", "-jar", "app.jar"]
