@@ -23,6 +23,9 @@ public class VoucherViewResponse
     Integer quantity;
     String conditions;
     Boolean approved;
+    BigDecimal minDiscountAmount;
+    BigDecimal maxDiscountAmount;
+    String sponsorType;
     Boolean isSaved;
     String urlImage;
 }

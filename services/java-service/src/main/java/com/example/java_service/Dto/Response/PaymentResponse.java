@@ -27,9 +27,6 @@ public class PaymentResponse
     @JsonProperty("status")
     String status;
 
-    @JsonProperty("currency")
-    String currency;
-
     @JsonProperty("order_url")
     String orderUrl;
 

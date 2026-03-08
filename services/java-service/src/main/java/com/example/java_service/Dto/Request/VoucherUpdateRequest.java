@@ -20,5 +20,7 @@ public class VoucherUpdateRequest
     Integer quantity;
     String conditions;
     Boolean approved;
+    BigDecimal minDiscountAmount;
+    BigDecimal maxDiscountAmount;
     String urlImage;
 }

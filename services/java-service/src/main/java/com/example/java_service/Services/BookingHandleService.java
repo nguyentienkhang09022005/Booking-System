@@ -410,7 +410,6 @@ public class BookingHandleService
                 PaymentRequest paymentRequest = new PaymentRequest(
                         booking.getUsers().getIdUser(),
                         booking.getIdBooking(),
-                        bookingRequest.getCurrency(),
                         booking.getTotalPrice().doubleValue()
                 );
 

@@ -14,8 +14,8 @@ import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
-    @Value("${java.service}")
-    private String serverJava;
+//    @Value("${java.service}")
+//    private String serverJava;
 
     @Bean
     public OpenAPI customOpenAPI() {

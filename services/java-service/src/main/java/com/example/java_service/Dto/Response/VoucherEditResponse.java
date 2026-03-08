@@ -25,5 +25,8 @@ public class VoucherEditResponse
     String conditions;
     LocalDateTime createAt;
     Boolean approved;
+    BigDecimal minDiscountAmount;
+    BigDecimal maxDiscountAmount;
+    String sponsorType;
     String urlImage;
 }

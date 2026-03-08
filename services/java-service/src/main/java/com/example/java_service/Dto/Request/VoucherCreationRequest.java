@@ -1,5 +1,6 @@
 package com.example.java_service.Dto.Request;
 
+import jakarta.persistence.Column;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,5 +22,7 @@ public class VoucherCreationRequest
     LocalDate endDate;
     Integer quantity;
     String conditions;
+    BigDecimal minDiscountAmount;
+    BigDecimal maxDiscountAmount;
     String urlImage;
 }

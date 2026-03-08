@@ -29,6 +29,8 @@ public class UserResponse
     LocalDate dob;
     String address;
     String email;
+    Integer loyaltyPoints;
+    String customerSegment;
     LocalDateTime createAt;
     String avatar;
 }
