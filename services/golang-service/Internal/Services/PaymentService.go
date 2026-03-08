@@ -58,7 +58,6 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		IDBooking:  paymentRequest.IDBooking,
 		Amount:     paymentRequest.Amount,
 		Method:     "ZaloPay",
-		Currency:   paymentRequest.Currency,
 		Status:     Constants.StatusPending,
 		IDAppTrans: IdAppTrans,
 	}
@@ -124,7 +123,6 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		Amount:    createdPayment.Amount,
 		Status:    createdPayment.Status,
 		Method:    createdPayment.Method,
-		Currency:  createdPayment.Currency,
 		OrderUrl:  orderURL,
 		CreatedAt: createdPayment.CreateAt,
 	}
