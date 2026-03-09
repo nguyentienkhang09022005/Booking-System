@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Constant.PredefinedRefFavoriteAndEvaluate;
 import com.example.java_service.Dto.Request.AccommodationCreationRequest;
 import com.example.java_service.Dto.Request.AccommodationUpdateRequest;
 import com.example.java_service.Dto.Response.*;
@@ -57,7 +58,8 @@ public class AccommodationService
                     () -> new ApiException(ErrorCode.USER_NOT_FOUND));
             favoriteAccommodationIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
                     .stream()
-                    .map(Favorite::getIdAccommodation)
+                    .filter(fav -> PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION.equalsIgnoreCase(fav.getRefType())) // Chỉ lấy những Favorite là accommodation
+                    .map(Favorite::getRefId) // Đổi từ getIdAccommodation sang getRefId
                     .collect(Collectors.toSet());
         } else {
             favoriteAccommodationIds = Set.of();
@@ -76,17 +78,17 @@ public class AccommodationService
                         Collectors.mapping(Images::getUrl, Collectors.toList())
                 ));
 
-        // Lấy thống kê
-        Map<String, AccommodationStatsResponse> statsMap = evaluatesRepository.findAccommodationStatsByAccommodationIds(accommodationIds)
+        // Lấy thống kê truyền refType là "accommodation"
+        Map<String, EvaluateStatsResponse> statsMap = evaluatesRepository.findStatsByRefIdsAndRefType(accommodationIds, PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION)
                 .stream()
-                .collect(Collectors.toMap(AccommodationStatsResponse::getIdAccommodation, dto -> dto));
+                .collect(Collectors.toMap(EvaluateStatsResponse::getRefId, dto -> dto));
 
         return accommodationList.stream()
                 .map(accommodation -> {
                     GetListAccommodationResponse response = accommodationMapper.toGetListAccommodationResponse(accommodation);
                     String accommodationIdStr = accommodation.getIdAccommodation().toString();
 
-                    AccommodationStatsResponse stats = statsMap.get(accommodationIdStr);
+                    EvaluateStatsResponse stats = statsMap.get(accommodationIdStr);
 
                     response.setFavorite(favoriteAccommodationIds.contains(accommodationIdStr));
                     response.setImageAccommodationUrl(accommodationImagesMap.get(accommodationIdStr));
@@ -126,16 +128,16 @@ public class AccommodationService
                 ));
 
         // Lấy thống kê
-        Map<String, AccommodationStatsResponse> statsMap = evaluatesRepository.findAccommodationStatsByAccommodationIds(accommodationIds)
+        Map<String, EvaluateStatsResponse> statsMap = evaluatesRepository.findStatsByRefIdsAndRefType(accommodationIds, PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION)
                 .stream()
-                .collect(Collectors.toMap(AccommodationStatsResponse::getIdAccommodation, dto -> dto));
+                .collect(Collectors.toMap(EvaluateStatsResponse::getRefId, dto -> dto));
 
         return accommodationList.stream()
                 .map(accommodation -> {
                     GetListAccommodationResponse response = accommodationMapper.toGetListAccommodationResponse(accommodation);
                     String accommodationIdStr = accommodation.getIdAccommodation().toString();
 
-                    AccommodationStatsResponse stats = statsMap.get(accommodationIdStr);
+                    EvaluateStatsResponse stats = statsMap.get(accommodationIdStr);
 
                     response.setImageAccommodationUrl(accommodationImagesMap.get(accommodationIdStr));
 
@@ -163,9 +165,10 @@ public class AccommodationService
         if (idUser != null) {
             userRepository.findById(idUser).orElseThrow(
                     () -> new ApiException(ErrorCode.USER_NOT_FOUND));
-            favoriteCheck = favoriteRepository.existsByIdUserAndIdAccommodation(
+            favoriteCheck = favoriteRepository.existsByIdUserAndRefIdAndRefType(
                     idUser.toString(),
-                    idAccommodation.toString());
+                    idAccommodation.toString(),
+                    PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
         } else {
             favoriteCheck = false;
         }
@@ -177,13 +180,13 @@ public class AccommodationService
 
         OwnerAccommodationResponse ownerAccommodationResponse = userMapper.toOwnerAccommodationResponse(accommodation.getUsers());
 
-        // Lấy tất cả đánh giá của nơi cư trú
-        Integer allEvaluate = evaluatesService.getAllEvaluateOfAccommodation(idAccommodation);
-        // Lấy trung bình số sao của nơi cư trú
-        Double stars = evaluatesService.getAverageStarOfAccommodation(idAccommodation);
+        // Lấy tất cả đánh giá của nơi cư trú (Cập nhật gọi hàm mới của EvaluatesService)
+        Integer allEvaluate = evaluatesService.getAllEvaluate(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
+        // Lấy trung bình số sao của nơi cư trú (Cập nhật gọi hàm mới của EvaluatesService)
+        Double stars = evaluatesService.getAverageStar(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
 
-        // Lấy danh sách đánh giá
-        List<Evaluates> top3Evaluates = evaluatesRepository.findTop3ByIdAccommodationOrderByCreatedAtAsc(idAccommodation.toString());
+        // Lấy danh sách đánh giá top 3
+        List<Evaluates> top3Evaluates = evaluatesRepository.findTop3ByRefIdAndRefTypeOrderByCreatedAtAsc(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
         List<EvaluateResponse> evaluateResponses = top3Evaluates.stream()
                 .map(evaluateMapper::toEvaluateResponse)
                 .toList();
@@ -246,7 +249,8 @@ public class AccommodationService
                     () -> new ApiException(ErrorCode.USER_NOT_FOUND));
             favoriteAccommodationIds = favoriteRepository.findByIdUser(user.getIdUser().toString())
                     .stream()
-                    .map(Favorite::getIdAccommodation)
+                    .filter(fav -> PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION.equalsIgnoreCase(fav.getRefType()))
+                    .map(Favorite::getRefId)
                     .collect(Collectors.toSet());
         } else {
             favoriteAccommodationIds = Set.of();
@@ -266,16 +270,16 @@ public class AccommodationService
                 ));
 
         // Lấy thống kê
-        Map<String, AccommodationStatsResponse> statsMap = evaluatesRepository.findAccommodationStatsByAccommodationIds(accommodationIds)
+        Map<String, EvaluateStatsResponse> statsMap = evaluatesRepository.findStatsByRefIdsAndRefType(accommodationIds, PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION)
                 .stream()
-                .collect(Collectors.toMap(AccommodationStatsResponse::getIdAccommodation, dto -> dto));
+                .collect(Collectors.toMap(EvaluateStatsResponse::getRefId, dto -> dto));
 
         return accommodationList.stream()
                 .map(accommodation -> {
                     GetListAccommodationResponse response = accommodationMapper.toGetListAccommodationResponse(accommodation);
                     String accommodationIdStr = accommodation.getIdAccommodation().toString();
 
-                    AccommodationStatsResponse stats = statsMap.get(accommodationIdStr);
+                    EvaluateStatsResponse stats = statsMap.get(accommodationIdStr);
 
                     response.setFavorite(favoriteAccommodationIds.contains(accommodationIdStr));
                     response.setImageAccommodationUrl(accommodationImagesMap.get(accommodationIdStr));
@@ -291,6 +295,7 @@ public class AccommodationService
                 })
                 .toList();
     }
+
     // Thêm nơi cư trú mới
     @Transactional
     public ResponseEntity<String> saveAccommodation(AccommodationCreationRequest request)
@@ -438,8 +443,8 @@ public class AccommodationService
             throw new ApiException(ErrorCode.USER_NOT_FOUND);
 
         imagesRepository.deleteByRefId(idAccommodation.toString());
-        favoriteRepository.deleteByIdAccommodation(idAccommodation.toString());
-        evaluatesRepository.deleteByIdAccommodation(idAccommodation.toString());
+        favoriteRepository.deleteByRefIdAndRefType(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
+        evaluatesRepository.deleteByRefIdAndRefType(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
         accommodationRepository.delete(accommodation);
         return ResponseEntity.ok("Xóa nơi cư trú thành công!");
     }

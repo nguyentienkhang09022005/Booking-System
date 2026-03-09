@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "favorites")
-public class Favorite
-{
+public class Favorite {
     @Id
     private String id;
     private String idUser;
-    private String idAccommodation;
+    private String refId;
+    private String refType; // "accommodation" hoặc "tour"
     private LocalDateTime createdAt;
 }

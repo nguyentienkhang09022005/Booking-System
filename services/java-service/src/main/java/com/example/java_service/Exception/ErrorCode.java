@@ -11,6 +11,7 @@ public enum ErrorCode
     PERCENT_NOT_NEGATIVE("PERCENT_NOT_NEGATIVE", "Phần trăm không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
     INTERNAL_ERROR("INTERNAL_ERROR", "Lỗi phía máy chủ", HttpStatus.INTERNAL_SERVER_ERROR),
     AI_MODERATION_INVALID_RESPONSE("AI_MODERATION_INVALID_RESPONSE", "Mô hình AI đang gặp sự cố, không thể kiểm duệt bình luận", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_DATA("INVALID_DATA", "Dữ liệu không hợp lệ!", HttpStatus.BAD_REQUEST),
 
     // Lỗi xác thực người dùng
     UNAUTHENTICATED("UNAUTHENTICATED", "Chưa xác thực!", HttpStatus.UNAUTHORIZED),
@@ -106,6 +107,18 @@ public enum ErrorCode
     INVALID_INCIDENT_REPORT("INVALID_INCIDENT_REPORT", "Báo cáo sự cố đã được xữ lý không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),
     INVALID_STATUS_INCIDENT_REPORT("INVALID_STATUS_INCIDENT_REPORT", "Trạng thái phải là: Pending, In Progress, Cancelled, Resolved!", HttpStatus.BAD_REQUEST),
     INVALID_SEVERITY_INCIDENT_REPORT("INVALID_SEVERITY_INCIDENT_REPORT", "Mức độ phải là: High, Low, Medium!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Tour
+    TOUR_NOT_FOUND("TOUR_NOT_FOUND", "Không tìm thấy tour du lịch!", HttpStatus.NOT_FOUND),
+    INVALID_STATUS_TOUR("INVALID_STATUS_TOUR", "Trạng thái tour không hợp lệ (Chỉ nhận Available hoặc Sold Out)!", HttpStatus.BAD_REQUEST),
+    INVALID_DURATION_DAYS("INVALID_DURATION_DAYS", "Số ngày của tour phải lớn hơn 0!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Transport Ticket
+    TRANSPORT_TICKET_NOT_FOUND("TRANSPORT_TICKET_NOT_FOUND", "Không tìm thấy vé di chuyển!", HttpStatus.NOT_FOUND),
+    INVALID_TICKET_TYPE("INVALID_TICKET_TYPE", "Loại vé không hợp lệ (Chỉ nhận Coach, Plane, Train, PassengerShip)!", HttpStatus.BAD_REQUEST),
+    INVALID_TICKET_TIME("INVALID_TICKET_TIME", "Thời gian đến (Arrival Time) phải sau thời gian đi (Departure Time)!", HttpStatus.BAD_REQUEST),
+    INVALID_TICKET_PRICE("INVALID_TICKET_PRICE", "Giá vé không được âm!", HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_TICKET("INVALID_STATUS_TICKET", "Trạng thái Ticket không hợp lệ (Chỉ nhận Available hoặc Sold Out)!", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

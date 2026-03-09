@@ -1,6 +1,7 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Configs.RabbitConfig;
+import com.example.java_service.Constant.PredefinedRefFavoriteAndEvaluate;
 import com.example.java_service.Dto.Request.EvaluateCreationRequest;
 import com.example.java_service.Dto.Request.EvaluateUpdateRequest;
 import com.example.java_service.Dto.Request.MessageHistoryItem;
@@ -12,8 +13,10 @@ import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.EvaluateMapper;
 import com.example.java_service.Models.Evaluates;
 import com.example.java_service.Models.Accommodation;
+import com.example.java_service.Models.Tour;
 import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.AccommodationRepository;
+import com.example.java_service.Repositories.Jpa.TourRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.EvaluatesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,10 +38,11 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class EvaluatesService
-{
+public class EvaluatesService {
+
     EvaluatesRepository evaluatesRepository;
     AccommodationRepository accommodationRepository;
+    TourRepository tourRepository; // Bổ sung repository của Tour
     UserRepository userRepository;
     GeminiService geminiService;
     ObjectMapper objectMapper;
@@ -46,21 +50,33 @@ public class EvaluatesService
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
 
-    // Hàm lấy danh sách đánh giá nơi cư trú theo phân trang 5
-    public Page<EvaluateResponse> getListEvaluateByPaging(Pageable pageable, UUID idAccommodation)
-    {
-        if (!accommodationRepository.existsById(idAccommodation)) {
-            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
+    // Hàm helper để kiểm tra xem dịch vụ (Accommodation/Tour) có tồn tại không
+    private void validateServiceExists(String refId, String refType) {
+        if (PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION.equalsIgnoreCase(refType)) {
+            if (!accommodationRepository.existsById(UUID.fromString(refId))) {
+                throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
+            }
+        } else if (PredefinedRefFavoriteAndEvaluate.REF_TOUR.equalsIgnoreCase(refType)) {
+            if (!tourRepository.existsById(UUID.fromString(refId))) {
+                throw new ApiException(ErrorCode.TOUR_NOT_FOUND);
+            }
+        } else {
+            throw new ApiException(ErrorCode.INVALID_DATA); // Hoặc tạo mã lỗi REF_TYPE_INVALID
         }
+    }
+
+    // Hàm lấy danh sách đánh giá theo phân trang
+    public Page<EvaluateResponse> getListEvaluateByPaging(Pageable pageable, String refId, String refType) {
+        validateServiceExists(refId, refType);
 
         Pageable sortedPageable = PageRequest.of(
                 pageable.getPageNumber(),
                 3,
                 Sort.by("createdAt").descending()
         );
-        Page<Evaluates> evaluatesPage = evaluatesRepository.findByIdAccommodation(idAccommodation.toString(), sortedPageable);
 
-        // Map kết quả của trang hiện tại sang EvaluateResponse
+        Page<Evaluates> evaluatesPage = evaluatesRepository.findByRefIdAndRefType(refId, refType, sortedPageable);
+
         List<EvaluateResponse> responses = evaluatesPage.getContent().stream()
                 .map(evaluateMapper::toEvaluateResponse)
                 .toList();
@@ -69,17 +85,43 @@ public class EvaluatesService
     }
 
     // Hàm tạo đánh giá
-    public EvaluateResponse saveEvaluate(EvaluateCreationRequest request)
-    {
-        Accommodation accommodation = accommodationRepository.findById(UUID.fromString(request.getIdAccommodation())).orElseThrow(
-                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
-        );
+    public EvaluateResponse saveEvaluate(EvaluateCreationRequest request) {
         Users user = userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
-        Boolean checkEvaluate = evaluatesRepository.existsByIdAccommodationAndIdUser(request.getIdAccommodation(), request.getIdUser());
-        if (checkEvaluate)
-            throw new ApiException(ErrorCode.USER_EVALUATED_ACCOMMODATION);
+
+        UUID ownerId = null;
+        String targetName = "";
+        String targetTypeVi = "";
+
+        // Kiểm tra loại dịch vụ và lấy thông tin gửi thông báo
+        if (PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION.equalsIgnoreCase(request.getRefType())) {
+            Accommodation accommodation = accommodationRepository.findById(UUID.fromString(request.getRefId())).orElseThrow(
+                    () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
+            );
+            ownerId = accommodation.getUsers().getIdUser();
+            targetName = accommodation.getAccommodationName();
+            targetTypeVi = "nơi cư trú";
+
+        } else if (PredefinedRefFavoriteAndEvaluate.REF_TOUR.equalsIgnoreCase(request.getRefType())) {
+            Tour tour = tourRepository.findById(UUID.fromString(request.getRefId())).orElseThrow(
+                    () -> new ApiException(ErrorCode.TOUR_NOT_FOUND)
+            );
+            ownerId = tour.getUsers().getIdUser();
+            targetName = tour.getTourName();
+            targetTypeVi = "tour";
+
+        } else {
+            throw new ApiException(ErrorCode.INVALID_DATA);
+        }
+
+        // Kiểm tra xem user đã đánh giá dịch vụ này chưa
+        Boolean checkEvaluate = evaluatesRepository.existsByRefIdAndRefTypeAndIdUser(
+                request.getRefId(), request.getRefType(), request.getIdUser()
+        );
+        if (checkEvaluate) {
+            throw new ApiException(ErrorCode.USER_EVALUATED_ACCOMMODATION); // Có thể đổi tên Exception thành USER_EVALUATED_ALREADY
+        }
 
         ModerationResult moderation = moderate(request.getComment());
 
@@ -91,21 +133,16 @@ public class EvaluatesService
         evaluates.setCreatedAt(LocalDateTime.now());
         evaluatesRepository.save(evaluates);
 
-        evaluateMapper.toEvaluateResponse(evaluates);
+        String fullName = String.join(" ", user.getFirstName(), user.getLastName());
 
-        String fullName = String.join(" ",
-                user.getFirstName(),
-                user.getLastName()
-        );
         // Gửi sự kiện vào Exchanges
         NotificationCreatedEvent event = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
-                .idUser(accommodation.getUsers().getIdUser())
-                .title("Thông báo đánh giá nơi cư trú")
+                .idUser(ownerId)
+                .title("Thông báo đánh giá " + targetTypeVi)
                 .content(String.format(
-                        "Người dùng %s vừa đánh giá nơi cư trú %s của bạn.",
-                        fullName,
-                        accommodation.getAccommodationName()
+                        "Người dùng %s vừa đánh giá %s %s của bạn.",
+                        fullName, targetTypeVi, targetName
                 ))
                 .type("evaluate")
                 .idRef(evaluates.getId())
@@ -121,18 +158,18 @@ public class EvaluatesService
                     message
             );
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Lỗi gửi thông báo đánh giá", ex);
         }
+
         return evaluateMapper.toEvaluateResponse(evaluates);
     }
 
     // Hàm sửa đánh giá
-    public EvaluateResponse updateEvaluate(EvaluateUpdateRequest request, String id)
-    {
+    public EvaluateResponse updateEvaluate(EvaluateUpdateRequest request, String id) {
         Evaluates evaluate = evaluatesRepository.findById(id).orElseThrow(
                 () -> new ApiException(ErrorCode.EVALUATE_NOT_FOUND)
         );
-        // Kiểm tra thời gian
+
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime deadline = evaluate.getCreatedAt().plusMinutes(30);
 
@@ -152,8 +189,7 @@ public class EvaluatesService
     }
 
     // Hàm xóa đánh giá
-    public ResponseEntity<String> deleteEvaluate(String id)
-    {
+    public ResponseEntity<String> deleteEvaluate(String id) {
         Evaluates evaluate = evaluatesRepository.findById(id).orElseThrow(
                 () -> new ApiException(ErrorCode.EVALUATE_NOT_FOUND)
         );
@@ -161,30 +197,23 @@ public class EvaluatesService
         return ResponseEntity.ok("Xóa đánh giá thành công!");
     }
 
-    // Hàm lấy tất cả số đánh giá của nơi cư trú
-    public Integer getAllEvaluateOfAccommodation(UUID idAccommodation)
-    {
-        if (!accommodationRepository.existsById(idAccommodation)) {
-            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
-        }
-        return (int) evaluatesRepository.countByIdAccommodation(idAccommodation.toString());
+    // Hàm lấy tất cả số lượng đánh giá của dịch vụ
+    public Integer getAllEvaluate(String refId, String refType) {
+        validateServiceExists(refId, refType);
+        return (int) evaluatesRepository.countByRefIdAndRefType(refId, refType);
     }
 
-    // Hàm lấy trung bình số sao của nơi cư trú
-    public Double getAverageStarOfAccommodation(UUID idAccommodation)
-    {
-        if (!accommodationRepository.existsById(idAccommodation)) {
-            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
-        }
-
-        Double averageOfAccommodation = evaluatesRepository.getAverageRatingByIdAccommodation(idAccommodation.toString());
-        return averageOfAccommodation != null ? averageOfAccommodation : 0.0;
+    // Hàm lấy trung bình số sao của dịch vụ
+    public Double getAverageStar(String refId, String refType) {
+        validateServiceExists(refId, refType);
+        Double average = evaluatesRepository.getAverageRatingByRefIdAndRefType(refId, refType);
+        return average != null ? average : 0.0;
     }
 
-    public String automaticNegativeCommentModeration(String comment)
-    {
+    // AI kiểm duyệt nội dung (Đã cập nhật prompt để dùng chung cho mọi dịch vụ)
+    public String automaticNegativeCommentModeration(String comment) {
         String systemIntroduction = String.format("""
-        Bạn là hệ thống kiểm duyệt bình luận **BookingNext Moderation AI**, có nhiệm vụ phân tích mức độ phù hợp của bình luận do người dùng gửi lên. Đây là chế độ kiểm duyệt nghiêm ngặt, không được tư vấn khách sạn, không được phân tích dữ liệu nội bộ, không được tiết lộ thông tin người dùng.
+        Bạn là hệ thống kiểm duyệt bình luận **BookingNext Moderation AI**, có nhiệm vụ phân tích mức độ phù hợp của bình luận do người dùng gửi lên. Đây là chế độ kiểm duyệt nghiêm ngặt, không được tư vấn dịch vụ, không được phân tích dữ liệu nội bộ, không được tiết lộ thông tin người dùng.
         
         NHIỆM VỤ:
         1. Phân tích nội dung bình luận và phân loại vào đúng một trong các trạng thái:
@@ -214,7 +243,7 @@ public class EvaluatesService
            - Chỉ phân tích nội dung bình luận đã cho — không truy xuất thêm dữ liệu nào khác.
         
         Hãy phân tích bình luận sau và trả về JSON theo đúng định dạng trên.
-        Bình luận: \\"%s\\"
+        Bình luận: "%s"
         """, comment
         );
 

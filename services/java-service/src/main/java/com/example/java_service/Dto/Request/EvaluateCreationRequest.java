@@ -10,7 +10,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EvaluateCreationRequest
 {
-    String idAccommodation;
+    String refId;
+    String refType;
     String idUser;
     Integer stars;
     String comment;

@@ -15,10 +15,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Document(collection = "evaluates")
 public class Evaluates {
-
     @Id
     private String id;
-    private String idAccommodation;
+    private String refId;
+    private String refType; // "accommodation" hoặc "tour"
     private String idUser;
     private Integer stars;
     private String comment;

@@ -7,15 +7,15 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface FavoriteRepository extends MongoRepository<Favorite, String>
-{
+public interface FavoriteRepository extends MongoRepository<Favorite, String> {
+
     List<Favorite> findByIdUser(String idUser);
 
-    Boolean existsByIdUserAndIdAccommodation(String idUser, String idAccommodation);
+    Boolean existsByIdUserAndRefIdAndRefType(String idUser, String refId, String refType);
 
     void deleteByIdUser(String idUser);
 
-    void deleteByIdAccommodation(String idAccommodation);
+    void deleteByRefIdAndRefType(String refId, String refType);
 
-    void deleteByIdUserAndIdAccommodation(String idUser, String idAccommodation);
+    void deleteByIdUserAndRefIdAndRefType(String idUser, String refId, String refType);
 }

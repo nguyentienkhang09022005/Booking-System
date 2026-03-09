@@ -21,6 +21,10 @@ public class TransportTicket {
     @Column(name = "id_ticket", nullable = false, updatable = false)
     private UUID idTicket;
 
+    @ManyToOne
+    @JoinColumn(name = "id_user", referencedColumnName = "id_user", foreignKey = @ForeignKey(name = "FK_TRANSPORT_TICKET_USER"))
+    private Users users; // Công ty cung cấp vé di chuyển
+
     @Column(name = "ticket_type", length = 50)
     private String ticketType;
 
@@ -47,6 +51,9 @@ public class TransportTicket {
 
     @Column(name = "status", length = 20)
     private String status;
+
+    @Column(name = "is_approved", nullable = false)
+    private Boolean approved = false;
 
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

@@ -27,14 +27,15 @@ public class EvaluateController
 
     // Endpoint lấy danh sách đánh giá theo paging 5
     @GetMapping("/getListEvaluate")
-    public ApiResponse<Page<EvaluateResponse>> getListEvaluate(@RequestParam UUID idHotel,
+    public ApiResponse<Page<EvaluateResponse>> getListEvaluate(@RequestParam String refId,
+                                                             @RequestParam String refType,
                                                              @RequestParam(defaultValue = "0") int page,
                                                              @RequestParam(defaultValue = "3") int size)
     {
         Pageable pageable = PageRequest.of(page, size);
         return ApiResponse.<Page<EvaluateResponse>>builder()
                 .message("Lấy danh sách đánh giá thành công!")
-                .data(evaluatesService.getListEvaluateByPaging(pageable, idHotel))
+                .data(evaluatesService.getListEvaluateByPaging(pageable, refId, refType))
                 .build();
     }
 

@@ -1,14 +1,17 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Configs.RabbitConfig;
+import com.example.java_service.Constant.PredefinedRefFavoriteAndEvaluate;
 import com.example.java_service.Dto.Request.FavoriteRequest;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.FavoriteMapper;
 import com.example.java_service.Models.Accommodation;
+import com.example.java_service.Models.Tour;
 import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.AccommodationRepository;
+import com.example.java_service.Repositories.Jpa.TourRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,9 +30,10 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class FavoriteService
-{
+public class FavoriteService {
+
     AccommodationRepository accommodationRepository;
+    TourRepository tourRepository;
     UserRepository userRepository;
     FavoriteRepository favoriteRepository;
     FavoriteMapper favoriteMapper;
@@ -37,37 +41,59 @@ public class FavoriteService
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
 
-    // Hàm tạo yêu thích nơi cư trú
-    public ResponseEntity<String> saveFavorite(FavoriteRequest request)
-    {
-        Accommodation accommodation = accommodationRepository.findById(UUID.fromString(request.getIdAccommodation())).orElseThrow(
-                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
-        );
+    // Hàm tạo yêu thích
+    public ResponseEntity<String> saveFavorite(FavoriteRequest request) {
         Users user = userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        Boolean checkFavorite = favoriteRepository.existsByIdUserAndIdAccommodation(request.getIdUser(), request.getIdAccommodation());
-        if (checkFavorite)
+        UUID ownerId = null;
+        String targetName = "";
+        String targetTypeVi = ""; // Để dùng cho thông báo tiếng Việt
+
+        // Xử lý kiểm tra dựa vào refType
+        if (PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION.equalsIgnoreCase(request.getRefType())) {
+            Accommodation accommodation = accommodationRepository.findById(UUID.fromString(request.getRefId())).orElseThrow(
+                    () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
+            );
+            ownerId = accommodation.getUsers().getIdUser();
+            targetName = accommodation.getAccommodationName();
+            targetTypeVi = "nơi cư trú";
+
+        } else if (PredefinedRefFavoriteAndEvaluate.REF_TOUR.equalsIgnoreCase(request.getRefType())) {
+            Tour tour = tourRepository.findById(UUID.fromString(request.getRefId())).orElseThrow(
+                    () -> new ApiException(ErrorCode.TOUR_NOT_FOUND)
+            );
+            ownerId = tour.getUsers().getIdUser();
+            targetName = tour.getTourName();
+            targetTypeVi = "tour";
+
+        } else {
+            throw new ApiException(ErrorCode.INVALID_DATA);
+        }
+
+        Boolean checkFavorite = favoriteRepository.existsByIdUserAndRefIdAndRefType(
+                request.getIdUser(), request.getRefId(), request.getRefType()
+        );
+
+        if (checkFavorite) {
             throw new ApiException(ErrorCode.USER_LIKED_ACCOMMODATION);
+        }
 
         var favorite = favoriteMapper.toFavorite(request);
         favorite.setCreatedAt(LocalDateTime.now());
         favoriteRepository.save(favorite);
 
-        String fullName = String.join(" ",
-                user.getFirstName(),
-                user.getLastName()
-        );
+        String fullName = String.join(" ", user.getFirstName(), user.getLastName());
+
         // Gửi sự kiện vào Exchanges
         NotificationCreatedEvent event = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
-                .idUser(accommodation.getUsers().getIdUser())
-                .title("Thông báo yêu thích nơi cư trú")
+                .idUser(ownerId)
+                .title("Thông báo yêu thích " + targetTypeVi)
                 .content(String.format(
-                        "Người dùng %s vừa thêm nơi cư trú %s vào danh sách yêu thích.",
-                        fullName,
-                        accommodation.getAccommodationName()
+                        "Người dùng %s vừa thêm %s %s vào danh sách yêu thích.",
+                        fullName, targetTypeVi, targetName
                 ))
                 .type("favorite")
                 .idRef(favorite.getId())
@@ -83,21 +109,31 @@ public class FavoriteService
                     message
             );
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Lỗi gửi thông báo RabbitMQ", ex);
         }
+
         return ResponseEntity.ok("Tạo yêu thích thành công!");
     }
 
-    // Hàm xóa yêu thích nơi cư trú
-    public ResponseEntity<String> deleteFavorite(FavoriteRequest request)
-    {
-        if (!userRepository.existsById(UUID.fromString(request.getIdUser())))
+    // Hàm xóa yêu thích
+    public ResponseEntity<String> deleteFavorite(FavoriteRequest request) {
+        if (!userRepository.existsById(UUID.fromString(request.getIdUser()))) {
             throw new ApiException(ErrorCode.USER_NOT_FOUND);
+        }
 
-        if (!accommodationRepository.existsById(UUID.fromString(request.getIdAccommodation())))
-            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
+        // Kiểm tra tồn tại dịch vụ
+        if (PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION.equalsIgnoreCase(request.getRefType())) {
+            if (!accommodationRepository.existsById(UUID.fromString(request.getRefId())))
+                throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
+        } else if (PredefinedRefFavoriteAndEvaluate.REF_TOUR.equalsIgnoreCase(request.getRefType())) {
+            if (!tourRepository.existsById(UUID.fromString(request.getRefId())))
+                throw new ApiException(ErrorCode.TOUR_NOT_FOUND);
+        }
 
-        favoriteRepository.deleteByIdUserAndIdAccommodation(request.getIdUser(), request.getIdAccommodation());
+        favoriteRepository.deleteByIdUserAndRefIdAndRefType(
+                request.getIdUser(), request.getRefId(), request.getRefType()
+        );
+
         return ResponseEntity.ok("Bỏ yêu thích thành công!");
     }
 }

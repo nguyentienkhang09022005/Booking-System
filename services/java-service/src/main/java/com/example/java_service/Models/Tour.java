@@ -37,6 +37,9 @@ public class Tour {
     @Column(name = "price_per_person", precision = 12, scale = 2)
     private BigDecimal pricePerPerson;
 
+    @Column(name = "is_approved", nullable = false)
+    private Boolean approved = false;
+
     @Column(name = "status", length = 20)
     private String status;
 

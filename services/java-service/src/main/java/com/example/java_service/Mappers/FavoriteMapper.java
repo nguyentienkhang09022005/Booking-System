@@ -5,8 +5,8 @@ import com.example.java_service.Models.Favorite;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
-public interface FavoriteMapper
-{
+public interface FavoriteMapper {
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     Favorite toFavorite(FavoriteRequest request);
 }

@@ -1,6 +1,6 @@
 package com.example.java_service.Repositories.Mongodb;
 
-import com.example.java_service.Dto.Response.AccommodationStatsResponse;
+import com.example.java_service.Dto.Response.EvaluateStatsResponse;
 import com.example.java_service.Models.Evaluates;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,33 +11,34 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface EvaluatesRepository extends MongoRepository<Evaluates, String>
-{
-    Boolean existsByIdAccommodationAndIdUser(String idAccommodation, String idUser);
+public interface EvaluatesRepository extends MongoRepository<Evaluates, String> {
 
-    // Lấy 5 đánh giá sớm nhất
-    List<Evaluates> findTop3ByIdAccommodationOrderByCreatedAtAsc(String idAccommodation);
+    Boolean existsByRefIdAndRefTypeAndIdUser(String refId, String refType, String idUser);
 
-    Page<Evaluates> findByIdAccommodation(String idAccommodation, Pageable pageable);
+    // Lấy top 3 đánh giá sớm nhất theo refId và refType
+    List<Evaluates> findTop3ByRefIdAndRefTypeOrderByCreatedAtAsc(String refId, String refType);
 
-    // Đếm số lượng đánh giá của Accommodation
-    long countByIdAccommodation(String idAccommodation);
+    Page<Evaluates> findByRefIdAndRefType(String refId, String refType, Pageable pageable);
 
-    // Tính trung bình số sao của Accommodation
+    // Đếm số lượng đánh giá
+    long countByRefIdAndRefType(String refId, String refType);
+
+    // Tính trung bình số sao
     @Aggregation(pipeline = {
-            "{ '$match': { 'idAccommodation': ?0 } }",
+            "{ '$match': { 'refId': ?0, 'refType': ?1 } }",
             "{ '$group': { '_id': null, 'avgStars': { '$avg': '$stars' } } }"
     })
-    Double getAverageRatingByIdAccommodation(String idAccommodation);
+    Double getAverageRatingByRefIdAndRefType(String refId, String refType);
 
+    // Lấy thống kê cho danh sách refIds
     @Aggregation(pipeline = {
-            "{ $match: { idAccommodation: { $in: ?0 } } }",
-            "{ $group: { _id: '$idAccommodation', allEvaluates: { $sum: 1 }, averageStar: { $avg: '$stars' } } }",
-            "{ $project: { idAccommodation: '$_id', allEvaluates: 1, averageStar: 1, _id: 0 } }"
+            "{ $match: { refId: { $in: ?0 }, refType: ?1 } }",
+            "{ $group: { _id: '$refId', allEvaluates: { $sum: 1 }, averageStar: { $avg: '$stars' } } }",
+            "{ $project: { refId: '$_id', allEvaluates: 1, averageStar: 1, _id: 0 } }"
     })
-    List<AccommodationStatsResponse> findAccommodationStatsByAccommodationIds(List<String> accommodationIds);
+    List<EvaluateStatsResponse> findStatsByRefIdsAndRefType(List<String> refIds, String refType);
 
     void deleteByIdUser(String idUser);
 
-    void deleteByIdAccommodation(String idAccommodation);
+    void deleteByRefIdAndRefType(String refId, String refType);
 }

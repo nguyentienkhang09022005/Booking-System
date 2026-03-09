@@ -7,8 +7,8 @@ import com.example.java_service.Models.Evaluates;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
-public interface EvaluateMapper
-{
+public interface EvaluateMapper {
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     Evaluates toEvaluate(EvaluateCreationRequest request);
 
