@@ -2,6 +2,8 @@ package com.example.java_service.Repositories.Jpa;
 
 import com.example.java_service.Models.Tour;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,12 +12,15 @@ import java.util.UUID;
 @Repository
 public interface TourRepository extends JpaRepository<Tour, UUID>
 {
-    // Lấy danh sách các tour đã được phê duyệt
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN FETCH t.tourSchedules WHERE t.approved = true")
     List<Tour> findByApprovedTrue();
 
-    // Lấy danh sách các tour chưa được phê duyệt
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN FETCH t.tourSchedules WHERE t.approved = false")
     List<Tour> findByApprovedFalse();
 
-    // Lấy danh sách các tour do một user cụ thể tạo ra
-    List<Tour> findByUsers_IdUser(UUID idUser);
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN FETCH t.tourSchedules WHERE t.users.idUser = :idUser")
+    List<Tour> findByUsers_IdUser(@Param("idUser") UUID idUser);
+
+    @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN FETCH t.tourSchedules")
+    List<Tour> findAllToursWithSchedules();
 }

@@ -5,14 +5,20 @@ import com.example.java_service.Dto.Request.TourApproveRequest;
 import com.example.java_service.Dto.Request.TourCreationRequest;
 import com.example.java_service.Dto.Request.TourUpdateRequest;
 import com.example.java_service.Dto.Response.TourResponse;
+import com.example.java_service.Dto.Response.TourScheduleResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.TourMapper;
+import com.example.java_service.Mappers.TourScheduleMapper;
 import com.example.java_service.Mappers.UserMapper;
+import com.example.java_service.Models.Images;
 import com.example.java_service.Models.Tour;
+import com.example.java_service.Models.TourSchedule;
 import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.TourRepository;
+import com.example.java_service.Repositories.Jpa.TourScheduleRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +38,11 @@ import java.util.stream.Collectors;
 public class TourService
 {
     TourRepository tourRepository;
+    TourScheduleRepository tourScheduleRepository;
     UserRepository userRepository;
+    ImagesRepository imagesRepository;
     TourMapper tourMapper;
+    TourScheduleMapper tourScheduleMapper;
     UserMapper userMapper;
 
     private TourResponse mapToTourResponse(Tour tour)
@@ -42,42 +51,47 @@ public class TourService
         if (tour.getUsers() != null) {
             response.setOwnerTourResponse(userMapper.toOwnerTourResponse(tour.getUsers()));
         }
+
+        List<String> imageUrls = imagesRepository.findByRefId(tour.getIdTour().toString())
+                .stream()
+                .map(Images::getUrl)
+                .collect(Collectors.toList());
+        response.setImageTourUrl(imageUrls);
+
+        if (tour.getTourSchedules() != null && !tour.getTourSchedules().isEmpty()) {
+            List<TourScheduleResponse> scheduleResponses = tour.getTourSchedules().stream()
+                    .map(tourScheduleMapper::toTourScheduleResponse)
+                    .collect(Collectors.toList());
+            response.setTourScheduleResponses(scheduleResponses);
+        }
+
         return response;
     }
 
-    // Lấy danh sách tất cả tour
-    public List<TourResponse> getAllTours()
-    {
-        return tourRepository.findAll().stream()
+    public List<TourResponse> getAllTours() {
+        return tourRepository.findAllToursWithSchedules().stream()
                 .map(this::mapToTourResponse)
                 .collect(Collectors.toList());
     }
 
-    // Lấy danh sách tour đã duyệt
-    public List<TourResponse> getListTourApproved()
-    {
+    public List<TourResponse> getListTourApproved() {
         return tourRepository.findByApprovedTrue().stream()
                 .map(this::mapToTourResponse)
                 .collect(Collectors.toList());
     }
 
-    // Lấy danh sách tour chưa duyệt
-    public List<TourResponse> getListTourNotApproved()
-    {
+    public List<TourResponse> getListTourNotApproved() {
         return tourRepository.findByApprovedFalse().stream()
                 .map(this::mapToTourResponse)
                 .collect(Collectors.toList());
     }
 
-    // Lấy danh sách tour của user đã tạo
-    public List<TourResponse> getListTourCreatedByUser(UUID idUser)
-    {
+    public List<TourResponse> getListTourCreatedByUser(UUID idUser) {
         return tourRepository.findByUsers_IdUser(idUser).stream()
                 .map(this::mapToTourResponse)
                 .collect(Collectors.toList());
     }
 
-    // Thêm tour mới
     @Transactional
     public ResponseEntity<String> saveTour(TourCreationRequest request)
     {
@@ -85,22 +99,41 @@ public class TourService
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        // Validate durationDays
-        if (request.getDurationDays() != null && request.getDurationDays() <= 0)
-        {
+        if (request.getDurationMinutes() != null && request.getDurationMinutes() <= 0) {
             throw new ApiException(ErrorCode.INVALID_DURATION_DAYS);
         }
 
         Tour tour = tourMapper.toTour(request);
         tour.setUsers(user);
-        tour.setApproved(false); // Mặc định chưa phê duyệt
-        tour.setStatus(PredefinedStatusTour.STATUS_TOUR_AVAILABLE); // Trạng thái mặc định khi tạo mới
+        tour.setApproved(false);
+        tour.setStatus(PredefinedStatusTour.STATUS_TOUR_AVAILABLE);
 
-        tourRepository.save(tour);
+        Tour savedTour = tourRepository.save(tour);
+
+        // Lưu ảnh
+        if (request.getImageTourUrl() != null && !request.getImageTourUrl().isEmpty()) {
+            List<Images> images = request.getImageTourUrl().stream().map(url -> {
+                Images image = new Images();
+                image.setUrl(url);
+                image.setRefId(savedTour.getIdTour().toString());
+                return image;
+            }).toList();
+            imagesRepository.saveAll(images);
+        }
+
+        // Lưu lịch trình (nếu có)
+        if (request.getTourScheduleRequests() != null && !request.getTourScheduleRequests().isEmpty()) {
+            List<TourSchedule> schedules = request.getTourScheduleRequests().stream().map(scheduleReq -> {
+                TourSchedule schedule = tourScheduleMapper.toTourSchedule(scheduleReq);
+                schedule.setTour(savedTour);
+                return schedule;
+            }).toList();
+            tourScheduleRepository.saveAll(schedules);
+        }
+
         return ResponseEntity.ok("Tạo tour thành công!");
     }
 
-    // Sửa thông tin tour
     @Transactional
     public ResponseEntity<String> updateTour(UUID idTour, TourUpdateRequest request)
     {
@@ -108,7 +141,6 @@ public class TourService
                 () -> new ApiException(ErrorCode.TOUR_NOT_FOUND)
         );
 
-        // Validate status
         if (request.getStatus() != null) {
             boolean isValidStatus = request.getStatus().equals(PredefinedStatusTour.STATUS_TOUR_AVAILABLE) ||
                     request.getStatus().equals(PredefinedStatusTour.STATUS_TOUR_SOLD_OUT);
@@ -117,19 +149,41 @@ public class TourService
             }
         }
 
-        // Validate durationDays
-        if (request.getDurationDays() != null && request.getDurationDays() <= 0)
-        {
+        if (request.getDurationMinutes() != null && request.getDurationMinutes() <= 0) {
             throw new ApiException(ErrorCode.INVALID_DURATION_DAYS);
         }
 
         tourMapper.updateTourFromRequest(request, tour);
-        tourRepository.save(tour);
+        Tour updatedTour = tourRepository.save(tour);
+
+        // Cập nhật ảnh (xóa cũ thêm mới)
+        if (request.getImageTourUrl() != null && !request.getImageTourUrl().isEmpty()) {
+            imagesRepository.deleteByRefId(updatedTour.getIdTour().toString());
+
+            List<Images> images = request.getImageTourUrl().stream().map(url -> {
+                Images image = new Images();
+                image.setUrl(url);
+                image.setRefId(updatedTour.getIdTour().toString());
+                return image;
+            }).toList();
+            imagesRepository.saveAll(images);
+        }
+
+        // Cập nhật lịch trình (xóa cũ thêm mới)
+        if (request.getTourScheduleRequests() != null && !request.getTourScheduleRequests().isEmpty()) {
+            tourScheduleRepository.deleteByTour_IdTour(idTour);
+
+            List<TourSchedule> schedules = request.getTourScheduleRequests().stream().map(scheduleReq -> {
+                TourSchedule schedule = tourScheduleMapper.toTourSchedule(scheduleReq);
+                schedule.setTour(updatedTour);
+                return schedule;
+            }).toList();
+            tourScheduleRepository.saveAll(schedules);
+        }
 
         return ResponseEntity.ok("Cập nhật thông tin tour thành công!");
     }
 
-    // Xóa tour
     @Transactional
     public ResponseEntity<String> deleteTour(UUID idTour)
     {
@@ -137,11 +191,12 @@ public class TourService
                 () -> new ApiException(ErrorCode.TOUR_NOT_FOUND)
         );
 
-        tourRepository.delete(tour);
+        imagesRepository.deleteByRefId(idTour.toString());
+        tourRepository.delete(tour); // Sẽ cascade xóa luôn bảng TourSchedule (nếu dùng OneToMany cascade)
+
         return ResponseEntity.ok("Xóa tour thành công!");
     }
 
-    // Phê duyệt tour
     @Transactional
     public ResponseEntity<String> approveTour(UUID idTour, TourApproveRequest request)
     {

@@ -13,6 +13,7 @@ public interface TourMapper
     Tour toTour(TourCreationRequest request);
 
     @Mapping(target = "ownerTourResponse", ignore = true)
+    @Mapping(target = "imageTourUrl", ignore = true)
     TourResponse toTourResponse(Tour tour);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

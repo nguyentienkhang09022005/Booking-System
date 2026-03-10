@@ -3,9 +3,11 @@ package com.example.java_service.Models;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -31,19 +33,43 @@ public class Tour {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "duration_days")
-    private Integer durationDays;
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
 
-    @Column(name = "price_per_person", precision = 12, scale = 2)
-    private BigDecimal pricePerPerson;
+    @Column(name = "meeting_point", length = 200)
+    private String meetingPoint;
 
-    @Column(name = "is_approved", nullable = false)
-    private Boolean approved = false;
+    @Column(name = "drop_off_point", length = 200)
+    private String dropOffPoint;
+
+    @Column(name = "cancellation_policy", columnDefinition = "TEXT")
+    private String cancellationPolicy;
+
+    @Column(name = "languages", length = 100)
+    private String languages;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "inclusions", columnDefinition = "jsonb")
+    private List<String> inclusions;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "exclusions", columnDefinition = "jsonb")
+    private List<String> exclusions;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "additional_info", columnDefinition = "jsonb")
+    private List<String> additionalInfo;
 
     @Column(name = "status", length = 20)
     private String status;
 
+    @Column(name = "is_approved", nullable = false)
+    private Boolean approved = false;
+
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TourSchedule> tourSchedules;
 }

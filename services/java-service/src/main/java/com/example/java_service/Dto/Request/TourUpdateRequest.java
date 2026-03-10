@@ -1,9 +1,10 @@
 package com.example.java_service.Dto.Request;
 
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +15,20 @@ public class TourUpdateRequest
 {
     String tourName;
     String description;
-    Integer durationDays;
+
+    @Min(value = 1, message = "Thời lượng tour (phút) phải lớn hơn 0")
+    Integer durationMinutes;
+
+    String meetingPoint;
+    String dropOffPoint;
+    String cancellationPolicy;
+    String languages;
     String status;
-    BigDecimal pricePerPerson;
+
+    List<String> inclusions;
+    List<String> exclusions;
+    List<String> additionalInfo;
+    List<TourScheduleRequest> tourScheduleRequests;
+
+    List<String> imageTourUrl;
 }
