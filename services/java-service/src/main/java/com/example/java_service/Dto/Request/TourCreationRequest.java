@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +32,8 @@ public class TourCreationRequest
     String dropOffPoint;
     String cancellationPolicy;
     String languages;
+    BigDecimal adultPrice;
+    BigDecimal childPrice;
 
     List<String> inclusions;
     List<String> exclusions;

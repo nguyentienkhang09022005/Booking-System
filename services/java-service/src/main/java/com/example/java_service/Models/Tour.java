@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +60,12 @@ public class Tour {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "additional_info", columnDefinition = "jsonb")
     private List<String> additionalInfo;
+
+    @Column(name = "adult_price", precision = 12, scale = 2)
+    private BigDecimal adultPrice;
+
+    @Column(name = "child_price", precision = 12, scale = 2)
+    private BigDecimal childPrice;
 
     @Column(name = "status", length = 20)
     private String status;

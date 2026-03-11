@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -102,6 +103,13 @@ public class TourService
         if (request.getDurationMinutes() != null && request.getDurationMinutes() <= 0) {
             throw new ApiException(ErrorCode.INVALID_DURATION_DAYS);
         }
+        if (request.getAdultPrice() != null && request.getAdultPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.INVALID_ADULT_PRICE);
+        }
+
+        if (request.getChildPrice() != null && request.getChildPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.INVALID_CHILD_PRICE);
+        }
 
         Tour tour = tourMapper.toTour(request);
         tour.setUsers(user);
@@ -151,6 +159,13 @@ public class TourService
 
         if (request.getDurationMinutes() != null && request.getDurationMinutes() <= 0) {
             throw new ApiException(ErrorCode.INVALID_DURATION_DAYS);
+        }
+        if (request.getAdultPrice() != null && request.getAdultPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.INVALID_ADULT_PRICE);
+        }
+
+        if (request.getChildPrice() != null && request.getChildPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.INVALID_CHILD_PRICE);
         }
 
         tourMapper.updateTourFromRequest(request, tour);

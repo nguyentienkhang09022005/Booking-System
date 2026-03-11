@@ -1,8 +1,10 @@
-package com.example.java_service.Dto.Request;
+package com.example.java_service.Dto.Response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -10,13 +12,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingTourCreationRequest
+public class BookingTourResponse
 {
-    UUID idTour;
-    UUID idUser;
+    UUID idBookingTour;
     Integer quantityAdult;
     Integer quantityChild;
+    BigDecimal priceBookingTour;
     String pickupLocation;
     String languageSelected;
     String specialRequests;
+    LocalDateTime createdAt;
+    TourResponse tourResponse;
 }

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -24,6 +25,8 @@ public class TourUpdateRequest
     String cancellationPolicy;
     String languages;
     String status;
+    BigDecimal adultPrice;
+    BigDecimal childPrice;
 
     List<String> inclusions;
     List<String> exclusions;

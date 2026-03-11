@@ -3,17 +3,13 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.UUID;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingTourCreationRequest
+public class BookingTourUpdateRequest
 {
-    UUID idTour;
-    UUID idUser;
     Integer quantityAdult;
     Integer quantityChild;
     String pickupLocation;

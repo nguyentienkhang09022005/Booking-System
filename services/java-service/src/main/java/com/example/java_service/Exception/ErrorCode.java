@@ -112,6 +112,8 @@ public enum ErrorCode
     TOUR_NOT_FOUND("TOUR_NOT_FOUND", "Không tìm thấy tour du lịch!", HttpStatus.NOT_FOUND),
     INVALID_STATUS_TOUR("INVALID_STATUS_TOUR", "Trạng thái tour không hợp lệ (Chỉ nhận Available hoặc Sold Out)!", HttpStatus.BAD_REQUEST),
     INVALID_DURATION_DAYS("INVALID_DURATION_DAYS", "Số ngày của tour phải lớn hơn 0!", HttpStatus.BAD_REQUEST),
+    INVALID_ADULT_PRICE("INVALID_ADULT_PRICE", "Giá vé người lớn không được nhỏ hơn 0!", HttpStatus.BAD_REQUEST),
+    INVALID_CHILD_PRICE("INVALID_CHILD_PRICE", "Giá vé trẻ em không được nhỏ hơn 0!", HttpStatus.BAD_REQUEST),
 
     // Lỗi Transport Ticket
     TRANSPORT_TICKET_NOT_FOUND("TRANSPORT_TICKET_NOT_FOUND", "Không tìm thấy vé di chuyển!", HttpStatus.NOT_FOUND),

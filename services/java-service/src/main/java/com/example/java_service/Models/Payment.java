@@ -17,8 +17,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "payment")
-public class Payment
-{
+public class Payment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_payment", nullable = false, updatable = false)
@@ -32,6 +32,15 @@ public class Payment
 
     @Column(name = "status", length = 20)
     private String status;
+
+    @Column(name = "id_app_trans", length = 100)
+    private String idAppTrans;
+
+    @Column(name = "id_zp_trans", length = 100)
+    private String idZpTrans;
+
+    @Column(name = "tx_hash", length = 66)
+    private String txHash;
 
     @CreationTimestamp
     @Column(name = "create_at", nullable = false, updatable = false)
@@ -52,4 +61,12 @@ public class Payment
             foreignKey = @ForeignKey(name = "FK_PAYMENT_BOOKING")
     )
     private Booking booking;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "id_booking_tour",
+            referencedColumnName = "id_booking_tour",
+            foreignKey = @ForeignKey(name = "FK_PAYMENT_BOOKING_TOUR")
+    )
+    private BookingTour bookingTour;
 }
