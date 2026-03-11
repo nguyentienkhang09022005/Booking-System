@@ -1,5 +1,7 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Constant.PredefinedMethodPayment;
+import com.example.java_service.Constant.PredefinedStatusPayment;
 import com.example.java_service.Dto.Request.BookingTourCreationRequest;
 import com.example.java_service.Dto.Request.BookingTourUpdateRequest;
 import com.example.java_service.Dto.Request.PaymentRequest;
@@ -9,9 +11,11 @@ import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingTourMapper;
 import com.example.java_service.Models.BookingTour;
+import com.example.java_service.Models.Payment;
 import com.example.java_service.Models.Tour;
 import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.BookingTourRepository;
+import com.example.java_service.Repositories.Jpa.PaymentRepository;
 import com.example.java_service.Repositories.Jpa.TourRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import lombok.AccessLevel;
@@ -41,6 +45,7 @@ public class BookingTourService {
     BookingTourRepository bookingTourRepository;
     TourRepository tourRepository;
     UserRepository userRepository;
+    PaymentRepository paymentRepository;
     BookingTourMapper bookingTourMapper;
     WebClient webClient;
 
@@ -189,43 +194,41 @@ public class BookingTourService {
     }
 
     @Transactional
-    public BookingTourResponse updateBookingTour(UUID idBookingTour, BookingTourUpdateRequest request) {
+    public PaymentResponse updateBookingTour(UUID idBookingTour, BookingTourUpdateRequest request) {
+        if (paymentRepository.existsByBookingTour_IdBookingTourAndStatus(idBookingTour, PredefinedStatusPayment.STATUS_PAYMENT_SUCCESS)) {
+            throw new ApiException(ErrorCode.PAID);
+        }
+
         BookingTour bookingTour = bookingTourRepository.findById(idBookingTour).orElseThrow(
                 () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
         );
 
-        if (request.getPickupLocation() != null) bookingTour.setPickupLocation(request.getPickupLocation());
-        if (request.getLanguageSelected() != null) bookingTour.setLanguageSelected(request.getLanguageSelected());
-        if (request.getSpecialRequests() != null) bookingTour.setSpecialRequests(request.getSpecialRequests());
-
-        boolean isQuantityChanged = false;
-        int newAdultQty = bookingTour.getQuantityAdult();
-        int newChildQty = bookingTour.getQuantityChild();
-
-        if (request.getQuantityAdult() != null && !request.getQuantityAdult().equals(bookingTour.getQuantityAdult())) {
-            newAdultQty = request.getQuantityAdult();
-            bookingTour.setQuantityAdult(newAdultQty);
-            isQuantityChanged = true;
+        Payment payment = paymentRepository.findByBookingTour_IdBookingTour(idBookingTour);
+        if (payment != null) {
+            payment.setStatus(PredefinedStatusPayment.STATUS_PAYMENT_FAILED);
+            paymentRepository.save(payment);
         }
 
-        if (request.getQuantityChild() != null && !request.getQuantityChild().equals(bookingTour.getQuantityChild())) {
-            newChildQty = request.getQuantityChild();
-            bookingTour.setQuantityChild(newChildQty);
-            isQuantityChanged = true;
+        String method = request.getPaymentMethod() != null ? request.getPaymentMethod() : PredefinedMethodPayment.ZALOPAY_METHOD;
+        return self.callPaymentApi(bookingTour, method, request.getPayerAddress());
+    }
+
+    @Transactional
+    public String cancelBookingTour(UUID idBookingTour) {
+        if (paymentRepository.existsByBookingTour_IdBookingTourAndStatus(idBookingTour, PredefinedStatusPayment.STATUS_PAYMENT_SUCCESS)) {
+            throw new ApiException(ErrorCode.PAID);
         }
 
-        if (isQuantityChanged) {
-            Tour tour = bookingTour.getTour();
-            BigDecimal adultPrice = tour.getAdultPrice() != null ? tour.getAdultPrice() : BigDecimal.ZERO;
-            BigDecimal childPrice = tour.getChildPrice() != null ? tour.getChildPrice() : BigDecimal.ZERO;
+        bookingTourRepository.findById(idBookingTour).orElseThrow(
+                () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
+        );
 
-            BigDecimal totalAdultPrice = adultPrice.multiply(BigDecimal.valueOf(newAdultQty));
-            BigDecimal totalChildPrice = childPrice.multiply(BigDecimal.valueOf(newChildQty));
-
-            bookingTour.setPriceBookingTour(totalAdultPrice.add(totalChildPrice));
+        Payment payment = paymentRepository.findByBookingTour_IdBookingTour(idBookingTour);
+        if (payment != null) {
+            payment.setStatus(PredefinedStatusPayment.STATUS_PAYMENT_FAILED);
+            paymentRepository.save(payment);
         }
 
-        BookingTour updatedBooking = bookingTourRepository.save(bookingTour);
-        return bookingTourMapper.toBookingTourResponse(updatedBooking);
+        return "Hủy đặt tour thành công!";
     }
 }

@@ -1,10 +1,7 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Configs.RabbitConfig;
-import com.example.java_service.Constant.PredefinedStatusBooking;
-import com.example.java_service.Constant.PredefinedStatusPayment;
-import com.example.java_service.Constant.PredefinedStatusRoom;
-import com.example.java_service.Constant.PredefinedStatusService;
+import com.example.java_service.Constant.*;
 import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
@@ -369,7 +366,7 @@ public class BookingHandleService
         try
         {
             // Branch on payment method
-            if ("VNDStablecoin".equals(bookingRequest.getPaymentMethod()) && bookingRequest.getPayerAddress() != null && !bookingRequest.getPayerAddress().isBlank())
+            if (PredefinedMethodPayment.VND_STABLE_COIN.equals(bookingRequest.getPaymentMethod()) && bookingRequest.getPayerAddress() != null && !bookingRequest.getPayerAddress().isBlank())
             {
                 // Call Go service VND payment prepare endpoint
                 Map<String, Object> vndRequest = Map.of(
@@ -398,7 +395,7 @@ public class BookingHandleService
                                 ? UUID.fromString(vndResponse.get("id_payment").toString())
                                 : null)
                         .amount(booking.getTotalPrice())
-                        .method("VNDStablecoin")
+                        .method(PredefinedMethodPayment.VND_STABLE_COIN)
                         .status("Pending")
                         .typedData((Map<String, Object>) vndResponse.get("typed_data"))
                         .orderId(vndResponse.get("order_id") != null ? vndResponse.get("order_id").toString() : null)

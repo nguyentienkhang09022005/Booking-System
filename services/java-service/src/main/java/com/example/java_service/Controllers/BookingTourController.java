@@ -62,13 +62,22 @@ public class BookingTourController
                 .build();
     }
 
-    @PatchMapping("/update")
-    public ApiResponse<BookingTourResponse> updateBookingTour(@RequestParam UUID idBookingTour,
-                                                              @RequestBody BookingTourUpdateRequest request)
+    @PatchMapping("/retry-payment")
+    public ApiResponse<PaymentResponse> retryPaymentBookingTour(@RequestParam UUID idBookingTour,
+                                                                @RequestBody BookingTourUpdateRequest request)
     {
-        return ApiResponse.<BookingTourResponse>builder()
-                .message("Cập nhật thông tin đơn đặt tour thành công!")
+        return ApiResponse.<PaymentResponse>builder()
+                .message("Tạo lại giao dịch thanh toán thành công!")
                 .data(bookingTourService.updateBookingTour(idBookingTour, request))
+                .build();
+    }
+
+    @DeleteMapping("/cancel")
+    public ApiResponse<String> cancelBookingTour(@RequestParam UUID idBookingTour)
+    {
+        return ApiResponse.<String>builder()
+                .message("Hủy đơn đặt tour thành công!")
+                .data(bookingTourService.cancelBookingTour(idBookingTour))
                 .build();
     }
 }

@@ -15,4 +15,6 @@ public class BookingTourUpdateRequest
     String pickupLocation;
     String languageSelected;
     String specialRequests;
+    String paymentMethod;
+    String payerAddress;
 }
