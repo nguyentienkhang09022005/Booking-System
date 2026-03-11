@@ -484,18 +484,16 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "currency",
-                "id_booking",
                 "id_user"
             ],
             "properties": {
                 "amount": {
                     "type": "number"
                 },
-                "currency": {
+                "id_booking": {
                     "type": "string"
                 },
-                "id_booking": {
+                "id_booking_tour": {
                     "type": "string"
                 },
                 "id_user": {
@@ -507,7 +505,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "id_booking",
                 "id_user",
                 "payer_address"
             ],
@@ -516,6 +513,9 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "id_booking": {
+                    "type": "string"
+                },
+                "id_booking_tour": {
                     "type": "string"
                 },
                 "id_user": {

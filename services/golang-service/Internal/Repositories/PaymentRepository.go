@@ -11,11 +11,12 @@ type IPaymentRepository interface {
 	FindByAppTransID(appTransID string) (*Models.Payment, error)
 	FindByIDPayment(idPayment uuid.UUID) (*Models.Payment, error)
 	UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error
-	CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking uuid.UUID, amount float64, orderID string) (*Models.Payment, error)
+	CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking *uuid.UUID, idBookingTour *uuid.UUID, amount float64, orderID string) (*Models.Payment, error)
 	UpdateVndPaymentSuccess(idPayment uuid.UUID, txHash string) error
 	ClaimForProcessing(idPayment uuid.UUID) (bool, error)
 	UpdateVndPaymentFailed(idPayment uuid.UUID, txHash string) error
 }
+
 type paymentRepository struct {
 	_db *gorm.DB
 }
@@ -25,7 +26,6 @@ func PaymentRepository(db *gorm.DB) IPaymentRepository {
 	return &paymentRepository{_db: db}
 }
 
-// Repo tạo thanh toán
 func (p *paymentRepository) Create(payment *Models.Payment) (*Models.Payment, error) {
 	err := p._db.Create(payment).Error
 	if err != nil {
@@ -37,24 +37,30 @@ func (p *paymentRepository) Create(payment *Models.Payment) (*Models.Payment, er
 func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment, error) {
 	var payment Models.Payment
 
-	err := p._db.
-		Where("id_app_trans = ?", IDAppTrans).
-		First(&payment).Error
-
+	err := p._db.Where("id_app_trans = ?", IDAppTrans).First(&payment).Error
 	if err != nil {
 		return nil, err
 	}
 
-	var booking Models.Booking
-	errBooking := p._db.Where("id_booking = ?", payment.IDBooking).First(&booking).Error
+	// Lấy thông tin Booking nếu có
+	if payment.IDBooking != nil {
+		var booking Models.Booking
+		if errBooking := p._db.Where("id_booking = ?", payment.IDBooking).First(&booking).Error; errBooking == nil {
+			payment.Booking = &booking
+		}
+	}
 
-	if errBooking == nil {
-		payment.Booking = booking
-	} else {
+	// Lấy thông tin BookingTour nếu có
+	if payment.IDBookingTour != nil {
+		var bookingTour Models.BookingTour
+		if errTour := p._db.Where("id_booking_tour = ?", payment.IDBookingTour).First(&bookingTour).Error; errTour == nil {
+			payment.BookingTour = &bookingTour
+		}
 	}
 
 	return &payment, nil
 }
+
 func (p *paymentRepository) UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error {
 	return p._db.Model(&Models.Payment{}).
 		Where("id_payment = ?", idPayment).
@@ -71,23 +77,33 @@ func (p *paymentRepository) FindByIDPayment(idPayment uuid.UUID) (*Models.Paymen
 		return nil, err
 	}
 
-	var booking Models.Booking
-	if err := p._db.Where("id_booking = ?", payment.IDBooking).First(&booking).Error; err == nil {
-		payment.Booking = booking
+	if payment.IDBooking != nil {
+		var booking Models.Booking
+		if err := p._db.Where("id_booking = ?", payment.IDBooking).First(&booking).Error; err == nil {
+			payment.Booking = &booking
+		}
+	}
+
+	if payment.IDBookingTour != nil {
+		var bookingTour Models.BookingTour
+		if err := p._db.Where("id_booking_tour = ?", payment.IDBookingTour).First(&bookingTour).Error; err == nil {
+			payment.BookingTour = &bookingTour
+		}
 	}
 
 	return &payment, nil
 }
 
-func (p *paymentRepository) CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking uuid.UUID, amount float64, orderID string) (*Models.Payment, error) {
+func (p *paymentRepository) CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking *uuid.UUID, idBookingTour *uuid.UUID, amount float64, orderID string) (*Models.Payment, error) {
 	payment := &Models.Payment{
-		IDPayment:  idPayment,
-		IDUser:     idUser,
-		IDBooking:  idBooking,
-		Amount:     amount,
-		Method:     "VNDStablecoin",
-		Status:     "Pending",
-		IDAppTrans: orderID, // reuse IDAppTrans to store the EIP-712 orderId
+		IDPayment:     idPayment,
+		IDUser:        idUser,
+		IDBooking:     idBooking,
+		IDBookingTour: idBookingTour,
+		Amount:        amount,
+		Method:        "VNDStablecoin",
+		Status:        "Pending",
+		IDAppTrans:    orderID,
 	}
 	if err := p._db.Create(payment).Error; err != nil {
 		return nil, err

@@ -16,13 +16,15 @@ type Payment struct {
 	TxHash     *string   `gorm:"type:varchar(66)" json:"tx_hash,omitempty"` // Blockchain tx hash (VNDStablecoin)
 	CreateAt   time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
-	// Khóa ngoại
-	IDUser    uuid.UUID `gorm:"type:uuid" json:"id_user"`
-	IDBooking uuid.UUID `gorm:"type:uuid" json:"id_booking"`
+	// Khóa ngoại - Dùng con trỏ (*uuid.UUID) để cho phép lưu NULL trong DB
+	IDUser        uuid.UUID  `gorm:"type:uuid" json:"id_user"`
+	IDBooking     *uuid.UUID `gorm:"type:uuid" json:"id_booking,omitempty"`
+	IDBookingTour *uuid.UUID `gorm:"type:uuid" json:"id_booking_tour,omitempty"`
 
 	// Quan hệ
-	User    User    `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE;" json:"user,omitempty"`
-	Booking Booking `gorm:"foreignKey:IDBooking;constraint:OnDelete:CASCADE;" json:"booking,omitempty"`
+	User        User         `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE;" json:"user,omitempty"`
+	Booking     *Booking     `gorm:"foreignKey:IDBooking;constraint:OnDelete:CASCADE;" json:"booking,omitempty"`
+	BookingTour *BookingTour `gorm:"foreignKey:IDBookingTour;constraint:OnDelete:CASCADE;" json:"booking_tour,omitempty"`
 }
 
 func (Payment) TableName() string {

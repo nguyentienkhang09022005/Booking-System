@@ -52,7 +52,7 @@ func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 		return
 	}
 
-	result, err := vc._blockchainService.PreparePaymentOrder(req.IDBooking, req.PayerAddress, req.Amount)
+	result, err := vc._blockchainService.PreparePaymentOrder(*req.IDBooking, req.PayerAddress, req.Amount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to prepare payment order: %v", err)})
 		return
@@ -62,6 +62,7 @@ func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 		result.IDPayment,
 		req.IDUser,
 		req.IDBooking,
+		req.IDBookingTour,
 		req.Amount,
 		result.OrderID,
 	)
@@ -168,7 +169,7 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 	if payment.Booking.IDAccommodation != uuid.Nil {
 		now := time.Now()
 		revenueEvent := Request.RevenueCreatedEvent{
-			IDBooking:       &payment.IDBooking,
+			IDBooking:       payment.IDBooking,
 			IDExpense:       nil,
 			IDAccommodation: payment.Booking.IDAccommodation,
 			Amount:          payment.Amount,
