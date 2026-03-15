@@ -4,6 +4,8 @@ import com.example.java_service.Constant.PredefinedStatusTour;
 import com.example.java_service.Dto.Request.TourApproveRequest;
 import com.example.java_service.Dto.Request.TourCreationRequest;
 import com.example.java_service.Dto.Request.TourUpdateRequest;
+import com.example.java_service.Dto.Response.OwnerTourResponse;
+import com.example.java_service.Dto.Response.TourOverviewResponse;
 import com.example.java_service.Dto.Response.TourResponse;
 import com.example.java_service.Dto.Response.TourScheduleResponse;
 import com.example.java_service.Exception.ApiException;
@@ -69,27 +71,60 @@ public class TourService
         return response;
     }
 
-    public List<TourResponse> getAllTours() {
+    private TourOverviewResponse mapToTourOverviewResponse(Tour tour) {
+        String thumbnail = null;
+        List<Images> images = imagesRepository.findByRefId(tour.getIdTour().toString());
+        if (!images.isEmpty()) {
+            thumbnail = images.get(0).getUrl();
+        }
+
+        OwnerTourResponse owner = null;
+        if (tour.getUsers() != null) {
+            owner = userMapper.toOwnerTourResponse(tour.getUsers());
+        }
+
+        return TourOverviewResponse.builder()
+                .idTour(tour.getIdTour())
+                .tourName(tour.getTourName())
+                .durationMinutes(tour.getDurationMinutes())
+                .adultPrice(tour.getAdultPrice())
+                .childPrice(tour.getChildPrice())
+                .status(tour.getStatus())
+                .approved(tour.getApproved())
+                .createdAt(tour.getCreatedAt())
+                .thumbnailImage(thumbnail)
+                .ownerTourResponse(owner)
+                .build();
+    }
+
+    public TourResponse getTourDetail(UUID idTour) {
+        Tour tour = tourRepository.findById(idTour).orElseThrow(
+                () -> new ApiException(ErrorCode.TOUR_NOT_FOUND)
+        );
+        return mapToTourResponse(tour);
+    }
+
+    public List<TourOverviewResponse> getAllTours() {
         return tourRepository.findAllToursWithSchedules().stream()
-                .map(this::mapToTourResponse)
+                .map(this::mapToTourOverviewResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<TourResponse> getListTourApproved() {
+    public List<TourOverviewResponse> getListTourApproved() {
         return tourRepository.findByApprovedTrue().stream()
-                .map(this::mapToTourResponse)
+                .map(this::mapToTourOverviewResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<TourResponse> getListTourNotApproved() {
+    public List<TourOverviewResponse> getListTourNotApproved() {
         return tourRepository.findByApprovedFalse().stream()
-                .map(this::mapToTourResponse)
+                .map(this::mapToTourOverviewResponse)
                 .collect(Collectors.toList());
     }
 
-    public List<TourResponse> getListTourCreatedByUser(UUID idUser) {
+    public List<TourOverviewResponse> getListTourCreatedByUser(UUID idUser) {
         return tourRepository.findByUsers_IdUser(idUser).stream()
-                .map(this::mapToTourResponse)
+                .map(this::mapToTourOverviewResponse)
                 .collect(Collectors.toList());
     }
 

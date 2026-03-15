@@ -121,6 +121,9 @@ public enum ErrorCode
     INVALID_TICKET_TIME("INVALID_TICKET_TIME", "Thời gian đến (Arrival Time) phải sau thời gian đi (Departure Time)!", HttpStatus.BAD_REQUEST),
     INVALID_TICKET_PRICE("INVALID_TICKET_PRICE", "Giá vé không được âm!", HttpStatus.BAD_REQUEST),
     INVALID_STATUS_TICKET("INVALID_STATUS_TICKET", "Trạng thái Ticket không hợp lệ (Chỉ nhận Available hoặc Sold Out)!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Booking Tour
+    INVALID_STATUS_BOOKING_TOUR("INVALID_STATUS_BOOKING_TOUR", "Trạng thái đặt tour không hợp lệ (Chỉ nhận Pending, Success hoặc Failed)!", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

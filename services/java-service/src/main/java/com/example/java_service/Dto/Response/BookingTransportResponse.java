@@ -12,16 +12,14 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingTourResponse
+public class BookingTransportResponse
 {
-    UUID idBookingTour;
-    Integer quantityAdult;
-    Integer quantityChild;
-    BigDecimal priceBookingTour;
-    String pickupLocation;
-    String languageSelected;
-    String specialRequests;
+
+    UUID idBookingTransport;
+    Integer quantityTickets;
+    BigDecimal priceBookingTransport;
+    String seatNumbers;
+    String status;
     PaymentInBookingResponse paymentInBookingResponse;
     LocalDateTime createdAt;
-    TourResponse tourResponse;
 }

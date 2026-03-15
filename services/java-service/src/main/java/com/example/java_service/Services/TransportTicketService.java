@@ -5,6 +5,7 @@ import com.example.java_service.Constant.PredefinedTypeTransportTicket;
 import com.example.java_service.Dto.Request.TransportTicketApproveRequest;
 import com.example.java_service.Dto.Request.TransportTicketCreationRequest;
 import com.example.java_service.Dto.Request.TransportTicketUpdateRequest;
+import com.example.java_service.Dto.Response.TransportTicketOverviewResponse;
 import com.example.java_service.Dto.Response.TransportTicketResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
@@ -32,24 +33,34 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class TransportTicketService
-{
+public class TransportTicketService {
+
     TransportTicketRepository transportTicketRepository;
     UserRepository userRepository;
     TransportTicketMapper transportTicketMapper;
     UserMapper userMapper;
 
-    private TransportTicketResponse mapToResponse(TransportTicket ticket)
-    {
-        TransportTicketResponse response = transportTicketMapper.toTransportTicketResponse(ticket);
+    private TransportTicketResponse toTransportTicketResponse(TransportTicket ticket) {
+        if (ticket == null) return null;
+
+        TransportTicketResponse response = transportTicketMapper.toBaseTransportTicketResponse(ticket);
         if (ticket.getUsers() != null) {
             response.setOwnerTransportTicketResponse(userMapper.toOwnerTransportTicketResponse(ticket.getUsers()));
         }
         return response;
     }
 
-    private void validateTicketType(String type)
-    {
+    private TransportTicketOverviewResponse toTransportTicketOverviewResponse(TransportTicket ticket) {
+        if (ticket == null) return null;
+
+        TransportTicketOverviewResponse response = transportTicketMapper.toBaseOverviewResponse(ticket);
+        if (ticket.getUsers() != null) {
+            response.setOwnerTransportTicketResponse(userMapper.toOwnerTransportTicketResponse(ticket.getUsers()));
+        }
+        return response;
+    }
+
+    private void validateTicketType(String type) {
         if (type == null) return;
         boolean isValid = type.equals(PredefinedTypeTransportTicket.COACH_TICKET) ||
                 type.equals(PredefinedTypeTransportTicket.PLANE_TICKET) ||
@@ -60,8 +71,7 @@ public class TransportTicketService
         }
     }
 
-    private void validateTimeAndPrice(LocalDateTime departureTime, LocalDateTime arrivalTime, BigDecimal price)
-    {
+    private void validateTimeAndPrice(LocalDateTime departureTime, LocalDateTime arrivalTime, BigDecimal price) {
         if (departureTime != null && arrivalTime != null) {
             if (!arrivalTime.isAfter(departureTime)) {
                 throw new ApiException(ErrorCode.INVALID_TICKET_TIME);
@@ -72,30 +82,43 @@ public class TransportTicketService
         }
     }
 
-    public List<TransportTicketResponse> getAllTickets() {
-        return transportTicketRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
+    public TransportTicketResponse getTransportTicketDetail(UUID idTicket) {
+        TransportTicket ticket = transportTicketRepository.findById(idTicket).orElseThrow(
+                () -> new ApiException(ErrorCode.TRANSPORT_TICKET_NOT_FOUND)
+        );
+        return toTransportTicketResponse(ticket);
     }
 
-    public List<TransportTicketResponse> getListTicketApproved() {
-        return transportTicketRepository.findByApprovedTrue().stream().map(this::mapToResponse).collect(Collectors.toList());
+    public List<TransportTicketOverviewResponse> getAllTickets() {
+        return transportTicketRepository.findAll().stream()
+                .map(this::toTransportTicketOverviewResponse)
+                .collect(Collectors.toList());
     }
 
-    public List<TransportTicketResponse> getListTicketNotApproved() {
-        return transportTicketRepository.findByApprovedFalse().stream().map(this::mapToResponse).collect(Collectors.toList());
+    public List<TransportTicketOverviewResponse> getListTicketApproved() {
+        return transportTicketRepository.findByApprovedTrue().stream()
+                .map(this::toTransportTicketOverviewResponse)
+                .collect(Collectors.toList());
     }
 
-    public List<TransportTicketResponse> getListTicketCreatedByUser(UUID idUser) {
-        return transportTicketRepository.findByUsers_IdUser(idUser).stream().map(this::mapToResponse).collect(Collectors.toList());
+    public List<TransportTicketOverviewResponse> getListTicketNotApproved() {
+        return transportTicketRepository.findByApprovedFalse().stream()
+                .map(this::toTransportTicketOverviewResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<TransportTicketOverviewResponse> getListTicketCreatedByUser(UUID idUser) {
+        return transportTicketRepository.findByUsers_IdUser(idUser).stream()
+                .map(this::toTransportTicketOverviewResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public ResponseEntity<String> saveTransportTicket(TransportTicketCreationRequest request)
-    {
+    public ResponseEntity<String> saveTransportTicket(TransportTicketCreationRequest request) {
         Users user = userRepository.findById(request.getIdUser()).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        // Validate đầu vào
         validateTicketType(request.getTicketType());
         validateTimeAndPrice(request.getDepartureTime(), request.getArrivalTime(), request.getPrice());
 
@@ -109,15 +132,13 @@ public class TransportTicketService
     }
 
     @Transactional
-    public ResponseEntity<String> updateTransportTicket(UUID idTicket, TransportTicketUpdateRequest request)
-    {
+    public ResponseEntity<String> updateTransportTicket(UUID idTicket, TransportTicketUpdateRequest request) {
         TransportTicket ticket = transportTicketRepository.findById(idTicket).orElseThrow(
                 () -> new ApiException(ErrorCode.TRANSPORT_TICKET_NOT_FOUND)
         );
 
         validateTicketType(request.getTicketType());
 
-        // Validate status
         if (request.getStatus() != null) {
             boolean isValidStatus = request.getStatus().equals(PredefinedStatusTransportTicket.STATUS_TRANSPORT_TICKET_AVAILABLE) ||
                     request.getStatus().equals(PredefinedStatusTransportTicket.STATUS_TRANSPORT_TICKET_SOLD_OUT);
@@ -136,8 +157,7 @@ public class TransportTicketService
     }
 
     @Transactional
-    public ResponseEntity<String> deleteTransportTicket(UUID idTicket)
-    {
+    public ResponseEntity<String> deleteTransportTicket(UUID idTicket) {
         TransportTicket ticket = transportTicketRepository.findById(idTicket).orElseThrow(
                 () -> new ApiException(ErrorCode.TRANSPORT_TICKET_NOT_FOUND)
         );
@@ -147,8 +167,7 @@ public class TransportTicketService
     }
 
     @Transactional
-    public ResponseEntity<String> approveTransportTicket(UUID idTicket, TransportTicketApproveRequest request)
-    {
+    public ResponseEntity<String> approveTransportTicket(UUID idTicket, TransportTicketApproveRequest request) {
         TransportTicket ticket = transportTicketRepository.findById(idTicket).orElseThrow(
                 () -> new ApiException(ErrorCode.TRANSPORT_TICKET_NOT_FOUND)
         );

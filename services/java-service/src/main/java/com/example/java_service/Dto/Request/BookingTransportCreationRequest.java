@@ -10,13 +10,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingTourCreationRequest
+public class BookingTransportCreationRequest
 {
-    UUID idTour;
+    UUID idTicket;
     UUID idUser;
-    Integer quantityAdult;
-    Integer quantityChild;
-    String pickupLocation;
-    String languageSelected;
-    String specialRequests;
+    Integer quantityTickets;
+    String seatNumbers;
 }

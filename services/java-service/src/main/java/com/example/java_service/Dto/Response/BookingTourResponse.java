@@ -21,6 +21,7 @@ public class BookingTourResponse
     String pickupLocation;
     String languageSelected;
     String specialRequests;
+    PaymentInBookingResponse paymentInBookingResponse;
     LocalDateTime createdAt;
     TourResponse tourResponse;
 }

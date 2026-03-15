@@ -8,7 +8,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingTransportCreationRequest
+public class BookingTransportUpdateRequest
 {
-
+    Integer quantityTickets;
+    String seatNumbers;
+    String status;
 }

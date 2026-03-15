@@ -12,19 +12,16 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TransportTicketResponse
+public class TransportTicketOverviewResponse
 {
     UUID idTicket;
-    OwnerTransportTicketResponse ownerTransportTicketResponse;
     String ticketType;
-    String ticketClass;
     String providerName;
     String departureLocation;
     String arrivalLocation;
     LocalDateTime departureTime;
-    LocalDateTime arrivalTime;
     BigDecimal price;
     String status;
     Boolean approved;
-    LocalDateTime createdAt;
+    OwnerTransportTicketResponse ownerTransportTicketResponse;
 }

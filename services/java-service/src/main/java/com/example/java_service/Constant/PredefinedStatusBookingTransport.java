@@ -1,6 +1,6 @@
 package com.example.java_service.Constant;
 
-public class PredefinedStatusBookingTour
+public class PredefinedStatusBookingTransport
 {
     public static final String STATUS_BOOKING_PENDING = "Pending";
     public static final String STATUS_BOOKING_SUCCESS = "Success";

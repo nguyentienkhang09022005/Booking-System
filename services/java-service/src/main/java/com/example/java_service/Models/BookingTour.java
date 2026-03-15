@@ -41,6 +41,9 @@ public class BookingTour {
     @Column(name = "special_requests", columnDefinition = "TEXT")
     private String specialRequests;
 
+    @Column(name = "status", length = 20)
+    private String status;
+
     @ManyToOne
     @JoinColumn(name = "id_tour", referencedColumnName = "id_tour", foreignKey = @ForeignKey(name = "FK_B_TOUR_TOUR"))
     private Tour tour;

@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.TransportTicketApproveRequest;
 import com.example.java_service.Dto.Request.TransportTicketCreationRequest;
 import com.example.java_service.Dto.Request.TransportTicketUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
+import com.example.java_service.Dto.Response.TransportTicketOverviewResponse;
 import com.example.java_service.Dto.Response.TransportTicketResponse;
 import com.example.java_service.Services.TransportTicketService;
 import lombok.AccessLevel;
@@ -25,37 +26,46 @@ public class TransportTicketController
 {
     TransportTicketService transportTicketService;
 
-    @GetMapping("/get-all")
-    public ApiResponse<List<TransportTicketResponse>> getAllTickets()
+    @GetMapping("/detail")
+    public ApiResponse<TransportTicketResponse> getTicketDetail(@RequestParam UUID idTicket)
     {
-        return ApiResponse.<List<TransportTicketResponse>>builder()
+        return ApiResponse.<TransportTicketResponse>builder()
+                .message("Lấy thông tin chi tiết vé di chuyển thành công!")
+                .data(transportTicketService.getTransportTicketDetail(idTicket))
+                .build();
+    }
+
+    @GetMapping("/get-all")
+    public ApiResponse<List<TransportTicketOverviewResponse>> getAllTickets()
+    {
+        return ApiResponse.<List<TransportTicketOverviewResponse>>builder()
                 .message("Lấy danh sách tất cả vé di chuyển thành công!")
                 .data(transportTicketService.getAllTickets())
                 .build();
     }
 
     @GetMapping("/get-list-approved")
-    public ApiResponse<List<TransportTicketResponse>> getTicketsApproved()
+    public ApiResponse<List<TransportTicketOverviewResponse>> getTicketsApproved()
     {
-        return ApiResponse.<List<TransportTicketResponse>>builder()
+        return ApiResponse.<List<TransportTicketOverviewResponse>>builder()
                 .message("Lấy danh sách vé đã phê duyệt thành công!")
                 .data(transportTicketService.getListTicketApproved())
                 .build();
     }
 
     @GetMapping("/get-list-not-approved")
-    public ApiResponse<List<TransportTicketResponse>> getTicketsNotApproved()
+    public ApiResponse<List<TransportTicketOverviewResponse>> getTicketsNotApproved()
     {
-        return ApiResponse.<List<TransportTicketResponse>>builder()
+        return ApiResponse.<List<TransportTicketOverviewResponse>>builder()
                 .message("Lấy danh sách vé chưa phê duyệt thành công!")
                 .data(transportTicketService.getListTicketNotApproved())
                 .build();
     }
 
     @GetMapping("/list-of-user")
-    public ApiResponse<List<TransportTicketResponse>> getTicketsCreatedByUser(@RequestParam UUID idUser)
+    public ApiResponse<List<TransportTicketOverviewResponse>> getTicketsCreatedByUser(@RequestParam UUID idUser)
     {
-        return ApiResponse.<List<TransportTicketResponse>>builder()
+        return ApiResponse.<List<TransportTicketOverviewResponse>>builder()
                 .message("Lấy danh sách vé của người dùng thành công!")
                 .data(transportTicketService.getListTicketCreatedByUser(idUser))
                 .build();

@@ -69,4 +69,12 @@ public class Payment {
             foreignKey = @ForeignKey(name = "FK_PAYMENT_BOOKING_TOUR")
     )
     private BookingTour bookingTour;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "id_booking_transport",
+            referencedColumnName = "id_booking_transport",
+            foreignKey = @ForeignKey(name = "FK_PAYMENT_BOOKING_TRANSPORT")
+    )
+    private BookingTransport bookingTransport;
 }

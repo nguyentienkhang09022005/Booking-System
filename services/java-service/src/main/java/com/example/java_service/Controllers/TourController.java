@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.TourApproveRequest;
 import com.example.java_service.Dto.Request.TourCreationRequest;
 import com.example.java_service.Dto.Request.TourUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
+import com.example.java_service.Dto.Response.TourOverviewResponse;
 import com.example.java_service.Dto.Response.TourResponse;
 import com.example.java_service.Services.TourService;
 import lombok.AccessLevel;
@@ -25,40 +26,41 @@ public class TourController
 {
     TourService tourService;
 
-    // Lấy tất cả tour
+    @GetMapping("/detail")
+    public ApiResponse<TourResponse> getTourDetail(@RequestParam UUID idTour) {
+        return ApiResponse.<TourResponse>builder()
+                .message("Lấy thông tin chi tiết tour thành công!")
+                .data(tourService.getTourDetail(idTour))
+                .build();
+    }
+
     @GetMapping("/get-all")
-    public ApiResponse<List<TourResponse>> getAllTours()
-    {
-        return ApiResponse.<List<TourResponse>>builder()
+    public ApiResponse<List<TourOverviewResponse>> getAllTours() {
+        return ApiResponse.<List<TourOverviewResponse>>builder()
                 .message("Lấy danh sách tất cả tour thành công!")
                 .data(tourService.getAllTours())
                 .build();
     }
 
-    // Lấy danh sách tour đã duyệt
     @GetMapping("/get-list-approved")
-    public ApiResponse<List<TourResponse>> getToursApproved()
-    {
-        return ApiResponse.<List<TourResponse>>builder()
+    public ApiResponse<List<TourOverviewResponse>> getToursApproved() {
+        return ApiResponse.<List<TourOverviewResponse>>builder()
                 .message("Lấy danh sách tour đã được phê duyệt thành công!")
                 .data(tourService.getListTourApproved())
                 .build();
     }
 
-    // Lấy danh sách tour chưa duyệt
     @GetMapping("/get-list-not-approved")
-    public ApiResponse<List<TourResponse>> getToursNotApproved() {
-        return ApiResponse.<List<TourResponse>>builder()
+    public ApiResponse<List<TourOverviewResponse>> getToursNotApproved() {
+        return ApiResponse.<List<TourOverviewResponse>>builder()
                 .message("Lấy danh sách tour chưa duyệt thành công!")
                 .data(tourService.getListTourNotApproved())
                 .build();
     }
 
-    // Lấy danh sách tour của user
     @GetMapping("/list-of-user")
-    public ApiResponse<List<TourResponse>> getToursCreatedByUser(@RequestParam UUID idUser)
-    {
-        return ApiResponse.<List<TourResponse>>builder()
+    public ApiResponse<List<TourOverviewResponse>> getToursCreatedByUser(@RequestParam UUID idUser) {
+        return ApiResponse.<List<TourOverviewResponse>>builder()
                 .message("Lấy danh sách tour của người dùng thành công!")
                 .data(tourService.getListTourCreatedByUser(idUser))
                 .build();

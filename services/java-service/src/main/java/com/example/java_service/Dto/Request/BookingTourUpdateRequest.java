@@ -17,4 +17,5 @@ public class BookingTourUpdateRequest
     String specialRequests;
     String paymentMethod;
     String payerAddress;
+    String status;
 }

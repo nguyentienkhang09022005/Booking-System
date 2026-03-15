@@ -408,6 +408,7 @@ public class BookingHandleService
                         booking.getUsers().getIdUser(),
                         booking.getIdBooking(),
                         null,
+                        null,
                         booking.getTotalPrice().doubleValue()
                 );
 
