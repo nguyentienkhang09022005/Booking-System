@@ -11,7 +11,7 @@ type IPaymentRepository interface {
 	FindByAppTransID(appTransID string) (*Models.Payment, error)
 	FindByIDPayment(idPayment uuid.UUID) (*Models.Payment, error)
 	UpdateStatus(idPayment uuid.UUID, zpTransId string, status string) error
-	CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking *uuid.UUID, idBookingTour *uuid.UUID, amount float64, orderID string) (*Models.Payment, error)
+	CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking *uuid.UUID, idBookingTour *uuid.UUID, idBookingTransport *uuid.UUID, amount float64, orderID string) (*Models.Payment, error)
 	UpdateVndPaymentSuccess(idPayment uuid.UUID, txHash string) error
 	ClaimForProcessing(idPayment uuid.UUID) (bool, error)
 	UpdateVndPaymentFailed(idPayment uuid.UUID, txHash string) error
@@ -58,6 +58,14 @@ func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment
 		}
 	}
 
+	// Lấy thông tin BookingTransport nếu có (THÊM MỚI)
+	if payment.IDBookingTransport != nil {
+		var bookingTransport Models.BookingTransport
+		if errTransport := p._db.Where("id_booking_transport = ?", payment.IDBookingTransport).First(&bookingTransport).Error; errTransport == nil {
+			payment.BookingTransport = &bookingTransport
+		}
+	}
+
 	return &payment, nil
 }
 
@@ -91,19 +99,27 @@ func (p *paymentRepository) FindByIDPayment(idPayment uuid.UUID) (*Models.Paymen
 		}
 	}
 
+	if payment.IDBookingTransport != nil {
+		var bookingTransport Models.BookingTransport
+		if err := p._db.Where("id_booking_transport = ?", payment.IDBookingTransport).First(&bookingTransport).Error; err == nil {
+			payment.BookingTransport = &bookingTransport
+		}
+	}
+
 	return &payment, nil
 }
 
-func (p *paymentRepository) CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking *uuid.UUID, idBookingTour *uuid.UUID, amount float64, orderID string) (*Models.Payment, error) {
+func (p *paymentRepository) CreateVndPayment(idPayment uuid.UUID, idUser uuid.UUID, idBooking *uuid.UUID, idBookingTour *uuid.UUID, idBookingTransport *uuid.UUID, amount float64, orderID string) (*Models.Payment, error) {
 	payment := &Models.Payment{
-		IDPayment:     idPayment,
-		IDUser:        idUser,
-		IDBooking:     idBooking,
-		IDBookingTour: idBookingTour,
-		Amount:        amount,
-		Method:        "VNDStablecoin",
-		Status:        "Pending",
-		IDAppTrans:    orderID,
+		IDPayment:          idPayment,
+		IDUser:             idUser,
+		IDBooking:          idBooking,
+		IDBookingTour:      idBookingTour,
+		IDBookingTransport: idBookingTransport,
+		Amount:             amount,
+		Method:             "VNDStablecoin",
+		Status:             "Pending",
+		IDAppTrans:         orderID,
 	}
 	if err := p._db.Create(payment).Error; err != nil {
 		return nil, err

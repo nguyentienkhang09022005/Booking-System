@@ -53,21 +53,21 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 	IdAppTrans := fmt.Sprintf("%s_%06d", prefix, randSuffix)
 
 	newPayment := &Models.Payment{
-		IDPayment:     uuid.New(),
-		IDUser:        paymentRequest.IDUser,
-		IDBooking:     paymentRequest.IDBooking,
-		IDBookingTour: paymentRequest.IDBookingTour,
-		Amount:        paymentRequest.Amount,
-		Method:        "ZaloPay",
-		Status:        Constants.StatusPending,
-		IDAppTrans:    IdAppTrans,
+		IDPayment:          uuid.New(),
+		IDUser:             paymentRequest.IDUser,
+		IDBooking:          paymentRequest.IDBooking,
+		IDBookingTour:      paymentRequest.IDBookingTour,
+		IDBookingTransport: paymentRequest.IDBookingTransport,
+		Amount:             paymentRequest.Amount,
+		Method:             "ZaloPay",
+		Status:             Constants.StatusPending,
+		IDAppTrans:         IdAppTrans,
 	}
 	createdPayment, err := p._paymentRepository.Create(newPayment)
 	if err != nil {
 		return nil, fmt.Errorf("Không thể tạo thanh toán!: %w", err)
 	}
 
-	// Chuẩn bị và gọi ZaloPay API
 	appTime := time.Now().UnixNano() / int64(time.Millisecond)
 	embedData, _ := json.Marshal(map[string]string{
 		"redirecturl": "http://localhost:3000/booking",
@@ -94,6 +94,8 @@ func (p *paymentService) CreatePayment(paymentRequest Request.PaymentRequest) (*
 		orderDescription = fmt.Sprintf("Thanh Toán Đơn Đặt Phòng #%s", paymentRequest.IDBooking.String())
 	} else if paymentRequest.IDBookingTour != nil {
 		orderDescription = fmt.Sprintf("Thanh Toán Đơn Đặt Tour #%s", paymentRequest.IDBookingTour.String())
+	} else if paymentRequest.IDBookingTransport != nil {
+		orderDescription = fmt.Sprintf("Thanh Toán Đơn Đặt Vé Di Chuyển #%s", paymentRequest.IDBookingTransport.String())
 	} else {
 		orderDescription = "Thanh Toán Dịch Vụ"
 	}

@@ -63,6 +63,7 @@ func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 		req.IDUser,
 		req.IDBooking,
 		req.IDBookingTour,
+		req.IDBookingTransport,
 		req.Amount,
 		result.OrderID,
 	)

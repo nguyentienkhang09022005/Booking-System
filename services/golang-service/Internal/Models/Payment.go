@@ -17,14 +17,16 @@ type Payment struct {
 	CreateAt   time.Time `gorm:"type:timestamp;default:current_timestamp" json:"create_at"`
 
 	// Khóa ngoại - Dùng con trỏ (*uuid.UUID) để cho phép lưu NULL trong DB
-	IDUser        uuid.UUID  `gorm:"type:uuid" json:"id_user"`
-	IDBooking     *uuid.UUID `gorm:"type:uuid" json:"id_booking,omitempty"`
-	IDBookingTour *uuid.UUID `gorm:"type:uuid" json:"id_booking_tour,omitempty"`
+	IDUser             uuid.UUID  `gorm:"type:uuid" json:"id_user"`
+	IDBooking          *uuid.UUID `gorm:"type:uuid" json:"id_booking,omitempty"`
+	IDBookingTour      *uuid.UUID `gorm:"type:uuid" json:"id_booking_tour,omitempty"`
+	IDBookingTransport *uuid.UUID `gorm:"type:uuid" json:"id_booking_transport,omitempty"`
 
 	// Quan hệ
-	User        User         `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE;" json:"user,omitempty"`
-	Booking     *Booking     `gorm:"foreignKey:IDBooking;constraint:OnDelete:CASCADE;" json:"booking,omitempty"`
-	BookingTour *BookingTour `gorm:"foreignKey:IDBookingTour;constraint:OnDelete:CASCADE;" json:"booking_tour,omitempty"`
+	User             User              `gorm:"foreignKey:IDUser;constraint:OnDelete:CASCADE;" json:"user,omitempty"`
+	Booking          *Booking          `gorm:"foreignKey:IDBooking;constraint:OnDelete:CASCADE;" json:"booking,omitempty"`
+	BookingTour      *BookingTour      `gorm:"foreignKey:IDBookingTour;constraint:OnDelete:CASCADE;" json:"booking_tour,omitempty"`
+	BookingTransport *BookingTransport `gorm:"foreignKey:IDBookingTransport;constraint:OnDelete:CASCADE;" json:"booking_transport,omitempty"`
 }
 
 func (Payment) TableName() string {

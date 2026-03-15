@@ -496,6 +496,9 @@ const docTemplate = `{
                 "id_booking_tour": {
                     "type": "string"
                 },
+                "id_booking_transport": {
+                    "type": "string"
+                },
                 "id_user": {
                     "type": "string"
                 }
@@ -516,6 +519,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id_booking_tour": {
+                    "type": "string"
+                },
+                "id_booking_transport": {
                     "type": "string"
                 },
                 "id_user": {
