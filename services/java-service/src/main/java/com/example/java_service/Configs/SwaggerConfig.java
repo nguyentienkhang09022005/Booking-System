@@ -14,14 +14,14 @@ import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
-//    @Value("${java.service}")
-//    private String serverJava;
+    @Value("${java.service}")
+    private String serverJava;
 
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .servers(List.of(
-//                        new Server().url(serverJava),
+                        new Server().url(serverJava),
                         new Server().url("http://localhost:8080")
                 ))
                 .info(new Info()
