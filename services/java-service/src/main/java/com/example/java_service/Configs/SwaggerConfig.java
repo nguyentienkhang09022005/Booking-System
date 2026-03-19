@@ -14,16 +14,23 @@ import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
+
+    // Thêm giá trị default để tránh lỗi nếu quên config biến môi trường trên server
     @Value("${java.service}")
     private String serverJava;
 
     @Bean
     public OpenAPI customOpenAPI() {
+        Server prodServer = new Server();
+        prodServer.setUrl(serverJava);
+        prodServer.setDescription("Production Server (DigitalOcean)");
+
+        Server localServer = new Server();
+        localServer.setUrl("http://localhost:8080");
+        localServer.setDescription("Localhost Server");
+
         return new OpenAPI()
-                .servers(List.of(
-                        new Server().url(serverJava),
-                        new Server().url("http://localhost:8080")
-                ))
+                .servers(List.of(prodServer, localServer))
                 .info(new Info()
                         .title("Booking API")
                         .version("2.0")
@@ -37,4 +44,3 @@ public class SwaggerConfig {
                                         .bearerFormat("JWT")));
     }
 }
-
