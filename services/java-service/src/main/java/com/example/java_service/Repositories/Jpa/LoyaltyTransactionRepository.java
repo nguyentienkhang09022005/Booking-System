@@ -12,9 +12,9 @@ public interface LoyaltyTransactionRepository extends JpaRepository<LoyaltyTrans
 
     List<LoyaltyTransaction> findByUsers_IdUserOrderByCreatedAtDesc(UUID idUser);
 
-    List<LoyaltyTransaction> findByBooking_IdBookingOrderByCreatedAtDesc(UUID idBooking);
+    List<LoyaltyTransaction> findByUsers_IdUserAndBookingIsNotNullOrderByCreatedAtDesc(UUID idUser);
 
-    List<LoyaltyTransaction> findByBookingTour_IdBookingTourOrderByCreatedAtDesc(UUID idBookingTour);
+    List<LoyaltyTransaction> findByUsers_IdUserAndBookingTourIsNotNullOrderByCreatedAtDesc(UUID idUser);
 
-    List<LoyaltyTransaction> findByBookingTransport_IdBookingTransportOrderByCreatedAtDesc(UUID idBookingTransport);
+    List<LoyaltyTransaction> findByUsers_IdUserAndBookingTransportIsNotNullOrderByCreatedAtDesc(UUID idUser);
 }

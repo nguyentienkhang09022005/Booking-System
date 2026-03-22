@@ -30,32 +30,32 @@ public class LoyaltyTransactionController {
     @GetMapping("/my-history")
     public ApiResponse<List<LoyaltyTransactionResponse>> getMyHistory(@RequestParam UUID idUser) {
         return ApiResponse.<List<LoyaltyTransactionResponse>>builder()
-                .message("Lấy lịch sử tích điểm thành công!")
+                .message("Lấy tất cả lịch sử tích điểm thành công!")
                 .data(loyaltyTransactionService.getHistoryByUser(idUser))
                 .build();
     }
 
     @GetMapping("/booking-room")
-    public ApiResponse<List<LoyaltyTransactionResponse>> getByBookingRoom(@RequestParam UUID idBooking) {
+    public ApiResponse<List<LoyaltyTransactionResponse>> getByBookingRoom(@RequestParam UUID idUser) {
         return ApiResponse.<List<LoyaltyTransactionResponse>>builder()
-                .message("Lấy thông tin điểm của đơn đặt phòng thành công!")
-                .data(loyaltyTransactionService.getHistoryByBookingRoom(idBooking))
+                .message("Lấy lịch sử tích điểm của đơn đặt phòng thành công!")
+                .data(loyaltyTransactionService.getRoomBookingHistoryByUser(idUser))
                 .build();
     }
 
     @GetMapping("/booking-tour")
-    public ApiResponse<List<LoyaltyTransactionResponse>> getByBookingTour(@RequestParam UUID idBookingTour) {
+    public ApiResponse<List<LoyaltyTransactionResponse>> getByBookingTour(@RequestParam UUID idUser) {
         return ApiResponse.<List<LoyaltyTransactionResponse>>builder()
-                .message("Lấy thông tin điểm của đơn đặt tour thành công!")
-                .data(loyaltyTransactionService.getHistoryByBookingTour(idBookingTour))
+                .message("Lấy lịch sử tích điểm của đơn đặt tour thành công!")
+                .data(loyaltyTransactionService.getTourBookingHistoryByUser(idUser))
                 .build();
     }
 
     @GetMapping("/booking-transport")
-    public ApiResponse<List<LoyaltyTransactionResponse>> getByBookingTransport(@RequestParam UUID idBookingTransport) {
+    public ApiResponse<List<LoyaltyTransactionResponse>> getByBookingTransport(@RequestParam UUID idUser) {
         return ApiResponse.<List<LoyaltyTransactionResponse>>builder()
-                .message("Lấy thông tin điểm của đơn đặt vé di chuyển thành công!")
-                .data(loyaltyTransactionService.getHistoryByBookingTransport(idBookingTransport))
+                .message("Lấy lịch sử tích điểm của đơn đặt vé di chuyển thành công!")
+                .data(loyaltyTransactionService.getTransportBookingHistoryByUser(idUser))
                 .build();
     }
 }

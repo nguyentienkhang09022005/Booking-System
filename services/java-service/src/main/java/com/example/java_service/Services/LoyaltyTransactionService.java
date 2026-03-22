@@ -81,18 +81,21 @@ public class LoyaltyTransactionService {
                 .stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 
-    public List<LoyaltyTransactionResponse> getHistoryByBookingRoom(UUID idBooking) {
-        return loyaltyTransactionRepository.findByBooking_IdBookingOrderByCreatedAtDesc(idBooking)
+    public List<LoyaltyTransactionResponse> getRoomBookingHistoryByUser(UUID idUser) {
+        userRepository.findById(idUser).orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+        return loyaltyTransactionRepository.findByUsers_IdUserAndBookingIsNotNullOrderByCreatedAtDesc(idUser)
                 .stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 
-    public List<LoyaltyTransactionResponse> getHistoryByBookingTour(UUID idBookingTour) {
-        return loyaltyTransactionRepository.findByBookingTour_IdBookingTourOrderByCreatedAtDesc(idBookingTour)
+    public List<LoyaltyTransactionResponse> getTourBookingHistoryByUser(UUID idUser) {
+        userRepository.findById(idUser).orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+        return loyaltyTransactionRepository.findByUsers_IdUserAndBookingTourIsNotNullOrderByCreatedAtDesc(idUser)
                 .stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 
-    public List<LoyaltyTransactionResponse> getHistoryByBookingTransport(UUID idBookingTransport) {
-        return loyaltyTransactionRepository.findByBookingTransport_IdBookingTransportOrderByCreatedAtDesc(idBookingTransport)
+    public List<LoyaltyTransactionResponse> getTransportBookingHistoryByUser(UUID idUser) {
+        userRepository.findById(idUser).orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
+        return loyaltyTransactionRepository.findByUsers_IdUserAndBookingTransportIsNotNullOrderByCreatedAtDesc(idUser)
                 .stream().map(mapper::toResponse).collect(Collectors.toList());
     }
 }

@@ -15,7 +15,6 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
 
-    // Thêm giá trị default để tránh lỗi nếu quên config biến môi trường trên server
     @Value("${java.service}")
     private String serverJava;
 
