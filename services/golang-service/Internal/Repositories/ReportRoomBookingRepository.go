@@ -11,10 +11,11 @@ type IReportRoomBookingRepository interface {
 	Create(reportRoomBooking *Models.ReportRoomBooking) (*Models.ReportRoomBooking, error)
 	Delete(idReportRoomBooking uuid.UUID) error
 	FindById(idReportRoomBooking uuid.UUID) (*Models.ReportRoomBooking, error)
-	FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRoomBooking, error)
-	CountBookingByTypeRoom(idHotel uuid.UUID, typeRoom string, month int, year int) (int, error)
+	FindByMonthAndYear(idAccommodation uuid.UUID, month int, year int) (*Models.ReportRoomBooking, error)
+	CountBookingByTypeRoom(idAccommodation uuid.UUID, typeRoom string, month int, year int) (int, error)
 	SaveDetails(details []Models.ReportRoomBookingDetail) error
 }
+
 type reportRoomBookingRepository struct {
 	_db *gorm.DB
 }
@@ -33,12 +34,12 @@ func (r *reportRoomBookingRepository) FindById(idReportRoomBooking uuid.UUID) (*
 	return &reportRoomBooking, nil
 }
 
-func (r *reportRoomBookingRepository) FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRoomBooking, error) {
+func (r *reportRoomBookingRepository) FindByMonthAndYear(idAccommodation uuid.UUID, month int, year int) (*Models.ReportRoomBooking, error) {
 	var reportRoomBooking Models.ReportRoomBooking
 
 	err := r._db.
 		Preload("Details").
-		Where("id_hotel = ? AND month = ? AND year = ?", idHotel, month, year).
+		Where("id_accommodation = ? AND month = ? AND year = ?", idAccommodation, month, year).
 		First(&reportRoomBooking).Error
 
 	if err != nil {
@@ -70,13 +71,13 @@ func (r *reportRoomBookingRepository) Delete(idReportRoomBooking uuid.UUID) erro
 	return nil
 }
 
-func (r *reportRoomBookingRepository) CountBookingByTypeRoom(idHotel uuid.UUID, typeRoom string, month int, year int) (int, error) {
+func (r *reportRoomBookingRepository) CountBookingByTypeRoom(idAccommodation uuid.UUID, typeRoom string, month int, year int) (int, error) {
 	var totalQuantity int64
 	err := r._db.Table("booking_room").
 		Select("COALESCE(SUM(booking_room.quantity), 0)").
 		Joins("JOIN booking ON booking.id_booking = booking_room.id_booking").
 		Joins("JOIN room ON room.id_room = booking_room.id_room").
-		Where("booking.id_hotel = ?", idHotel).
+		Where("booking.id_accommodation = ?", idAccommodation).
 		Where("room.type_room = ?", typeRoom).
 		Where("EXTRACT(MONTH FROM booking.checkin_date) = ?", month).
 		Where("EXTRACT(YEAR FROM booking.checkin_date) = ?", year).

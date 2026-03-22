@@ -13,11 +13,11 @@ type IReportRevenueRepository interface {
 	Create(reportRevenue *Models.ReportRevenue) (*Models.ReportRevenue, error)
 	Delete(idReportRevenue uuid.UUID) error
 	FindById(idReportRevenue uuid.UUID) (*Models.ReportRevenue, error)
-	FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRevenue, error)
-	GetBookingsByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Booking, error)
-	GetExpensesByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Expense, error)
+	FindByMonthAndYear(idAccommodation uuid.UUID, month int, year int) (*Models.ReportRevenue, error)
+	GetBookingsByMonth(idAccommodation uuid.UUID, month int, year int) ([]Models.Booking, error)
+	GetExpensesByMonth(idAccommodation uuid.UUID, month int, year int) ([]Models.Expense, error)
 	CreateDetails(details []Models.ReportRevenueDetail) error
-	GetYearlyStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error)
+	GetYearlyStats(idAccommodation uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error)
 }
 type reportRevenueRepository struct {
 	_db *gorm.DB
@@ -37,12 +37,12 @@ func (r *reportRevenueRepository) FindById(idReportRevenue uuid.UUID) (*Models.R
 	return &reportRevenue, nil
 }
 
-func (r *reportRevenueRepository) FindByMonthAndYear(idHotel uuid.UUID, month int, year int) (*Models.ReportRevenue, error) {
+func (r *reportRevenueRepository) FindByMonthAndYear(idAccommodation uuid.UUID, month int, year int) (*Models.ReportRevenue, error) {
 	var reportRevenue Models.ReportRevenue
 
 	err := r._db.
 		Preload("Details").
-		Where("id_hotel = ? AND month = ? AND year = ?", idHotel, month, year).
+		Where("id_accommodation = ? AND month = ? AND year = ?", idAccommodation, month, year).
 		First(&reportRevenue).Error
 
 	if err != nil {
@@ -74,16 +74,16 @@ func (r *reportRevenueRepository) Delete(idReportRevenue uuid.UUID) error {
 	return nil
 }
 
-func (r *reportRevenueRepository) GetBookingsByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Booking, error) {
+func (r *reportRevenueRepository) GetBookingsByMonth(idAccommodation uuid.UUID, month int, year int) ([]Models.Booking, error) {
 	var bookings []Models.Booking
-	err := r._db.Where("id_hotel = ? AND status = ? AND EXTRACT(MONTH FROM booking_date) = ? AND EXTRACT(YEAR FROM booking_date) = ?", idHotel, "Success", month, year).
+	err := r._db.Where("id_accommodation = ? AND status = ? AND EXTRACT(MONTH FROM booking_date) = ? AND EXTRACT(YEAR FROM booking_date) = ?", idAccommodation, "Success", month, year).
 		Find(&bookings).Error
 	return bookings, err
 }
 
-func (r *reportRevenueRepository) GetExpensesByMonth(idHotel uuid.UUID, month int, year int) ([]Models.Expense, error) {
+func (r *reportRevenueRepository) GetExpensesByMonth(idAccommodation uuid.UUID, month int, year int) ([]Models.Expense, error) {
 	var expenses []Models.Expense
-	err := r._db.Where("id_hotel = ? AND EXTRACT(MONTH FROM create_at) = ? AND EXTRACT(YEAR FROM create_at) = ?", idHotel, month, year).
+	err := r._db.Where("id_accommodation = ? AND EXTRACT(MONTH FROM create_at) = ? AND EXTRACT(YEAR FROM create_at) = ?", idAccommodation, month, year).
 		Find(&expenses).Error
 	return expenses, err
 }
@@ -95,7 +95,7 @@ func (r *reportRevenueRepository) CreateDetails(details []Models.ReportRevenueDe
 	return r._db.Create(&details).Error
 }
 
-func (r *reportRevenueRepository) GetYearlyStats(idHotel uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error) {
+func (r *reportRevenueRepository) GetYearlyStats(idAccommodation uuid.UUID, year int) ([]Response.MonthlyRevenueStatResponse, error) {
 	var results []Response.MonthlyRevenueStatResponse
 
 	err := r._db.Table("report_revenue").
@@ -105,7 +105,7 @@ func (r *reportRevenueRepository) GetYearlyStats(idHotel uuid.UUID, year int) ([
             COALESCE(SUM(CASE WHEN report_revenue_detail.type_revenue = ? THEN report_revenue_detail.amount ELSE 0 END), 0) as total_expense
         `, Constants.TypeIncome, Constants.TypeExpense).
 		Joins("JOIN report_revenue_detail ON report_revenue.id_report_revenue = report_revenue_detail.id_report_revenue").
-		Where("report_revenue.id_hotel = ? AND report_revenue.year = ?", idHotel, year).
+		Where("report_revenue.id_accommodation = ? AND report_revenue.year = ?", idAccommodation, year).
 		Group("report_revenue.month").
 		Order("report_revenue.month ASC").
 		Scan(&results).Error
