@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -73,5 +74,14 @@ public class UserController
                 .message("Lấy thông tin chi tiết người dùng thành công!")
                 .data(userService.getInfUser(idUser))
                 .build();
+    }
+
+    // Internal Enpoint
+    @PostMapping("/add-loyalty-points/{idUser}")
+    public ResponseEntity<String> addLoyaltyPoints(@PathVariable UUID idUser,
+                                                   @RequestParam BigDecimal amount) {
+
+        userService.addLoyaltyPoints(idUser, amount);
+        return ResponseEntity.ok("Cộng điểm thành công!");
     }
 }
