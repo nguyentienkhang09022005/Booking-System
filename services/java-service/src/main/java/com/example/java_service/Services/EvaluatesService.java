@@ -2,6 +2,7 @@ package com.example.java_service.Services;
 
 import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Constant.PredefinedRefFavoriteAndEvaluate;
+import com.example.java_service.Constant.PredefinedTimeChangeEvaluate;
 import com.example.java_service.Dto.Request.EvaluateCreationRequest;
 import com.example.java_service.Dto.Request.EvaluateUpdateRequest;
 import com.example.java_service.Dto.Request.MessageHistoryItem;
@@ -45,6 +46,7 @@ public class EvaluatesService {
     TourRepository tourRepository; // Bổ sung repository của Tour
     UserRepository userRepository;
     GeminiService geminiService;
+    SystemParameterService systemParameterService;
     ObjectMapper objectMapper;
     EvaluateMapper evaluateMapper;
     RabbitTemplate rabbitTemplate;
@@ -170,8 +172,10 @@ public class EvaluatesService {
                 () -> new ApiException(ErrorCode.EVALUATE_NOT_FOUND)
         );
 
+        int updateExpireMinutes = Integer.parseInt(systemParameterService.getParamValue("EVALUATE_UPDATE_EXPIRE_MINUTES", PredefinedTimeChangeEvaluate.TIME_CHANGE));
+
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime deadline = evaluate.getCreatedAt().plusMinutes(30);
+        LocalDateTime deadline = evaluate.getCreatedAt().plusMinutes(updateExpireMinutes);
 
         if (now.isAfter(deadline)) {
             throw new ApiException(ErrorCode.EVALUATE_UPDATE_TIME_EXPIRED);

@@ -1,6 +1,5 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Constant.PredefinedLoyaltyPoint;
 import com.example.java_service.Constant.PredefinedRole;
 import com.example.java_service.Constant.PredefinedTypeUser;
 import com.example.java_service.Dto.Request.UserCreationRequest;
@@ -25,8 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

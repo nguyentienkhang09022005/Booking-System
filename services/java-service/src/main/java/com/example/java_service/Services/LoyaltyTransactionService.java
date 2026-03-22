@@ -33,6 +33,7 @@ public class LoyaltyTransactionService {
     BookingTourRepository bookingTourRepository;
     BookingTransportTicketRepository bookingTransportRepository;
     LoyaltyTransactionMapper mapper;
+    SystemParameterService systemParameterService;
 
     @Transactional
     public void processLoyaltyPoints(AddPointRequest request) {
@@ -44,7 +45,10 @@ public class LoyaltyTransactionService {
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
 
-        int pointsToAdd = request.getAmount().divide(PredefinedLoyaltyPoint.VND_PER_POINT, 0, RoundingMode.DOWN).intValue();
+        String vndPerPointStr = systemParameterService.getParamValue("VND_PER_POINT", PredefinedLoyaltyPoint.DEFAULT_VND_PER_POINT);
+        BigDecimal vndPerPoint = new BigDecimal(vndPerPointStr);
+
+        int pointsToAdd = request.getAmount().divide(vndPerPoint, 0, RoundingMode.DOWN).intValue();
 
         if (pointsToAdd > 0) {
             int currentPoints = user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0;
