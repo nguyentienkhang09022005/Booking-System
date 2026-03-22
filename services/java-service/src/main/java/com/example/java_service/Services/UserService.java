@@ -264,24 +264,4 @@ public class UserService
         favoriteRepository.deleteByIdUser(idUser.toString());
         return ResponseEntity.ok("Xóa người dùng thành công!");
     }
-
-    @Transactional
-    public void addLoyaltyPoints(UUID idUser, BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return;
-        }
-
-        Users user = userRepository.findById(idUser).orElseThrow(
-                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
-        );
-
-        int pointsToAdd = amount.divide(PredefinedLoyaltyPoint.VND_PER_POINT, 0, RoundingMode.DOWN).intValue();
-
-        if (pointsToAdd > 0) {
-            int currentPoints = user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0;
-            user.setLoyaltyPoints(currentPoints + pointsToAdd);
-            userRepository.save(user);
-            log.info("Đã cộng {} Loyalty Points cho user {}. Giao dịch: {} VNĐ!", pointsToAdd, idUser, amount);
-        }
-    }
 }

@@ -75,7 +75,7 @@ public enum ErrorCode
 
     // Lỗi đặt phòng
     BOOKING_NOT_FOUND("BOOKING_NOT_FOUND", "Lỗi xữ lý đặt phòng!", HttpStatus.NOT_FOUND),
-    BOOKING_FAILED("BOOKING_FAILED", "Đặt phòng thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
+    BOOKING_FAILED("BOOKING_FAILED", "Tạo đơn thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
     BOOKING_NOT_CANCEL("BOOKING_NOT_CANCEL", "Không thể hủy đặt phòng!", HttpStatus.BAD_REQUEST),
     CHECKOUT_DATE_BEFORE_CHECKIN_DATE("CHECKOUT_DATE_BEFORE_CHECKIN_DATE", "Lỗi: Thời gian checkout không được trước hoặc bằng thời gian checkin!", HttpStatus.BAD_REQUEST),
 
@@ -124,6 +124,9 @@ public enum ErrorCode
 
     // Lỗi Booking Tour
     INVALID_STATUS_BOOKING_TOUR("INVALID_STATUS_BOOKING_TOUR", "Trạng thái đặt tour không hợp lệ (Chỉ nhận Pending, Success hoặc Failed)!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Loyalty Transaction
+    LOYALTY_TRANSACTION_NOT_FOUND("LOYALTY_TRANSACTION_NOT_FOUND", "Không tìm thấy giao dịch tích điểm!", HttpStatus.NOT_FOUND),
     ;
 
     private final String code;

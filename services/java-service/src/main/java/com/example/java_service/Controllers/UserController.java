@@ -75,13 +75,4 @@ public class UserController
                 .data(userService.getInfUser(idUser))
                 .build();
     }
-
-    // Internal Enpoint
-    @PostMapping("/add-loyalty-points/{idUser}")
-    public ResponseEntity<String> addLoyaltyPoints(@PathVariable UUID idUser,
-                                                   @RequestParam BigDecimal amount) {
-
-        userService.addLoyaltyPoints(idUser, amount);
-        return ResponseEntity.ok("Cộng điểm thành công!");
-    }
 }

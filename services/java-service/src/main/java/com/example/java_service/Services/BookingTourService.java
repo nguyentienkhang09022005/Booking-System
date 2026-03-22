@@ -200,7 +200,7 @@ public class BookingTourService {
 
                 PaymentResponse paymentResponse = webClient
                         .post()
-                        .uri("/api/v1/payments")
+                        .uri("/api/v1/payments/")
                         .header("Content-Type", "application/json")
                         .bodyValue(paymentRequest)
                         .retrieve()
