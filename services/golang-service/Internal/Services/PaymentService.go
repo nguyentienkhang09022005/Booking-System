@@ -185,32 +185,46 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 	}
 
 	if payment.IDUser != uuid.Nil && payment.Amount > 0 {
-		go p.triggerAddLoyaltyPoints(payment.IDUser, payment.Amount)
+		go p.triggerAddLoyaltyPoints(payment)
 	}
 
 	fmt.Println("Đã cập nhật thanh toán và tạo báo cáo thành công.")
 	return nil
 }
 
-func (p *paymentService) triggerAddLoyaltyPoints(userID uuid.UUID, amount float64) {
+func (p *paymentService) triggerAddLoyaltyPoints(payment *Models.Payment) {
 	javaServiceBaseURL := os.Getenv("JAVA_SERVICE")
 	if javaServiceBaseURL == "" {
 		javaServiceBaseURL = "http://localhost:8080"
 	}
 
-	javaServiceURL := fmt.Sprintf("%s/users/add-loyalty-points/%s?amount=%.0f", javaServiceBaseURL, userID.String(), amount)
+	javaServiceURL := fmt.Sprintf("%s/loyalty/add-points", javaServiceBaseURL)
 
-	resp, err := http.Post(javaServiceURL, "application/json", nil)
+	reqBody := map[string]interface{}{
+		"idUser":             payment.IDUser,
+		"amount":             payment.Amount,
+		"idBooking":          payment.IDBooking,
+		"idBookingTour":      payment.IDBookingTour,
+		"idBookingTransport": payment.IDBookingTransport,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		fmt.Printf("Lỗi parse JSON: %v\n", err)
+		return
+	}
+
+	resp, err := http.Post(javaServiceURL, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		fmt.Printf("Lỗi khi gọi Java Service để cộng điểm: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		fmt.Printf("Java Service phản hồi lỗi khi cộng điểm, Status Code: %d\n", resp.StatusCode)
 	} else {
-		fmt.Printf("Đã kích hoạt cộng điểm Loyalty thành công cho User: %s\n", userID.String())
+		fmt.Printf("Đã kích hoạt cộng điểm Loyalty thành công cho User: %s\n", payment.IDUser.String())
 	}
 }
 
