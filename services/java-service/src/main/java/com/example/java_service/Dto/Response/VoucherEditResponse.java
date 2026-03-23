@@ -27,6 +27,7 @@ public class VoucherEditResponse
     Boolean approved;
     BigDecimal minDiscountAmount;
     BigDecimal maxDiscountAmount;
+    String applyTo;
     String sponsorType;
     String urlImage;
 }

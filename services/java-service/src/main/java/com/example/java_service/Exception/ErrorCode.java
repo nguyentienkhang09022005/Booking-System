@@ -93,6 +93,11 @@ public enum ErrorCode
     VOUCHER_NOT_ENOUGH_QUANTITY("VOUCHER_NOT_ENOUGH_QUANTITY", "Không đủ số lượng voucher!", HttpStatus.BAD_REQUEST),
     VOUCHER_EXPIRED("VOUCHER_EXPIRED", "Voucher đã hết hạn!", HttpStatus.BAD_REQUEST),
     VOUCHER_NOT_BELONG_TO_ACCOMMODATION("VOUCHER_NOT_BELONG_TO_ACCOMMODATION", "Voucher không thuộc về nơi cư trú!", HttpStatus.BAD_REQUEST),
+    INVALID_DISCOUNT_AMOUNT("INVALID_DISCOUNT_AMOUNT", "Số tiền giảm tối đa phải lớn hơn hoặc bằng số tiền giảm tối thiểu!", HttpStatus.BAD_REQUEST),
+    DISCOUNT_AMOUNT_NOT_NEGATIVE("DISCOUNT_AMOUNT_NOT_NEGATIVE", "Số tiền giảm giá không được nhỏ hơn 0!", HttpStatus.BAD_REQUEST),
+    SYSTEM_VOUCHER_MODIFICATION_DENIED("SYSTEM_VOUCHER_MODIFICATION_DENIED", "Không thể chỉnh sửa voucher của hệ thống thông qua API này!", HttpStatus.BAD_REQUEST),
+    BUSINESS_VOUCHER_MODIFICATION_DENIED("BUSINESS_VOUCHER_MODIFICATION_DENIED", "Không thể chỉnh sửa voucher của doanh nghiệp thông qua API này!", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_APPLICABLE("VOUCHER_NOT_APPLICABLE", "Đơn hàng không có hạng mục phù hợp để áp dụng voucher này!", HttpStatus.BAD_REQUEST),
 
     // Lỗi UserVoucher
     VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),

@@ -270,30 +270,30 @@ public class BookingHandleService
                 totalPriceService = bookingServiceResponse.getPriceBookingService();
             }
 
-            // Tính tổng tiền đặt phòng + thời gian đặt
-            BigDecimal totalPrice = BigDecimal.ZERO;
+            // Tính tổng tiền đặt phòng theo thời gian đặt
+            BigDecimal finalRoomPrice = BigDecimal.ZERO;
             long daysBetween = ChronoUnit.DAYS.between(
                     bookingRequest.getCheckinDate().toLocalDate(),
                     bookingRequest.getCheckoutDate().toLocalDate()
             );
 
             if (daysBetween >= 1) {
-                totalPriceRoom = totalPriceRoom.multiply(BigDecimal.valueOf(daysBetween));
-                totalPrice = totalPriceRoom.add(totalPriceService);
-            } else
-            {
+                finalRoomPrice = totalPriceRoom.multiply(BigDecimal.valueOf(daysBetween));
+            } else {
                 long minutesUsed = ChronoUnit.MINUTES.between(
                         bookingRequest.getCheckinDate(),
                         bookingRequest.getCheckoutDate());
                 if (minutesUsed < 0) {
                     minutesUsed = 0;
                 }
-                // Tính phần trăm số tiền nếu đặt trong ngày
                 BigDecimal percentage = BigDecimal.valueOf(minutesUsed).divide(BigDecimal.valueOf(1440), 4, RoundingMode.HALF_UP);
-                BigDecimal totalPriceRoomInDay = totalPriceRoom.multiply(percentage);
-
-                totalPrice = totalPriceRoomInDay.add(totalPriceService);
+                finalRoomPrice = totalPriceRoom.multiply(percentage);
             }
+
+            // Gán giá trị để áp dụng Voucher
+            BigDecimal remainingRoomPrice = finalRoomPrice;
+            BigDecimal remainingServicePrice = totalPriceService;
+            BigDecimal totalPrice = remainingRoomPrice.add(remainingServicePrice);
 
             // Xữ lý nếu có voucher
             if (bookingRequest.getUserVoucherRequests() != null && !bookingRequest.getUserVoucherRequests().isEmpty()) {
@@ -302,8 +302,8 @@ public class BookingHandleService
                     Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
                             .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
 
-                    // Kiểm tra voucher có thuộc Accommodation của booking
-                    if (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(bookingRequest.getIdAccommodation())) {
+                    // Kiểm tra voucher có thuộc Accommodation của booking (Bỏ qua nếu là voucher SYSTEM)
+                    if (!PredefinedSponsorType.SYSTEM_TYPE.equals(voucher.getSponsorType()) && (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(bookingRequest.getIdAccommodation()))) {
                         throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_ACCOMMODATION);
                     }
 
@@ -317,11 +317,70 @@ public class BookingHandleService
                             .build();
                     appliedVoucherService.saveAppliedVoucher(appliedVoucherRequest, savedBooking.getIdBooking());
 
-                    if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
-                        BigDecimal discount = totalPrice
+                    // Áp dụng voucher theo hạng mục
+                    if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0)
+                    {
+                        BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
+                        String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+
+                        switch (applyTo) {
+                            case PredefinedApplyTo.APPLY_TO_ROOM:
+                                targetPriceForDiscount = remainingRoomPrice;
+                                break;
+                            case PredefinedApplyTo.APPLY_TO_SERVICE:
+                                targetPriceForDiscount = remainingServicePrice;
+                                break;
+                            case PredefinedApplyTo.APPLY_TO_ALL:
+                            default:
+                                targetPriceForDiscount = totalPrice;
+                                break;
+                        }
+
+                        // Nếu mục tiêu giảm giá bằng 0 (VD: dùng voucher Service nhưng không mua service nào)
+                        if (targetPriceForDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+                            throw new ApiException(ErrorCode.VOUCHER_NOT_APPLICABLE);
+                        }
+
+                        BigDecimal discount = targetPriceForDiscount
                                 .multiply(voucher.getDiscountPercent())
                                 .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
-                        totalPrice = totalPrice.subtract(discount);
+
+                        if (voucher.getMinDiscountAmount() != null && discount.compareTo(voucher.getMinDiscountAmount()) < 0) {
+                            discount = voucher.getMinDiscountAmount();
+                        }
+
+                        if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                            discount = voucher.getMaxDiscountAmount();
+                        }
+
+                        // Không giảm vượt quá số tiền của hạng mục đó
+                        if (discount.compareTo(targetPriceForDiscount) > 0) {
+                            discount = targetPriceForDiscount;
+                        }
+
+                        // Trừ tiền vào biến còn lại để áp dụng chuẩn nếu có nhiều voucher
+                        switch (applyTo) {
+                            case PredefinedApplyTo.APPLY_TO_ROOM:
+                                remainingRoomPrice = remainingRoomPrice.subtract(discount);
+                                break;
+                            case PredefinedApplyTo.APPLY_TO_SERVICE:
+                                remainingServicePrice = remainingServicePrice.subtract(discount);
+                                break;
+                            case PredefinedApplyTo.APPLY_TO_ALL:
+                            default:
+                                // Nếu giảm ALL, ưu tiên trừ vào tiền phòng trước
+                                if (discount.compareTo(remainingRoomPrice) <= 0) {
+                                    remainingRoomPrice = remainingRoomPrice.subtract(discount);
+                                } else {
+                                    // Nếu tiền phòng không đủ trừ, số âm còn dư sẽ đẩy sang trừ vào tiền dịch vụ
+                                    BigDecimal leftoverDiscount = discount.subtract(remainingRoomPrice);
+                                    remainingRoomPrice = BigDecimal.ZERO;
+                                    remainingServicePrice = remainingServicePrice.subtract(leftoverDiscount);
+                                }
+                                break;
+                        }
+
+                        totalPrice = remainingRoomPrice.add(remainingServicePrice);
                     }
                 }
             }
@@ -507,7 +566,7 @@ public class BookingHandleService
                 bookingServiceRepository.deleteByBooking_IdBooking(idBooking);
             }
             bookingServiceResponse = bookingServiceService.saveBookingService(bookingUpdateRequest.getBookingServices(),
-                                                                                                     idBooking);
+                    idBooking);
         }
 
         // Lưu tổng tiền của lần booking
@@ -521,30 +580,30 @@ public class BookingHandleService
             totalPriceService = bookingServiceResponse.getPriceBookingService();
         }
 
-        // Tính tổng tiền đặt phòng + thời gian đặt
-        BigDecimal totalPrice = BigDecimal.ZERO;
+        // Tính tổng tiền đặt phòng theo thời gian đặt
+        BigDecimal finalRoomPrice = BigDecimal.ZERO;
         long daysBetween = ChronoUnit.DAYS.between(
                 bookingUpdateRequest.getCheckinDate().toLocalDate(),
                 bookingUpdateRequest.getCheckoutDate().toLocalDate()
         );
 
         if (daysBetween >= 1) {
-            totalPriceRoom = totalPriceRoom.multiply(BigDecimal.valueOf(daysBetween));
-            totalPrice = totalPriceRoom.add(totalPriceService);
-        } else
-        {
+            finalRoomPrice = totalPriceRoom.multiply(BigDecimal.valueOf(daysBetween));
+        } else {
             long minutesUsed = ChronoUnit.MINUTES.between(
                     bookingUpdateRequest.getCheckinDate(),
                     bookingUpdateRequest.getCheckoutDate());
             if (minutesUsed < 0) {
                 minutesUsed = 0;
             }
-            // Tính phần trăm số tiền nếu đặt trong ngày
             BigDecimal percentage = BigDecimal.valueOf(minutesUsed).divide(BigDecimal.valueOf(1440), 4, RoundingMode.HALF_UP);
-            BigDecimal totalPriceRoomInDay = totalPriceRoom.multiply(percentage);
-
-            totalPrice = totalPriceRoomInDay.add(totalPriceService);
+            finalRoomPrice = totalPriceRoom.multiply(percentage);
         }
+
+        // Gán giá trị để áp dụng Voucher
+        BigDecimal remainingRoomPrice = finalRoomPrice;
+        BigDecimal remainingServicePrice = totalPriceService;
+        BigDecimal totalPrice = remainingRoomPrice.add(remainingServicePrice);
 
         // Nếu có cập nhật voucher
         if (bookingUpdateRequest.getUserVoucherRequests() != null && !bookingUpdateRequest.getUserVoucherRequests().isEmpty()) {
@@ -566,11 +625,10 @@ public class BookingHandleService
                         .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
 
                 // Kiểm tra voucher có thuộc Accommodation của booking
-                if (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(booking.getAccommodation().getIdAccommodation())) {
+                if (!PredefinedSponsorType.SYSTEM_TYPE.equals(voucher.getSponsorType()) && (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(booking.getAccommodation().getIdAccommodation()))) {
                     throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_ACCOMMODATION);
                 }
 
-                //----------Xữ lý lưu danh sách voucher mới-----------------
                 // Lưu voucher
                 userVoucherService.saveUserVoucherForBooking(userVoucherRequest);
 
@@ -581,11 +639,69 @@ public class BookingHandleService
                         .build();
                 appliedVoucherService.saveAppliedVoucher(appliedVoucherRequest, booking.getIdBooking());
 
-                if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal discount = totalPrice
+                // Áp dụng voucher theo hạng mục
+                if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0)
+                {
+                    BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
+                    String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+
+                    switch (applyTo) {
+                        case PredefinedApplyTo.APPLY_TO_ROOM:
+                            targetPriceForDiscount = remainingRoomPrice;
+                            break;
+                        case PredefinedApplyTo.APPLY_TO_SERVICE:
+                            targetPriceForDiscount = remainingServicePrice;
+                            break;
+                        case PredefinedApplyTo.APPLY_TO_ALL:
+                        default:
+                            targetPriceForDiscount = totalPrice;
+                            break;
+                    }
+
+                    if (targetPriceForDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new ApiException(ErrorCode.VOUCHER_NOT_APPLICABLE);
+                    }
+
+                    BigDecimal discount = targetPriceForDiscount
                             .multiply(voucher.getDiscountPercent())
                             .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
-                    totalPrice = totalPrice.subtract(discount);
+
+                    if (voucher.getMinDiscountAmount() != null && discount.compareTo(voucher.getMinDiscountAmount()) < 0) {
+                        discount = voucher.getMinDiscountAmount();
+                    }
+
+                    if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                        discount = voucher.getMaxDiscountAmount();
+                    }
+
+                    // Không giảm vượt quá số tiền của hạng mục đó
+                    if (discount.compareTo(targetPriceForDiscount) > 0) {
+                        discount = targetPriceForDiscount;
+                    }
+
+                    // Trừ tiền vào biến còn lại để áp dụng chuẩn nếu có nhiều voucher
+                    switch (applyTo) {
+                        case PredefinedApplyTo.APPLY_TO_ROOM:
+                            remainingRoomPrice = remainingRoomPrice.subtract(discount);
+                            break;
+                        case PredefinedApplyTo.APPLY_TO_SERVICE:
+                            remainingServicePrice = remainingServicePrice.subtract(discount);
+                            break;
+                        case PredefinedApplyTo.APPLY_TO_ALL:
+                        default:
+                            // Nếu giảm ALL, ưu tiên trừ vào tiền phòng trước
+                            if (discount.compareTo(remainingRoomPrice) <= 0) {
+                                remainingRoomPrice = remainingRoomPrice.subtract(discount);
+                            } else {
+                                // Nếu tiền phòng không đủ trừ, số âm còn dư sẽ đẩy sang trừ vào tiền dịch vụ
+                                BigDecimal leftoverDiscount = discount.subtract(remainingRoomPrice);
+                                remainingRoomPrice = BigDecimal.ZERO;
+                                remainingServicePrice = remainingServicePrice.subtract(leftoverDiscount);
+                            }
+                            break;
+                    }
+
+                    totalPrice = remainingRoomPrice.add(remainingServicePrice);
                 }
             }
         }

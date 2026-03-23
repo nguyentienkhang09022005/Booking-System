@@ -1,6 +1,7 @@
 package com.example.java_service.Controllers;
 
-import com.example.java_service.Dto.Request.VoucherCreationRequest;
+import com.example.java_service.Dto.Request.BusinessVoucherCreationRequest;
+import com.example.java_service.Dto.Request.SystemVoucherCreationRequest;
 import com.example.java_service.Dto.Request.VoucherUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Dto.Response.VoucherEditResponse;
@@ -66,24 +67,41 @@ public class VoucherController
                 .build();
     }
 
-    // Endpoint tạo voucher mới
-    @PostMapping("/creation")
-    public ApiResponse<VoucherViewResponse> creationVoucher(@RequestBody VoucherCreationRequest request)
+    @PostMapping("/business/creation")
+    public ApiResponse<VoucherViewResponse> creationBusinessVoucher(@RequestBody BusinessVoucherCreationRequest request)
     {
         return ApiResponse.<VoucherViewResponse>builder()
-                .message("Tạo voucher thành công!")
-                .data(voucherService.saveVoucher(request))
+                .message("Doanh nghiệp tạo voucher thành công!")
+                .data(voucherService.saveBusinessVoucher(request))
                 .build();
     }
 
-    // Endpoint thay đổi thông tin voucher
-    @PatchMapping( "/update")
-    public ApiResponse<VoucherViewResponse> updateVoucher(@RequestBody VoucherUpdateRequest request,
-                                                          @RequestParam UUID idVoucher)
+    @PatchMapping("/business/update")
+    public ApiResponse<VoucherViewResponse> updateBusinessVoucher(@RequestBody VoucherUpdateRequest request,
+                                                                  @RequestParam UUID idVoucher)
     {
         return ApiResponse.<VoucherViewResponse>builder()
-                .message("Thay đổi thông tin voucher thành công!")
-                .data(voucherService.updateVoucher(request, idVoucher))
+                .message("Thay đổi thông tin voucher doanh nghiệp thành công!")
+                .data(voucherService.updateBusinessVoucher(request, idVoucher))
+                .build();
+    }
+
+    @PostMapping("/system/creation")
+    public ApiResponse<VoucherViewResponse> creationSystemVoucher(@RequestBody SystemVoucherCreationRequest request)
+    {
+        return ApiResponse.<VoucherViewResponse>builder()
+                .message("Hệ thống tạo voucher thành công!")
+                .data(voucherService.saveSystemVoucher(request))
+                .build();
+    }
+
+    @PatchMapping("/system/update")
+    public ApiResponse<VoucherViewResponse> updateSystemVoucher(@RequestBody VoucherUpdateRequest request,
+                                                                @RequestParam UUID idVoucher)
+    {
+        return ApiResponse.<VoucherViewResponse>builder()
+                .message("Thay đổi thông tin voucher hệ thống thành công!")
+                .data(voucherService.updateSystemVoucher(request, idVoucher))
                 .build();
     }
 

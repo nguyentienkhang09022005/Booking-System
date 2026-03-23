@@ -47,6 +47,9 @@ public class Voucher {
     @Column(name = "sponsor_type", length = 50)
     private String sponsorType;
 
+    @Column(name = "apply_to", length = 20)
+    private String applyTo;
+
     @Column(name = "start_date")
     private LocalDate startDate;
 

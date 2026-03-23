@@ -1,6 +1,5 @@
 package com.example.java_service.Dto.Request;
 
-import jakarta.persistence.Column;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,7 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class VoucherCreationRequest
+public class BusinessVoucherCreationRequest
 {
     UUID idAccommodation;
     String nameVoucher;
@@ -24,5 +23,6 @@ public class VoucherCreationRequest
     String conditions;
     BigDecimal minDiscountAmount;
     BigDecimal maxDiscountAmount;
+    String applyTo;
     String urlImage;
 }

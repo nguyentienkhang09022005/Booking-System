@@ -1,6 +1,8 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Dto.Request.VoucherCreationRequest;
+import com.example.java_service.Constant.PredefinedSponsorType;
+import com.example.java_service.Dto.Request.BusinessVoucherCreationRequest;
+import com.example.java_service.Dto.Request.SystemVoucherCreationRequest;
 import com.example.java_service.Dto.Request.VoucherUpdateRequest;
 import com.example.java_service.Dto.Response.VoucherEditResponse;
 import com.example.java_service.Dto.Response.VoucherViewAllResponse;
@@ -24,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,6 +65,28 @@ public class VoucherService
         return code;
     }
 
+    private void validateVoucherInputs(LocalDate startDate, LocalDate endDate, Integer quantity,
+                                       BigDecimal discountPercent, BigDecimal minDiscountAmount, BigDecimal maxDiscountAmount) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)){
+            throw new ApiException(ErrorCode.END_DATE_BEFORE_STAR_DATE);
+        }
+        if (quantity != null && quantity < 0){
+            throw new ApiException(ErrorCode.QUANTITY_NOT_ENOUGH);
+        }
+        if (discountPercent != null && discountPercent.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.PERCENT_NOT_NEGATIVE);
+        }
+        if (minDiscountAmount != null && minDiscountAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.DISCOUNT_AMOUNT_NOT_NEGATIVE);
+        }
+        if (maxDiscountAmount != null && maxDiscountAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ApiException(ErrorCode.DISCOUNT_AMOUNT_NOT_NEGATIVE);
+        }
+        if (minDiscountAmount != null && maxDiscountAmount != null && minDiscountAmount.compareTo(maxDiscountAmount) > 0) {
+            throw new ApiException(ErrorCode.INVALID_DISCOUNT_AMOUNT);
+        }
+    }
+
     // Lấy danh sách voucher của nơi cư trú đã được phê duyệt và còn hạn (cho user)
     public List<VoucherViewResponse> listVouchersApprovedByAccommodation(UUID idAccommodation, UUID idUser)
     {
@@ -73,28 +98,18 @@ public class VoucherService
             throw new ApiException(ErrorCode.USER_NOT_FOUND);
         }
 
-        List<Voucher> vouchers = voucherRepository.findVoucherByApprovedTrueAndAccommodation_IdAccommodation(idAccommodation);
+        List<Voucher> vouchers = voucherRepository.findApprovedVouchersForAccommodationAndSystem(idAccommodation);
 
         if (vouchers.isEmpty()) {
             return List.of();
         }
 
-        // Lấy ID của tất cả voucher
-        List<UUID> voucherUUIDs = vouchers.stream()
-                .map(Voucher::getIdVoucher)
-                .toList();
+        List<UUID> voucherUUIDs = vouchers.stream().map(Voucher::getIdVoucher).toList();
+        List<String> voucherIdStrings = voucherUUIDs.stream().map(UUID::toString).toList();
 
-        List<String> voucherIdStrings = voucherUUIDs.stream()
-                .map(UUID::toString)
-                .toList();
-
-        // Lấy tất cả ảnh
         List<Images> images = imagesRepository.findByRefIdIn(voucherIdStrings);
         Map<String, String> voucherImagesMap = images.stream()
-                .collect(Collectors.toMap(
-                        Images::getRefId,
-                        Images::getUrl
-                ));
+                .collect(Collectors.toMap(Images::getRefId, Images::getUrl));
 
         List<UUID> savedVoucherIds = userVoucherRepository.findSavedVoucherIdsByUserAndVoucherIds(idUser, voucherUUIDs);
         Set<UUID> savedVoucherSet = new HashSet<>(savedVoucherIds);
@@ -103,10 +118,8 @@ public class VoucherService
                 .map(voucher -> {
                     VoucherViewResponse response = voucherMapper.toVoucherViewResponse(voucher);
                     String voucherIdStr = voucher.getIdVoucher().toString();
-
                     response.setIsSaved(savedVoucherSet.contains(voucher.getIdVoucher()));
                     response.setUrlImage(voucherImagesMap.get(voucherIdStr));
-
                     return response;
                 })
                 .toList();
@@ -231,91 +244,108 @@ public class VoucherService
     }
 
     // Tạo voucher
-    public VoucherViewResponse saveVoucher(VoucherCreationRequest voucherCreationRequest)
+    public VoucherViewResponse saveBusinessVoucher(BusinessVoucherCreationRequest request)
     {
-        // ---------Validate Input---------
-        // Kiểm tra ngày kết thúc của voucher không nằm trong quá khứ
-        if (voucherCreationRequest.getEndDate().isBefore(voucherCreationRequest.getStartDate())){
-            throw new ApiException(ErrorCode.END_DATE_BEFORE_STAR_DATE);
+        validateVoucherInputs(request.getStartDate(), request.getEndDate(), request.getQuantity(),
+                request.getDiscountPercent(), request.getMinDiscountAmount(), request.getMaxDiscountAmount());
+
+        if (request.getIdAccommodation() == null) {
+            throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
         }
 
-        // Kiểm tra số lượng phải lớn hơn 0
-        if (voucherCreationRequest.getQuantity() < 0){
-            throw new ApiException(ErrorCode.QUANTITY_NOT_ENOUGH);
-        }
-
-        // Kiểm tra phần trăm discount lớn hơn 0
-        if (voucherCreationRequest.getDiscountPercent().compareTo(BigDecimal.ZERO) < 0) {
-            throw new ApiException(ErrorCode.PERCENT_NOT_NEGATIVE);
-        }
-
-        Accommodation accommodation = accommodationRepository.findById(voucherCreationRequest.getIdAccommodation()).orElseThrow(
+        Accommodation accommodation = accommodationRepository.findById(request.getIdAccommodation()).orElseThrow(
                 () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
         );
 
-        Voucher voucher = voucherMapper.toVoucher(voucherCreationRequest);
-        voucher.setAccommodation(accommodation);
+        Voucher voucher = voucherMapper.toVoucher(request);
         voucher.setCode(generateUniqueVoucherCode());
+        voucher.setSponsorType(PredefinedSponsorType.BUSINESS_TYPE);
+        voucher.setAccommodation(accommodation);
         voucher.setApproved(false);
+
         Voucher savedVoucher = voucherRepository.save(voucher);
+        saveVoucherImage(request.getUrlImage(), savedVoucher.getIdVoucher().toString());
 
-        if (voucherCreationRequest.getUrlImage() != null && !voucherCreationRequest.getUrlImage().isEmpty()) {
-            Images image = new Images();
-            image.setUrl(voucherCreationRequest.getUrlImage());
-            image.setRefId(savedVoucher.getIdVoucher().toString());
-            imagesRepository.save(image);
-        }
-
-        VoucherViewResponse voucherViewResponse = voucherMapper.toVoucherViewResponse(savedVoucher);
-        voucherViewResponse.setUrlImage(voucherCreationRequest.getUrlImage());
-
-        return voucherViewResponse;
+        VoucherViewResponse response = voucherMapper.toVoucherViewResponse(savedVoucher);
+        response.setUrlImage(request.getUrlImage());
+        return response;
     }
 
-    // Sửa thông tin của voucher
-    public VoucherViewResponse updateVoucher(VoucherUpdateRequest voucherUpdateRequest, UUID idVoucher)
+    public VoucherViewResponse updateBusinessVoucher(VoucherUpdateRequest request, UUID idVoucher)
     {
-        // ---------Validate Input---------
-        // Kiểm tra voucher tồn tại
         Voucher voucher = voucherRepository.findById(idVoucher).orElseThrow(
                 () -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND)
         );
 
-        // Kiểm tra ngày kết thúc của voucher không nằm trong quá khứ
-        if (voucherUpdateRequest.getStartDate() != null && voucherUpdateRequest.getEndDate() != null) {
-            if (voucherUpdateRequest.getEndDate().isBefore(voucherUpdateRequest.getStartDate())) {
-                throw new ApiException(ErrorCode.END_DATE_BEFORE_STAR_DATE);
-            }
+        if (PredefinedSponsorType.SYSTEM_TYPE.equals(voucher.getSponsorType())) {
+            throw new ApiException(ErrorCode.SYSTEM_VOUCHER_MODIFICATION_DENIED);
         }
 
-        // Kiểm tra số lượng phải lớn hơn 0
-        if (voucherUpdateRequest.getQuantity() != null) {
-            if (voucherUpdateRequest.getQuantity() < 0){
-                throw new ApiException(ErrorCode.QUANTITY_NOT_ENOUGH);
-            }
-        }
+        validateVoucherInputs(request.getStartDate(), request.getEndDate(), request.getQuantity(),
+                request.getDiscountPercent(), request.getMinDiscountAmount(), request.getMaxDiscountAmount());
 
-        // Kiểm tra phần trăm discount lớn hơn 0
-        if (voucherUpdateRequest.getDiscountPercent() != null) {
-            if (voucherUpdateRequest.getDiscountPercent().compareTo(BigDecimal.ZERO) < 0) {
-                throw new ApiException(ErrorCode.PERCENT_NOT_NEGATIVE);
-            }
-        }
-
-        voucherMapper.updateVoucherFromRequest(voucherUpdateRequest, voucher);
-
-        // Nếu có up load ảnh mới
-        if (voucherUpdateRequest.getUrlImage() != null && !voucherUpdateRequest.getUrlImage().isEmpty())
-        {
-            imagesRepository.deleteByRefId(idVoucher.toString());
-
-            Images image = new Images();
-            image.setUrl(voucherUpdateRequest.getUrlImage());
-            image.setRefId(idVoucher.toString());
-            imagesRepository.save(image);
-        }
+        voucherMapper.updateVoucherFromRequest(request, voucher);
+        updateVoucherImage(request.getUrlImage(), idVoucher.toString());
 
         return voucherMapper.toVoucherViewResponse(voucherRepository.save(voucher));
+    }
+
+
+    public VoucherViewResponse saveSystemVoucher(SystemVoucherCreationRequest request)
+    {
+        validateVoucherInputs(request.getStartDate(), request.getEndDate(), request.getQuantity(),
+                request.getDiscountPercent(), request.getMinDiscountAmount(), request.getMaxDiscountAmount());
+
+        Voucher voucher = voucherMapper.toVoucher(request);
+        voucher.setCode(generateUniqueVoucherCode());
+        voucher.setSponsorType(PredefinedSponsorType.SYSTEM_TYPE);
+        voucher.setAccommodation(null);
+        voucher.setApproved(true);
+
+        Voucher savedVoucher = voucherRepository.save(voucher);
+        saveVoucherImage(request.getUrlImage(), savedVoucher.getIdVoucher().toString());
+
+        VoucherViewResponse response = voucherMapper.toVoucherViewResponse(savedVoucher);
+        response.setUrlImage(request.getUrlImage());
+        return response;
+    }
+
+    public VoucherViewResponse updateSystemVoucher(VoucherUpdateRequest request, UUID idVoucher)
+    {
+        Voucher voucher = voucherRepository.findById(idVoucher).orElseThrow(
+                () -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND)
+        );
+
+        if (PredefinedSponsorType.BUSINESS_TYPE.equals(voucher.getSponsorType())) {
+            throw new ApiException(ErrorCode.BUSINESS_VOUCHER_MODIFICATION_DENIED);
+        }
+
+        validateVoucherInputs(request.getStartDate(), request.getEndDate(), request.getQuantity(),
+                request.getDiscountPercent(), request.getMinDiscountAmount(), request.getMaxDiscountAmount());
+
+        voucherMapper.updateVoucherFromRequest(request, voucher);
+        updateVoucherImage(request.getUrlImage(), idVoucher.toString());
+
+        return voucherMapper.toVoucherViewResponse(voucherRepository.save(voucher));
+    }
+
+    private void saveVoucherImage(String urlImage, String refId) {
+        if (urlImage != null && !urlImage.isEmpty()) {
+            Images image = new Images();
+            image.setUrl(urlImage);
+            image.setRefId(refId);
+            imagesRepository.save(image);
+        }
+    }
+
+    private void updateVoucherImage(String urlImage, String refId) {
+        if (urlImage != null && !urlImage.isEmpty()) {
+            imagesRepository.deleteByRefId(refId);
+            Images image = new Images();
+            image.setUrl(urlImage);
+            image.setRefId(refId);
+            imagesRepository.save(image);
+        }
     }
 
     // Xóa voucher

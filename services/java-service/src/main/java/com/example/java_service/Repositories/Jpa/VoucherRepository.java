@@ -15,13 +15,14 @@ public interface VoucherRepository extends JpaRepository<Voucher, UUID>
 {
     Boolean existsVoucherByCode(String code);
 
-    List<Voucher> findVoucherByApprovedTrueAndAccommodation_IdAccommodation(UUID idAccommodation);
+    // Lấy voucher đã duyệt: bao gồm voucher của nơi cư trú cụ thể hoặc voucher của hệ thống
+    @Query("SELECT v FROM Voucher v WHERE v.approved = true AND (v.accommodation.idAccommodation = :idAccommodation OR UPPER(v.sponsorType) = 'SYSTEM')")
+    List<Voucher> findApprovedVouchersForAccommodationAndSystem(@Param("idAccommodation") UUID idAccommodation);
 
     List<Voucher> findVoucherByApprovedFalse();
 
     List<Voucher> findVoucherByAccommodation_IdAccommodation(UUID idAccommodation);
 
-    // Giảm số lượng voucher khi lưu
     @Modifying
     @Query("""
     UPDATE Voucher v

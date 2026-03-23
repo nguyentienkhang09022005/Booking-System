@@ -1,6 +1,7 @@
 package com.example.java_service.Mappers;
 
-import com.example.java_service.Dto.Request.VoucherCreationRequest;
+import com.example.java_service.Dto.Request.BusinessVoucherCreationRequest;
+import com.example.java_service.Dto.Request.SystemVoucherCreationRequest;
 import com.example.java_service.Dto.Request.VoucherUpdateRequest;
 import com.example.java_service.Dto.Response.VoucherEditResponse;
 import com.example.java_service.Dto.Response.VoucherViewAllResponse;
@@ -12,7 +13,9 @@ import org.mapstruct.*;
 public interface VoucherMapper
 {
     @Mapping(target = "accommodation", ignore = true)
-    Voucher toVoucher(VoucherCreationRequest request);
+    Voucher toVoucher(BusinessVoucherCreationRequest request);
+
+    Voucher toVoucher(SystemVoucherCreationRequest request);
 
     VoucherEditResponse toVoucherEditResponse(Voucher voucher);
 
