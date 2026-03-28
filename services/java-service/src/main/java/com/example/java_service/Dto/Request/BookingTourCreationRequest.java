@@ -3,6 +3,7 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -19,4 +20,5 @@ public class BookingTourCreationRequest
     String pickupLocation;
     String languageSelected;
     String specialRequests;
+    List<UserVoucherCreationRequest> userVoucherRequests;
 }

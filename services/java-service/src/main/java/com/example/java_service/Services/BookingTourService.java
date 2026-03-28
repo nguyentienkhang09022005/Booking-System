@@ -1,26 +1,19 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Configs.RabbitConfig;
+import com.example.java_service.Constant.PredefinedApplyTo;
 import com.example.java_service.Constant.PredefinedMethodPayment;
 import com.example.java_service.Constant.PredefinedStatusBookingTour;
 import com.example.java_service.Constant.PredefinedStatusPayment;
-import com.example.java_service.Dto.Request.BookingTourCreationRequest;
-import com.example.java_service.Dto.Request.BookingTourUpdateRequest;
-import com.example.java_service.Dto.Request.PaymentRequest;
+import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.BookingTourResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Dto.Response.PaymentResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingTourMapper;
-import com.example.java_service.Models.BookingTour;
-import com.example.java_service.Models.Payment;
-import com.example.java_service.Models.Tour;
-import com.example.java_service.Models.Users;
-import com.example.java_service.Repositories.Jpa.BookingTourRepository;
-import com.example.java_service.Repositories.Jpa.PaymentRepository;
-import com.example.java_service.Repositories.Jpa.TourRepository;
-import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Models.*;
+import com.example.java_service.Repositories.Jpa.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +47,11 @@ public class BookingTourService {
     UserRepository userRepository;
     PaymentRepository paymentRepository;
     BookingTourMapper bookingTourMapper;
+    VoucherRepository voucherRepository;
+    UserVoucherRepository userVoucherRepository;
+    UserVoucherService userVoucherService;
+    AppliedVoucherService appliedVoucherService;
+
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
     ObjectMapper objectMapper;
@@ -107,6 +106,61 @@ public class BookingTourService {
 
         BookingTour savedBookingTour = bookingTourRepository.save(bookingTour);
 
+        if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
+            for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
+                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                // Lưu voucher
+                userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
+
+                AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
+                        .idUser(request.getIdUser())
+                        .idVoucher(userVoucherRequest.getIdVoucher())
+                        .build();
+                appliedVoucherService.saveAppliedVoucherForTour(appliedVoucherRequest, savedBookingTour.getIdBookingTour());
+
+                // Áp dụng voucher
+                if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
+                    String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+
+                    switch (applyTo) {
+                        case PredefinedApplyTo.APPLY_TO_TOUR:
+                        case PredefinedApplyTo.APPLY_TO_ALL:
+                        default:
+                            targetPriceForDiscount = totalPrice;
+                            break;
+                    }
+
+                    if (targetPriceForDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new ApiException(ErrorCode.VOUCHER_NOT_APPLICABLE);
+                    }
+
+                    BigDecimal discount = targetPriceForDiscount
+                            .multiply(voucher.getDiscountPercent())
+                            .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
+
+                    if (voucher.getMinDiscountAmount() != null && discount.compareTo(voucher.getMinDiscountAmount()) < 0) {
+                        discount = voucher.getMinDiscountAmount();
+                    }
+
+                    if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                        discount = voucher.getMaxDiscountAmount();
+                    }
+
+                    if (discount.compareTo(targetPriceForDiscount) > 0) {
+                        discount = targetPriceForDiscount;
+                    }
+
+                    totalPrice = totalPrice.subtract(discount);
+                }
+            }
+        }
+
+        savedBookingTour.setPriceBookingTour(totalPrice);
+        bookingTourRepository.save(savedBookingTour);
+
         // --- Gửi thông báo cho người đặt tour ---
         NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
@@ -122,7 +176,7 @@ public class BookingTourService {
         // --- Gửi thông báo cho người chủ tour ---
         NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
-                .idUser(savedBookingTour.getTour().getUsers().getIdUser()) // Chủ sở hữu tour
+                .idUser(savedBookingTour.getTour().getUsers().getIdUser())
                 .title("Có người đặt tour mới")
                 .content(String.format("Khách hàng %s vừa đặt tour %s của bạn.", savedBookingTour.getUsers().getLastName(), savedBookingTour.getTour().getTourName()))
                 .type("booking")
@@ -320,7 +374,7 @@ public class BookingTourService {
         boolean isBusinessUpdatingStatus = request.getStatus() != null && !request.getStatus().isBlank();
 
         if (isBusinessUpdatingStatus) {
-            // TRƯỜNG HỢP 1: BUSINESS CẬP NHẬT TRẠNG THÁI (DUYỆT/TỪ CHỐI)
+            // TRƯỜNG HỢP 1: BUSINESS CẬP NHẬT TRẠNG THÁI
             List<String> validStatuses = List.of(
                     PredefinedStatusBookingTour.STATUS_BOOKING_PENDING,
                     PredefinedStatusBookingTour.STATUS_BOOKING_SUCCESS,
@@ -334,7 +388,6 @@ public class BookingTourService {
             bookingTour.setStatus(request.getStatus());
             bookingTourRepository.save(bookingTour);
 
-            // Chỉ gửi thông báo cho User: Trạng thái đơn của họ đã thay đổi
             NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                     .idNotification(UUID.randomUUID())
                     .idUser(bookingTour.getUsers().getIdUser())
@@ -359,6 +412,79 @@ public class BookingTourService {
         } else {
             // TRƯỜNG HỢP 2: USER SỬA THÔNG TIN ĐỂ THANH TOÁN LẠI
             bookingTourMapper.updateBookingTourFromRequest(request, bookingTour);
+
+            // Tính toán lại giá tiền ban đầu
+            int qtyAdult = bookingTour.getQuantityAdult() != null ? bookingTour.getQuantityAdult() : 1;
+            int qtyChild = bookingTour.getQuantityChild() != null ? bookingTour.getQuantityChild() : 0;
+
+            BigDecimal adultPrice = bookingTour.getTour().getAdultPrice() != null ? bookingTour.getTour().getAdultPrice() : BigDecimal.ZERO;
+            BigDecimal childPrice = bookingTour.getTour().getChildPrice() != null ? bookingTour.getTour().getChildPrice() : BigDecimal.ZERO;
+
+            BigDecimal totalPrice = adultPrice.multiply(BigDecimal.valueOf(qtyAdult)).add(childPrice.multiply(BigDecimal.valueOf(qtyChild)));
+
+            if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
+
+                // Xóa danh sách voucher đã apply cũ
+                appliedVoucherService.deleteAppliedVoucherForTour(bookingTour.getIdBookingTour());
+
+                // Reset lại is_used và usedAt của voucher còn hạn
+                List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingTourId(bookingTour.getIdBookingTour());
+                usedVouchers.forEach(uv -> {
+                    uv.setIsUsed(false);
+                    uv.setUsedAt(null);
+                });
+                userVoucherRepository.saveAll(usedVouchers);
+
+                for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
+                    Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                            .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                    userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
+
+                    AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
+                            .idUser(request.getIdUser())
+                            .idVoucher(userVoucherRequest.getIdVoucher())
+                            .build();
+                    appliedVoucherService.saveAppliedVoucherForTour(appliedVoucherRequest, bookingTour.getIdBookingTour());
+
+                    if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
+                        String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+
+                        switch (applyTo) {
+                            case PredefinedApplyTo.APPLY_TO_TOUR:
+                            case PredefinedApplyTo.APPLY_TO_ALL:
+                            default:
+                                targetPriceForDiscount = totalPrice;
+                                break;
+                        }
+
+                        if (targetPriceForDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+                            throw new ApiException(ErrorCode.VOUCHER_NOT_APPLICABLE);
+                        }
+
+                        BigDecimal discount = targetPriceForDiscount
+                                .multiply(voucher.getDiscountPercent())
+                                .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
+
+                        if (voucher.getMinDiscountAmount() != null && discount.compareTo(voucher.getMinDiscountAmount()) < 0) {
+                            discount = voucher.getMinDiscountAmount();
+                        }
+
+                        if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                            discount = voucher.getMaxDiscountAmount();
+                        }
+
+                        if (discount.compareTo(targetPriceForDiscount) > 0) {
+                            discount = targetPriceForDiscount;
+                        }
+
+                        totalPrice = totalPrice.subtract(discount);
+                    }
+                }
+            }
+
+            bookingTour.setPriceBookingTour(totalPrice);
             bookingTourRepository.save(bookingTour);
 
             Payment payment = paymentRepository.findByBookingTour_IdBookingTour(idBookingTour);
@@ -367,7 +493,6 @@ public class BookingTourService {
                 paymentRepository.save(payment);
             }
 
-            // Chỉ gửi thông báo cho Chủ Tour (Business): User đã thay đổi thông tin
             NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
                     .idNotification(UUID.randomUUID())
                     .idUser(bookingTour.getTour().getUsers().getIdUser())

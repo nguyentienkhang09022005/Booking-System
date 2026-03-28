@@ -1,26 +1,19 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Configs.RabbitConfig;
+import com.example.java_service.Constant.PredefinedApplyTo;
 import com.example.java_service.Constant.PredefinedMethodPayment;
 import com.example.java_service.Constant.PredefinedStatusBookingTransport;
 import com.example.java_service.Constant.PredefinedStatusPayment;
-import com.example.java_service.Dto.Request.BookingTransportCreationRequest;
-import com.example.java_service.Dto.Request.BookingTransportUpdateRequest;
-import com.example.java_service.Dto.Request.PaymentRequest;
+import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.BookingTransportResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Dto.Response.PaymentResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingTransportTicketMapper;
-import com.example.java_service.Models.BookingTransport;
-import com.example.java_service.Models.Payment;
-import com.example.java_service.Models.TransportTicket;
-import com.example.java_service.Models.Users;
-import com.example.java_service.Repositories.Jpa.BookingTransportTicketRepository;
-import com.example.java_service.Repositories.Jpa.PaymentRepository;
-import com.example.java_service.Repositories.Jpa.TransportTicketRepository;
-import com.example.java_service.Repositories.Jpa.UserRepository;
+import com.example.java_service.Models.*;
+import com.example.java_service.Repositories.Jpa.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +47,11 @@ public class BookingTransportTicketService {
     UserRepository userRepository;
     PaymentRepository paymentRepository;
     BookingTransportTicketMapper bookingTransportMapper;
+    VoucherRepository voucherRepository;
+    UserVoucherRepository userVoucherRepository;
+    UserVoucherService userVoucherService;
+    AppliedVoucherService appliedVoucherService;
+
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
     ObjectMapper objectMapper;
@@ -101,7 +100,60 @@ public class BookingTransportTicketService {
 
         BookingTransport savedBooking = bookingTransportRepository.save(bookingTransport);
 
-        // --- Gửi thông báo cho người đặt vé ---
+        if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
+            for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
+                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
+
+                AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
+                        .idUser(request.getIdUser())
+                        .idVoucher(userVoucherRequest.getIdVoucher())
+                        .build();
+                appliedVoucherService.saveAppliedVoucherForTicket(appliedVoucherRequest, savedBooking.getIdBookingTransport());
+
+                if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
+                    String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+
+                    switch (applyTo) {
+                        case PredefinedApplyTo.APPLY_TO_TICKET:
+                        case PredefinedApplyTo.APPLY_TO_ALL:
+                        default:
+                            targetPriceForDiscount = totalPrice;
+                            break;
+                    }
+
+                    if (targetPriceForDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new ApiException(ErrorCode.VOUCHER_NOT_APPLICABLE);
+                    }
+
+                    BigDecimal discount = targetPriceForDiscount
+                            .multiply(voucher.getDiscountPercent())
+                            .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
+
+                    if (voucher.getMinDiscountAmount() != null && discount.compareTo(voucher.getMinDiscountAmount()) < 0) {
+                        discount = voucher.getMinDiscountAmount();
+                    }
+
+                    if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                        discount = voucher.getMaxDiscountAmount();
+                    }
+
+                    if (discount.compareTo(targetPriceForDiscount) > 0) {
+                        discount = targetPriceForDiscount;
+                    }
+
+                    totalPrice = totalPrice.subtract(discount);
+                }
+            }
+        }
+
+        savedBooking.setPriceBookingTransport(totalPrice);
+        bookingTransportRepository.save(savedBooking);
+
+        // --- Gửi thông báo ---
         NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
                 .idUser(savedBooking.getUsers().getIdUser())
@@ -113,7 +165,6 @@ public class BookingTransportTicketService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // --- Gửi thông báo cho người chủ vé (Business) ---
         NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
                 .idUser(savedBooking.getTransportTicket().getUsers().getIdUser())
@@ -264,7 +315,6 @@ public class BookingTransportTicketService {
             booking.setStatus(request.getStatus());
             bookingTransportRepository.save(booking);
 
-            // Chỉ gửi thông báo cho User: Trạng thái đơn đặt vé của họ đã thay đổi
             NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                     .idNotification(UUID.randomUUID())
                     .idUser(booking.getUsers().getIdUser())
@@ -290,11 +340,76 @@ public class BookingTransportTicketService {
             // TRƯỜNG HỢP 2: USER SỬA THÔNG TIN ĐỂ THANH TOÁN LẠI
             bookingTransportMapper.updateBookingTransportFromRequest(request, booking);
 
+            BigDecimal totalPrice = booking.getPriceBookingTransport(); // Lưu tạm
+
             if (request.getQuantityTickets() != null && request.getQuantityTickets() > 0) {
                 BigDecimal ticketPrice = booking.getTransportTicket().getPrice() != null ? booking.getTransportTicket().getPrice() : BigDecimal.ZERO;
-                booking.setPriceBookingTransport(ticketPrice.multiply(BigDecimal.valueOf(request.getQuantityTickets())));
+                totalPrice = ticketPrice.multiply(BigDecimal.valueOf(request.getQuantityTickets()));
             }
 
+            if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
+
+                // Xóa danh sách voucher đã apply
+                appliedVoucherService.deleteAppliedVoucherForTicket(booking.getIdBookingTransport());
+
+                // Reset lại is_used và usedAt của voucher còn hạn
+                List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingTicketId(booking.getIdBookingTransport());
+                usedVouchers.forEach(uv -> {
+                    uv.setIsUsed(false);
+                    uv.setUsedAt(null);
+                });
+                userVoucherRepository.saveAll(usedVouchers);
+
+                for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
+                    Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
+                            .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+
+                    userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
+
+                    AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
+                            .idUser(request.getIdUser())
+                            .idVoucher(userVoucherRequest.getIdVoucher())
+                            .build();
+                    appliedVoucherService.saveAppliedVoucherForTicket(appliedVoucherRequest, booking.getIdBookingTransport());
+
+                    if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
+                        String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+
+                        switch (applyTo) {
+                            case PredefinedApplyTo.APPLY_TO_TICKET:
+                            case PredefinedApplyTo.APPLY_TO_ALL:
+                            default:
+                                targetPriceForDiscount = totalPrice;
+                                break;
+                        }
+
+                        if (targetPriceForDiscount.compareTo(BigDecimal.ZERO) <= 0) {
+                            throw new ApiException(ErrorCode.VOUCHER_NOT_APPLICABLE);
+                        }
+
+                        BigDecimal discount = targetPriceForDiscount
+                                .multiply(voucher.getDiscountPercent())
+                                .divide(BigDecimal.valueOf(100), 10, RoundingMode.DOWN);
+
+                        if (voucher.getMinDiscountAmount() != null && discount.compareTo(voucher.getMinDiscountAmount()) < 0) {
+                            discount = voucher.getMinDiscountAmount();
+                        }
+
+                        if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                            discount = voucher.getMaxDiscountAmount();
+                        }
+
+                        if (discount.compareTo(targetPriceForDiscount) > 0) {
+                            discount = targetPriceForDiscount;
+                        }
+
+                        totalPrice = totalPrice.subtract(discount);
+                    }
+                }
+            }
+
+            booking.setPriceBookingTransport(totalPrice);
             bookingTransportRepository.save(booking);
 
             Payment payment = paymentRepository.findByBookingTransport_IdBookingTransport(idBookingTransport);
@@ -303,7 +418,6 @@ public class BookingTransportTicketService {
                 paymentRepository.save(payment);
             }
 
-            // Chỉ gửi thông báo cho Chủ vé (Business): User đã thay đổi thông tin
             NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
                     .idNotification(UUID.randomUUID())
                     .idUser(booking.getTransportTicket().getUsers().getIdUser())

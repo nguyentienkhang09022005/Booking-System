@@ -24,6 +24,7 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, UserVo
     List<UserVoucher> findValidByUserIdAndVoucherEndDateAfterOrEqual(@Param("idUser") UUID idUser,
                                                                      @Param("toDay") LocalDate toDay);
 
+    // Dành cho Booking Room
     @Query("""
     SELECT uv
     FROM UserVoucher uv
@@ -35,6 +36,30 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, UserVo
     AND uv.voucher.endDate >= CURRENT_TIMESTAMP
 """)
     List<UserVoucher> findUsedVouchersByBookingId(@Param("idBooking") UUID idBooking);
+
+    @Query("""
+    SELECT uv
+    FROM UserVoucher uv
+    WHERE uv.voucher.idVoucher IN (
+        SELECT av.voucher.idVoucher
+        FROM AppliedVoucher av
+        WHERE av.bookingTour.idBookingTour = :idBookingTour
+    )
+    AND uv.voucher.endDate >= CURRENT_TIMESTAMP
+""")
+    List<UserVoucher> findUsedVouchersByBookingTourId(@Param("idBookingTour") UUID idBookingTour);
+
+    @Query("""
+    SELECT uv
+    FROM UserVoucher uv
+    WHERE uv.voucher.idVoucher IN (
+        SELECT av.voucher.idVoucher
+        FROM AppliedVoucher av
+        WHERE av.bookingTransport.idBookingTransport = :idBookingTransport
+    )
+    AND uv.voucher.endDate >= CURRENT_TIMESTAMP
+""")
+    List<UserVoucher> findUsedVouchersByBookingTicketId(@Param("idBookingTransport") UUID idBookingTransport);
 
     @Query("""
     SELECT uv.voucher.idVoucher

@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Dto.Request.UserVoucherCreationRequest;
 import com.example.java_service.Dto.Request.UserVoucherRequest;
 import com.example.java_service.Dto.Response.UserVoucherResponse;
 import com.example.java_service.Exception.ApiException;
@@ -172,6 +173,64 @@ public class UserVoucherService
 
         // Xữ lý race condition bằng Atomistic
         UUID idVoucher = userVoucherRequest.getIdVoucher();
+
+        int voucherUpdated = voucherRepository.decreaseVoucherQuantity(idVoucher, DEFAULT_VOUCHER_QUANTITY_SAVED);
+        if (voucherUpdated == 0)
+            throw new ApiException(ErrorCode.VOUCHER_NOT_ENOUGH_QUANTITY);
+
+        // Tạo mới UserVoucher và đánh dấu là dùng rồi
+        UserVoucher userVoucher = UserVoucher.builder()
+                .user(user)
+                .voucher(voucher)
+                .isUsed(true)
+                .usedAt(LocalDateTime.now())
+                .savedAt(LocalDateTime.now())
+                .build();
+
+        userVoucherRepository.save(userVoucher);
+    }
+
+    @Transactional
+    // Hàm lưu voucher cho booking
+    public void saveUserVoucherForBookingTourAndTicket(UserVoucherCreationRequest userVoucherCreationRequest, UUID idUser)
+    {
+        Users user = userRepository.findById(idUser).orElseThrow(
+                () -> new ApiException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        Voucher voucher = voucherRepository.findById(userVoucherCreationRequest.getIdVoucher()).orElseThrow(
+                () -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND)
+        );
+
+        // Kiểm tra hạn voucher
+        if (voucher.getEndDate().isBefore(LocalDate.now())) {
+            throw new ApiException(ErrorCode.VOUCHER_EXPIRED);
+        }
+
+        UserVoucherId userVoucherId = new UserVoucherId(user.getIdUser(), voucher.getIdVoucher());
+
+        // Kiểm tra voucher đã được lưu chưa
+        Optional<UserVoucher> existUserVoucherOtp = userVoucherRepository.findById(userVoucherId);
+
+        if (existUserVoucherOtp.isPresent())
+        {
+            UserVoucher existUserVoucher = existUserVoucherOtp.get();
+
+            // Kiểm tra nếu dùng rồi không cho lưu
+            if (Boolean.TRUE.equals(existUserVoucher.getIsUsed())){
+                throw new ApiException(ErrorCode.VOUCHER_ALREADY_USED);
+            }
+
+            // Nếu lưu rồi thì update thông tin
+            existUserVoucher.setIsUsed(true);
+            existUserVoucher.setUsedAt(LocalDateTime.now());
+            userVoucherRepository.save(existUserVoucher);
+
+            return;
+        }
+
+        // Xữ lý race condition bằng Atomistic
+        UUID idVoucher = userVoucherCreationRequest.getIdVoucher();
 
         int voucherUpdated = voucherRepository.decreaseVoucherQuantity(idVoucher, DEFAULT_VOUCHER_QUANTITY_SAVED);
         if (voucherUpdated == 0)

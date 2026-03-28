@@ -20,4 +20,24 @@ public interface AppliedVoucherRepository extends JpaRepository<AppliedVoucher, 
         JOIN FETCH av.voucher v
         WHERE av.booking.idBooking = :idBooking""")
     List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingId(@Param("idBooking") UUID idBooking);
+
+
+    void deleteAppliedVoucherByBookingTour_IdBookingTour(UUID idBookingTour);
+
+    @Query("""
+        SELECT av
+        FROM AppliedVoucher av
+        JOIN FETCH av.voucher v
+        WHERE av.bookingTour.idBookingTour = :idBookingTour""")
+    List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingTourId(@Param("idBookingTour") UUID idBookingTour);
+
+
+    void deleteAppliedVoucherByBookingTransport_IdBookingTransport(UUID idBookingTransport);
+
+    @Query("""
+        SELECT av
+        FROM AppliedVoucher av
+        JOIN FETCH av.voucher v
+        WHERE av.bookingTransport.idBookingTransport = :idBookingTransport""")
+    List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingTransportId(@Param("idBookingTransport") UUID idBookingTransport);
 }
