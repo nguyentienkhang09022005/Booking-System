@@ -36,4 +36,7 @@ public class PaymentResponse
 
     @JsonProperty("order_id")
     String orderId;
+
+    @JsonProperty("vnd_token_address")
+    String vndTokenAddress;
 }

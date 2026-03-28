@@ -230,6 +230,7 @@ public class BookingTransportTicketService {
                         .status("Pending")
                         .typedData((Map<String, Object>) vndResponse.get("typed_data"))
                         .orderId(vndResponse.get("order_id") != null ? vndResponse.get("order_id").toString() : null)
+                        .vndTokenAddress(vndResponse.get("vnd_token_address") != null ? vndResponse.get("vnd_token_address").toString() : null)
                         .build();
             } else {
                 PaymentRequest paymentRequest = PaymentRequest.builder()
