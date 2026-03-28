@@ -2,6 +2,7 @@ package Controllers
 
 import (
 	"fmt"
+	"math/big"
 	"net/http"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"payment-service/Configs"
 	"payment-service/Constants"
 	"payment-service/Internal/Dtos/Request"
 	"payment-service/Internal/Dtos/Response"
@@ -73,9 +75,10 @@ func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 	}
 
 	resp := &Response.PrepareVndPaymentResponse{
-		IDPayment: payment.IDPayment,
-		TypedData: result.TypedData,
-		OrderID:   result.OrderID,
+		IDPayment:       payment.IDPayment,
+		TypedData:       result.TypedData,
+		OrderID:         result.OrderID,
+		VndTokenAddress: Configs.VNDTokenAddress,
 	}
 
 	c.JSON(http.StatusCreated, resp)
@@ -149,7 +152,27 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 		return
 	}
 
-	// Submit transaction to Sepolia via relayer
+	// If permit signature provided, execute permit first (gasless ERC20 approval)
+	if req.Permit != nil && req.Permit.R != "" {
+		permitValue := new(big.Int)
+		permitValue.SetString(req.Permit.Value, 10)
+		_, err := vc._blockchainService.ExecutePermit(
+			req.Order.Payer,
+			Configs.PaymentGatewayAddress,
+			permitValue,
+			req.Permit.Deadline,
+			req.Permit.V,
+			req.Permit.R,
+			req.Permit.S,
+		)
+		if err != nil {
+			_ = vc._paymentRepository.UpdateVndPaymentFailed(idPayment, "")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Permit transaction failed: %v", err)})
+			return
+		}
+	}
+
+	// Submit payment transaction to Sepolia via relayer
 	txHash, err := vc._blockchainService.ExecutePayment(idPayment, req.Order, req.Signature)
 	if err != nil {
 		_ = vc._paymentRepository.UpdateVndPaymentFailed(idPayment, txHash)

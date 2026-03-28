@@ -20,8 +20,17 @@ type PaymentOrderData struct {
 	Deadline  int64  `json:"deadline"`
 }
 
+type PermitData struct {
+	V        uint8  `json:"v"`
+	R        string `json:"r"`
+	S        string `json:"s"`
+	Value    string `json:"value"`
+	Deadline int64  `json:"deadline"`
+}
+
 type ExecuteVndPaymentRequest struct {
 	IDPayment string           `json:"id_payment" binding:"required"`
 	Order     PaymentOrderData `json:"order" binding:"required"`
 	Signature string           `json:"signature" binding:"required"`
+	Permit    *PermitData      `json:"permit,omitempty"`
 }

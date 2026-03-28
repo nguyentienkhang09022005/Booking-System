@@ -26,6 +26,7 @@ import (
 type IBlockchainService interface {
 	PreparePaymentOrder(idBooking uuid.UUID, payerAddress string, amount float64) (*Response.PrepareVndPaymentResponse, error)
 	ExecutePayment(idPayment uuid.UUID, order Request.PaymentOrderData, signature string) (string, error)
+	ExecutePermit(owner, spender string, value *big.Int, deadline int64, v uint8, r, s string) (string, error)
 	VerifySignature(order Request.PaymentOrderData, signature string) (bool, error)
 	GetNonce(payerAddress string) (uint64, error)
 }
@@ -66,6 +67,25 @@ const paymentGatewayABI = `[
     "name":"getNonce",
     "outputs":[{"internalType":"uint256","name":"","type":"uint256"}],
     "stateMutability":"view",
+    "type":"function"
+  }
+]`
+
+// VNDToken ABI — permit function for EIP-2612 gasless approval.
+const vndTokenABI = `[
+  {
+    "inputs": [
+      {"internalType":"address","name":"owner","type":"address"},
+      {"internalType":"address","name":"spender","type":"address"},
+      {"internalType":"uint256","name":"value","type":"uint256"},
+      {"internalType":"uint256","name":"deadline","type":"uint256"},
+      {"internalType":"uint8","name":"v","type":"uint8"},
+      {"internalType":"bytes32","name":"r","type":"bytes32"},
+      {"internalType":"bytes32","name":"s","type":"bytes32"}
+    ],
+    "name":"permit",
+    "outputs":[],
+    "stateMutability":"nonpayable",
     "type":"function"
   }
 ]`
@@ -154,9 +174,10 @@ func (b *blockchainService) PreparePaymentOrder(
 	}
 
 	return &Response.PrepareVndPaymentResponse{
-		IDPayment: idPayment,
-		TypedData: typedData,
-		OrderID:   orderIDHex,
+		IDPayment:       idPayment,
+		TypedData:       typedData,
+		OrderID:         orderIDHex,
+		VndTokenAddress: Configs.VNDTokenAddress,
 	}, nil
 }
 
@@ -314,6 +335,90 @@ func (b *blockchainService) ExecutePayment(idPayment uuid.UUID, order Request.Pa
 					return txHash, fmt.Errorf("transaction reverted on-chain: %s", txHash)
 				}
 				return txHash, nil
+			}
+		}
+	}
+}
+
+// ExecutePermit calls VNDToken.permit() on-chain via the relayer to set approval gaslessly.
+func (b *blockchainService) ExecutePermit(owner, spender string, value *big.Int, deadline int64, v uint8, r, s string) (string, error) {
+	client, err := ethclient.Dial(Configs.SepoliaRPCURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to Sepolia: %w", err)
+	}
+	defer client.Close()
+
+	privKeyHex := strings.TrimPrefix(Configs.RelayerPrivateKey, "0x")
+	privateKey, err := crypto.HexToECDSA(privKeyHex)
+	if err != nil {
+		return "", fmt.Errorf("invalid relayer private key: %w", err)
+	}
+	relayerAddr := crypto.PubkeyToAddress(privateKey.PublicKey)
+
+	parsedABI, err := abi.JSON(strings.NewReader(vndTokenABI))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse VNDToken ABI: %w", err)
+	}
+
+	var rBytes, sBytes [32]byte
+	rSlice, _ := hex.DecodeString(strings.TrimPrefix(r, "0x"))
+	sSlice, _ := hex.DecodeString(strings.TrimPrefix(s, "0x"))
+	copy(rBytes[:], rSlice)
+	copy(sBytes[:], sSlice)
+
+	data, err := parsedABI.Pack("permit",
+		common.HexToAddress(owner),
+		common.HexToAddress(spender),
+		value,
+		new(big.Int).SetInt64(deadline),
+		v,
+		rBytes,
+		sBytes,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to pack permit call: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	nonce, err := client.PendingNonceAt(ctx, relayerAddr)
+	if err != nil {
+		return "", fmt.Errorf("failed to get nonce: %w", err)
+	}
+
+	vndTokenAddr := common.HexToAddress(Configs.VNDTokenAddress)
+	gasPrice, _ := client.SuggestGasPrice(ctx)
+	gasLimit, err := client.EstimateGas(ctx, ethereum.CallMsg{From: relayerAddr, To: &vndTokenAddr, Data: data})
+	if err != nil {
+		return "", fmt.Errorf("failed to estimate gas: %w", err)
+	}
+
+	chainID := new(big.Int).SetInt64(Configs.ChainID)
+	tx := types.NewTransaction(nonce, vndTokenAddr, big.NewInt(0), gasLimit*2, gasPrice, data)
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign permit tx: %w", err)
+	}
+
+	if err = client.SendTransaction(ctx, signedTx); err != nil {
+		return "", fmt.Errorf("failed to send permit tx: %w", err)
+	}
+
+	// Wait for confirmation
+	receiptCtx, receiptCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer receiptCancel()
+	for {
+		select {
+		case <-receiptCtx.Done():
+			return signedTx.Hash().Hex(), fmt.Errorf("permit tx broadcast but not confirmed")
+		case <-time.After(3 * time.Second):
+			receipt, err := client.TransactionReceipt(receiptCtx, signedTx.Hash())
+			if err == nil {
+				if receipt.Status == 0 {
+					return signedTx.Hash().Hex(), fmt.Errorf("permit tx reverted")
+				}
+				return signedTx.Hash().Hex(), nil
 			}
 		}
 	}
