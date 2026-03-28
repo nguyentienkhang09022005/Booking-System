@@ -9,11 +9,14 @@ import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.BookingTransportResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Dto.Response.PaymentResponse;
+import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingTransportTicketMapper;
+import com.example.java_service.Mappers.VoucherMapper;
 import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.*;
+import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +54,10 @@ public class BookingTransportTicketService {
     UserVoucherRepository userVoucherRepository;
     UserVoucherService userVoucherService;
     AppliedVoucherService appliedVoucherService;
+
+    AppliedVoucherRepository appliedVoucherRepository;
+    VoucherMapper voucherMapper;
+    ImagesRepository imagesRepository;
 
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
@@ -153,7 +160,6 @@ public class BookingTransportTicketService {
         savedBooking.setPriceBookingTransport(totalPrice);
         bookingTransportRepository.save(savedBooking);
 
-        // --- Gửi thông báo ---
         NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
                 .idUser(savedBooking.getUsers().getIdUser())
@@ -254,6 +260,23 @@ public class BookingTransportTicketService {
             response.setPaymentInBookingResponse(bookingTransportMapper.toPaymentInBookingResponse(payment));
         }
 
+        // Lấy danh sách Voucher áp dụng
+        List<AppliedVoucher> appliedVouchers = appliedVoucherRepository.findAppliedVouchersWithVoucherByBookingTransportId(idBookingTransport);
+        List<String> voucherIds = appliedVouchers.stream()
+                .map(appliedVoucher -> appliedVoucher.getVoucher().getIdVoucher().toString())
+                .toList();
+
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        Map<String, String> voucherImagesMap = images.stream().collect(Collectors.toMap(Images::getRefId, Images::getUrl, (a, b) -> a));
+
+        List<VoucherViewResponse> voucherViewResponses = appliedVouchers.stream().map(av -> {
+            VoucherViewResponse voucherViewResponse = voucherMapper.toVoucherViewResponse(av.getVoucher());
+            voucherViewResponse.setUrlImage(voucherImagesMap.get(av.getVoucher().getIdVoucher().toString()));
+            return voucherViewResponse;
+        }).toList();
+
+        response.setVoucherViewResponses(voucherViewResponses);
+
         return response;
     }
 
@@ -272,11 +295,19 @@ public class BookingTransportTicketService {
         if (bookings.isEmpty()) return List.of();
 
         List<UUID> bookingIds = bookings.stream().map(BookingTransport::getIdBookingTransport).collect(Collectors.toList());
-        List<Payment> payments = paymentRepository.findByBookingTransport_IdBookingTransportIn(bookingIds);
 
+        List<Payment> payments = paymentRepository.findByBookingTransport_IdBookingTransportIn(bookingIds);
         Map<UUID, Payment> paymentMap = payments.stream()
                 .filter(p -> p.getBookingTransport() != null)
                 .collect(Collectors.toMap(p -> p.getBookingTransport().getIdBookingTransport(), p -> p, (existing, replacement) -> existing));
+
+        List<AppliedVoucher> allAppliedVouchers = appliedVoucherRepository.findAppliedVouchersWithVoucherByBookingTransportIds(bookingIds);
+        Map<UUID, List<AppliedVoucher>> voucherMap = allAppliedVouchers.stream()
+                .collect(Collectors.groupingBy(av -> av.getBookingTransport().getIdBookingTransport()));
+
+        List<String> voucherIds = allAppliedVouchers.stream().map(av -> av.getVoucher().getIdVoucher().toString()).distinct().toList();
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        Map<String, String> voucherImagesMap = images.stream().collect(Collectors.toMap(Images::getRefId, Images::getUrl, (a, b) -> a));
 
         return bookings.stream().map(booking -> {
             BookingTransportResponse response = bookingTransportMapper.toBookingTransportResponse(booking);
@@ -284,6 +315,15 @@ public class BookingTransportTicketService {
             if (payment != null) {
                 response.setPaymentInBookingResponse(bookingTransportMapper.toPaymentInBookingResponse(payment));
             }
+
+            List<AppliedVoucher> avs = voucherMap.getOrDefault(booking.getIdBookingTransport(), List.of());
+            List<VoucherViewResponse> vResList = avs.stream().map(av -> {
+                VoucherViewResponse vRes = voucherMapper.toVoucherViewResponse(av.getVoucher());
+                vRes.setUrlImage(voucherImagesMap.get(av.getVoucher().getIdVoucher().toString()));
+                return vRes;
+            }).toList();
+            response.setVoucherViewResponses(vResList);
+
             return response;
         }).collect(Collectors.toList());
     }
@@ -301,7 +341,6 @@ public class BookingTransportTicketService {
         boolean isBusinessUpdatingStatus = request.getStatus() != null && !request.getStatus().isBlank();
 
         if (isBusinessUpdatingStatus) {
-            // TRƯỜNG HỢP 1: BUSINESS CẬP NHẬT TRẠNG THÁI (DUYỆT/TỪ CHỐI)
             List<String> validStatuses = List.of(
                     PredefinedStatusBookingTransport.STATUS_BOOKING_PENDING,
                     PredefinedStatusBookingTransport.STATUS_BOOKING_SUCCESS,
@@ -337,10 +376,9 @@ public class BookingTransportTicketService {
                     .build();
 
         } else {
-            // TRƯỜNG HỢP 2: USER SỬA THÔNG TIN ĐỂ THANH TOÁN LẠI
             bookingTransportMapper.updateBookingTransportFromRequest(request, booking);
 
-            BigDecimal totalPrice = booking.getPriceBookingTransport(); // Lưu tạm
+            BigDecimal totalPrice = booking.getPriceBookingTransport();
 
             if (request.getQuantityTickets() != null && request.getQuantityTickets() > 0) {
                 BigDecimal ticketPrice = booking.getTransportTicket().getPrice() != null ? booking.getTransportTicket().getPrice() : BigDecimal.ZERO;
@@ -349,10 +387,8 @@ public class BookingTransportTicketService {
 
             if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
 
-                // Xóa danh sách voucher đã apply
                 appliedVoucherService.deleteAppliedVoucherForTicket(booking.getIdBookingTransport());
 
-                // Reset lại is_used và usedAt của voucher còn hạn
                 List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingTicketId(booking.getIdBookingTransport());
                 usedVouchers.forEach(uv -> {
                     uv.setIsUsed(false);

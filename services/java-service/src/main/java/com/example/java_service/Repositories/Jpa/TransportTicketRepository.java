@@ -1,7 +1,9 @@
 package com.example.java_service.Repositories.Jpa;
 
+import com.example.java_service.Dto.Response.SimpleItemResponse;
 import com.example.java_service.Models.TransportTicket;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,7 @@ public interface TransportTicketRepository extends JpaRepository<TransportTicket
     List<TransportTicket> findByApprovedFalse();
 
     List<TransportTicket> findByUsers_IdUser(UUID idUser);
+
+    @Query("SELECT new com.example.java_service.Dto.Response.SimpleItemResponse(t.idTicket, CONCAT(t.providerName, ' - ', t.ticketType)) FROM TransportTicket t WHERE t.approved = true")
+    List<SimpleItemResponse> findAllSimpleTransportTickets();
 }

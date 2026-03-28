@@ -13,7 +13,7 @@ public interface ImagesRepository extends MongoRepository<Images, String>
 
     void deleteAllByRefId(String refIds);
 
-    List<Images> findByRefIdOrderByUploadedAtAsc(String idHotel);
+    List<Images> findByRefIdOrderByUploadedAtAsc(String idAccommodation);
 
     List<Images> findByRefIdIn(List<String> refIds);
 

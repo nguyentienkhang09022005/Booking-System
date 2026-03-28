@@ -34,13 +34,13 @@ public class ExpenseController
                 .build();
     }
 
-    // Endpoint lấy danh sách chi tiêu của khách sạn
-    @GetMapping("/get-list-expense-of-hotel")
-    public ApiResponse<List<ExpenseResponse>> getExpenses(@RequestParam UUID idHotel)
+    // Endpoint lấy danh sách chi tiêu của nơi cư trú
+    @GetMapping("/get-list-expense-of-accommodation")
+    public ApiResponse<List<ExpenseResponse>> getExpenses(@RequestParam UUID idAccommodation)
     {
         return ApiResponse.<List<ExpenseResponse>>builder()
                 .message("Lấy danh sách chi tiêu thành công!")
-                .data(expenseService.getListExpense(idHotel))
+                .data(expenseService.getListExpense(idAccommodation))
                 .build();
     }
 

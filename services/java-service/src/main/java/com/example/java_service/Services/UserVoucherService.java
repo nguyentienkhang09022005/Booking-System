@@ -50,7 +50,7 @@ public class UserVoucherService
 
         LocalDate today = LocalDate.now();
 
-        List<UserVoucher> userVouchers = userVoucherRepository.findValidByUserIdAndVoucherEndDateAfterOrEqual(idUser, today);
+        List<UserVoucher> userVouchers = userVoucherRepository.findValidAndUnusedByUserIdAndVoucherEndDateAfterOrEqual(idUser, today);
 
         // Lấy ID của tất cả voucher
         List<String> voucherIds = userVouchers.stream()

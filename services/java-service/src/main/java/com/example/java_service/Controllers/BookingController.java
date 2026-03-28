@@ -28,13 +28,13 @@ public class BookingController
 {
     BookingHandleService bookingHandleService;
 
-    // Endpoint lấy danh sách booking theo khách sạn
+    // Endpoint lấy danh sách booking theo nơi cư trú
     @GetMapping("/getListBooking")
-    public ApiResponse<List<BookingListResponse>> getListBooking(@RequestParam UUID idHotel)
+    public ApiResponse<List<BookingListResponse>> getListBooking(@RequestParam UUID idAccommodation)
     {
         return ApiResponse.<List<BookingListResponse>>builder()
-                .message("Lấy danh sách đặt phòng của khách sạn thành công!")
-                .data(bookingHandleService.getListBooking(idHotel))
+                .message("Lấy danh sách đặt phòng của nơi cư trú thành công!")
+                .data(bookingHandleService.getListBooking(idAccommodation))
                 .build();
     }
 
@@ -48,7 +48,7 @@ public class BookingController
                 .build();
     }
 
-    // Endpoint lấy thông tin booking theo khách sạn
+    // Endpoint lấy thông tin booking theo nơi cư trú
     @GetMapping("/getInfBooking")
     public ApiResponse<BookingResponse> getInfBooking(@RequestParam UUID idBooking)
     {

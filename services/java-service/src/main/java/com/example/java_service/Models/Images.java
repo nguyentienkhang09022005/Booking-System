@@ -19,7 +19,7 @@ public class Images
     @Id
     private String id;
     private String url;
-    private String refId; //id tham chiếu (idRoom, idHotel, idUser, ...)
+    private String refId; //id tham chiếu (idRoom, idAccommodation, idUser, ...)
     private String type; //"room", "hotel", "user", "advertisement"
     private LocalDateTime uploadedAt = LocalDateTime.now();
 }

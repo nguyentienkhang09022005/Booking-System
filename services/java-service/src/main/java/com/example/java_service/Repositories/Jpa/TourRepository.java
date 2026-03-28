@@ -1,5 +1,6 @@
 package com.example.java_service.Repositories.Jpa;
 
+import com.example.java_service.Dto.Response.SimpleItemResponse;
 import com.example.java_service.Models.Tour;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,7 @@ public interface TourRepository extends JpaRepository<Tour, UUID>
 
     @Query("SELECT DISTINCT t FROM Tour t LEFT JOIN FETCH t.tourSchedules")
     List<Tour> findAllToursWithSchedules();
+
+    @Query("SELECT new com.example.java_service.Dto.Response.SimpleItemResponse(t.idTour, t.tourName) FROM Tour t WHERE t.approved = true")
+    List<SimpleItemResponse> findAllSimpleTours();
 }

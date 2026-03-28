@@ -9,11 +9,14 @@ import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.BookingTourResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Dto.Response.PaymentResponse;
+import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.BookingTourMapper;
+import com.example.java_service.Mappers.VoucherMapper;
 import com.example.java_service.Models.*;
 import com.example.java_service.Repositories.Jpa.*;
+import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +55,10 @@ public class BookingTourService {
     UserVoucherService userVoucherService;
     AppliedVoucherService appliedVoucherService;
 
+    AppliedVoucherRepository appliedVoucherRepository;
+    VoucherMapper voucherMapper;
+    ImagesRepository imagesRepository;
+
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
     ObjectMapper objectMapper;
@@ -68,7 +75,6 @@ public class BookingTourService {
 
     public PaymentResponse createBookingTour(BookingTourCreationRequest request, String paymentMethod, String payerAddress) {
         BookingTour savedBookingTour = self.createBookingTourTransactional(request);
-
         return self.callPaymentApi(savedBookingTour, paymentMethod, payerAddress);
     }
 
@@ -97,7 +103,7 @@ public class BookingTourService {
                 .tour(tour)
                 .quantityAdult(qtyAdult)
                 .quantityChild(qtyChild)
-                .priceBookingTour(totalPrice) // Lưu tổng tiền
+                .priceBookingTour(totalPrice)
                 .pickupLocation(request.getPickupLocation())
                 .languageSelected(request.getLanguageSelected())
                 .specialRequests(request.getSpecialRequests())
@@ -111,7 +117,6 @@ public class BookingTourService {
                 Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
                         .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
 
-                // Lưu voucher
                 userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
 
                 AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
@@ -120,7 +125,6 @@ public class BookingTourService {
                         .build();
                 appliedVoucherService.saveAppliedVoucherForTour(appliedVoucherRequest, savedBookingTour.getIdBookingTour());
 
-                // Áp dụng voucher
                 if (voucher.getDiscountPercent() != null && voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal targetPriceForDiscount = BigDecimal.ZERO;
                     String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
@@ -161,19 +165,17 @@ public class BookingTourService {
         savedBookingTour.setPriceBookingTour(totalPrice);
         bookingTourRepository.save(savedBookingTour);
 
-        // --- Gửi thông báo cho người đặt tour ---
         NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
                 .idUser(savedBookingTour.getUsers().getIdUser())
                 .title("Thông báo đặt tour")
-                .content(String.format("Thông tin đơn đặt tour %s của bạn đã được ghi nhận!", savedBookingTour.getTour().getTourName())) // Giả sử model Tour có getTourName()
+                .content(String.format("Thông tin đơn đặt tour %s của bạn đã được ghi nhận!", savedBookingTour.getTour().getTourName()))
                 .type("booking")
                 .idRef(savedBookingTour.getIdBookingTour().toString())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // --- Gửi thông báo cho người chủ tour ---
         NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
                 .idUser(savedBookingTour.getTour().getUsers().getIdUser())
@@ -186,19 +188,8 @@ public class BookingTourService {
                 .build();
 
         try {
-            // Gửi cho user
-            rabbitTemplate.convertAndSend(
-                    rabbitConfig.EXCHANGE_NOTIFICATION,
-                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
-                    objectMapper.writeValueAsString(userEvent)
-            );
-
-            // Gửi cho owner
-            rabbitTemplate.convertAndSend(
-                    rabbitConfig.EXCHANGE_NOTIFICATION,
-                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
-                    objectMapper.writeValueAsString(ownerEvent)
-            );
+            rabbitTemplate.convertAndSend(rabbitConfig.EXCHANGE_NOTIFICATION, rabbitConfig.ROUTING_KEY_NOTIFICATION, objectMapper.writeValueAsString(userEvent));
+            rabbitTemplate.convertAndSend(rabbitConfig.EXCHANGE_NOTIFICATION, rabbitConfig.ROUTING_KEY_NOTIFICATION, objectMapper.writeValueAsString(ownerEvent));
         } catch (Exception ex) {
             log.error("Lỗi khi gửi thông báo đặt tour: {}", ex.getMessage());
         }
@@ -206,12 +197,10 @@ public class BookingTourService {
         return savedBookingTour;
     }
 
-    // Gọi API Thanh toán
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PaymentResponse callPaymentApi(BookingTour bookingTour, String paymentMethod, String payerAddress) {
         try {
             if ("VNDStablecoin".equals(paymentMethod) && payerAddress != null && !payerAddress.isBlank()) {
-                // Flow thanh toán bằng Crypto/Stablecoin
                 Map<String, Object> vndRequest = Map.of(
                         "id_user", bookingTour.getUsers().getIdUser(),
                         "id_booking_tour", bookingTour.getIdBookingTour(),
@@ -244,7 +233,6 @@ public class BookingTourService {
                         .orderId(vndResponse.get("order_id") != null ? vndResponse.get("order_id").toString() : null)
                         .build();
             } else {
-                // Flow thanh toán mặc định (ZaloPay, v.v...)
                 PaymentRequest paymentRequest = PaymentRequest.builder()
                         .id_user(bookingTour.getUsers().getIdUser())
                         .id_booking(null)
@@ -287,75 +275,71 @@ public class BookingTourService {
             response.setPaymentInBookingResponse(bookingTourMapper.toPaymentInBookingResponse(payment));
         }
 
+        // Lấy danh sách Voucher áp dụng
+        List<AppliedVoucher> appliedVouchers = appliedVoucherRepository.findAppliedVouchersWithVoucherByBookingTourId(idBookingTour);
+        List<String> voucherIds = appliedVouchers.stream()
+                .map(appliedVoucher -> appliedVoucher.getVoucher().getIdVoucher().toString())
+                .toList();
+
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        Map<String, String> voucherImagesMap = images.stream().collect(Collectors.toMap(Images::getRefId, Images::getUrl, (a, b) -> a));
+
+        List<VoucherViewResponse> voucherViewResponses = appliedVouchers.stream().map(av -> {
+            VoucherViewResponse voucherViewResponse = voucherMapper.toVoucherViewResponse(av.getVoucher());
+            voucherViewResponse.setUrlImage(voucherImagesMap.get(av.getVoucher().getIdVoucher().toString()));
+            return voucherViewResponse;
+        }).toList();
+
+        response.setVoucherViewResponses(voucherViewResponses);
+
         return response;
     }
 
     public List<BookingTourResponse> getListBookingTourByUser(UUID idUser) {
         List<BookingTour> bookings = bookingTourRepository.findByUsers_IdUser(idUser);
-
-        if (bookings.isEmpty()) {
-            return List.of();
-        }
-
-        // Lấy danh sách ID để query Payment 1 lần
-        List<UUID> bookingTourIds = bookings.stream()
-                .map(BookingTour::getIdBookingTour)
-                .collect(Collectors.toList());
-
-        List<Payment> payments = paymentRepository.findByBookingTour_IdBookingTourIn(bookingTourIds);
-
-        Map<UUID, Payment> paymentMap = payments.stream()
-                .filter(p -> p.getBookingTour() != null)
-                .collect(Collectors.toMap(
-                        p -> p.getBookingTour().getIdBookingTour(),
-                        p -> p,
-                        (existing, replacement) -> existing
-                ));
-
-        return bookings.stream().map(booking -> {
-            BookingTourResponse response = bookingTourMapper.toBookingTourResponse(booking);
-
-            Payment payment = paymentMap.get(booking.getIdBookingTour());
-            if (payment != null) {
-                response.setPaymentInBookingResponse(bookingTourMapper.toPaymentInBookingResponse(payment));
-            }
-
-            return response;
-        }).collect(Collectors.toList());
+        return mapToResponseList(bookings);
     }
 
     public List<BookingTourResponse> getListBookingTourByBusiness(UUID idUser) {
         userRepository.findById(idUser).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)
         );
-
         List<BookingTour> bookings = bookingTourRepository.findByTour_Users_IdUser(idUser);
+        return mapToResponseList(bookings);
+    }
 
-        if (bookings.isEmpty()) {
-            return List.of();
-        }
+    private List<BookingTourResponse> mapToResponseList(List<BookingTour> bookings) {
+        if (bookings.isEmpty()) return List.of();
 
-        List<UUID> bookingTourIds = bookings.stream()
-                .map(BookingTour::getIdBookingTour)
-                .collect(Collectors.toList());
+        List<UUID> bookingTourIds = bookings.stream().map(BookingTour::getIdBookingTour).collect(Collectors.toList());
 
         List<Payment> payments = paymentRepository.findByBookingTour_IdBookingTourIn(bookingTourIds);
-
         Map<UUID, Payment> paymentMap = payments.stream()
                 .filter(p -> p.getBookingTour() != null)
-                .collect(Collectors.toMap(
-                        p -> p.getBookingTour().getIdBookingTour(),
-                        p -> p,
-                        (existing, replacement) -> existing
-                ));
+                .collect(Collectors.toMap(p -> p.getBookingTour().getIdBookingTour(), p -> p, (existing, replacement) -> existing));
+
+        List<AppliedVoucher> allAppliedVouchers = appliedVoucherRepository.findAppliedVouchersWithVoucherByBookingTourIds(bookingTourIds);
+        Map<UUID, List<AppliedVoucher>> voucherMap = allAppliedVouchers.stream()
+                .collect(Collectors.groupingBy(av -> av.getBookingTour().getIdBookingTour()));
+
+        List<String> voucherIds = allAppliedVouchers.stream().map(av -> av.getVoucher().getIdVoucher().toString()).distinct().toList();
+        List<Images> images = imagesRepository.findByRefIdIn(voucherIds);
+        Map<String, String> voucherImagesMap = images.stream().collect(Collectors.toMap(Images::getRefId, Images::getUrl, (a, b) -> a));
 
         return bookings.stream().map(booking -> {
             BookingTourResponse response = bookingTourMapper.toBookingTourResponse(booking);
-
             Payment payment = paymentMap.get(booking.getIdBookingTour());
             if (payment != null) {
                 response.setPaymentInBookingResponse(bookingTourMapper.toPaymentInBookingResponse(payment));
             }
+
+            List<AppliedVoucher> avs = voucherMap.getOrDefault(booking.getIdBookingTour(), List.of());
+            List<VoucherViewResponse> vResList = avs.stream().map(av -> {
+                VoucherViewResponse vRes = voucherMapper.toVoucherViewResponse(av.getVoucher());
+                vRes.setUrlImage(voucherImagesMap.get(av.getVoucher().getIdVoucher().toString()));
+                return vRes;
+            }).toList();
+            response.setVoucherViewResponses(vResList);
 
             return response;
         }).collect(Collectors.toList());
@@ -374,7 +358,6 @@ public class BookingTourService {
         boolean isBusinessUpdatingStatus = request.getStatus() != null && !request.getStatus().isBlank();
 
         if (isBusinessUpdatingStatus) {
-            // TRƯỜNG HỢP 1: BUSINESS CẬP NHẬT TRẠNG THÁI
             List<String> validStatuses = List.of(
                     PredefinedStatusBookingTour.STATUS_BOOKING_PENDING,
                     PredefinedStatusBookingTour.STATUS_BOOKING_SUCCESS,
@@ -410,10 +393,8 @@ public class BookingTourService {
                     .build();
 
         } else {
-            // TRƯỜNG HỢP 2: USER SỬA THÔNG TIN ĐỂ THANH TOÁN LẠI
             bookingTourMapper.updateBookingTourFromRequest(request, bookingTour);
 
-            // Tính toán lại giá tiền ban đầu
             int qtyAdult = bookingTour.getQuantityAdult() != null ? bookingTour.getQuantityAdult() : 1;
             int qtyChild = bookingTour.getQuantityChild() != null ? bookingTour.getQuantityChild() : 0;
 
@@ -424,10 +405,8 @@ public class BookingTourService {
 
             if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
 
-                // Xóa danh sách voucher đã apply cũ
                 appliedVoucherService.deleteAppliedVoucherForTour(bookingTour.getIdBookingTour());
 
-                // Reset lại is_used và usedAt của voucher còn hạn
                 List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingTourId(bookingTour.getIdBookingTour());
                 usedVouchers.forEach(uv -> {
                     uv.setIsUsed(false);
@@ -534,7 +513,6 @@ public class BookingTourService {
         bookingTour.setStatus(PredefinedStatusBookingTour.STATUS_BOOKING_FAILED);
         bookingTourRepository.save(bookingTour);
 
-        // --- Thông báo cho người chủ tour ---
         NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
                 .idUser(bookingTour.getTour().getUsers().getIdUser())

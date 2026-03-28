@@ -1,7 +1,9 @@
 package com.example.java_service.Repositories.Jpa;
 
+import com.example.java_service.Dto.Response.SimpleItemResponse;
 import com.example.java_service.Models.Accommodation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +21,7 @@ public interface AccommodationRepository extends JpaRepository<Accommodation, UU
     List<Accommodation> findAllByApprovedTrue();
 
     List<Accommodation> findAllByApprovedFalse();
+
+    @Query("SELECT new com.example.java_service.Dto.Response.SimpleItemResponse(a.idAccommodation, a.accommodationName) FROM Accommodation a WHERE a.approved = true")
+    List<SimpleItemResponse> findAllSimpleAccommodations();
 }

@@ -25,11 +25,11 @@ public class RoomController
 
     // Endpoint lấy danh sách phòng
     @GetMapping("/getListRoom")
-    public ApiResponse<List<GetRoomResponse>> getRooms(@RequestParam UUID idHotel)
+    public ApiResponse<List<GetRoomResponse>> getRooms(@RequestParam UUID idAccommodation)
     {
         return ApiResponse.<List<GetRoomResponse>>builder()
                 .message("Lấy danh sách phòng thành công!")
-                .data(roomService.getListRoom(idHotel))
+                .data(roomService.getListRoom(idAccommodation))
                 .build();
     }
 

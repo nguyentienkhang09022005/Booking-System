@@ -12,6 +12,7 @@ import java.util.UUID;
 @Repository
 public interface AppliedVoucherRepository extends JpaRepository<AppliedVoucher, UUID>
 {
+
     void deleteAppliedVoucherByBooking_IdBooking(UUID idBooking);
 
     @Query("""
@@ -20,6 +21,13 @@ public interface AppliedVoucherRepository extends JpaRepository<AppliedVoucher, 
         JOIN FETCH av.voucher v
         WHERE av.booking.idBooking = :idBooking""")
     List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingId(@Param("idBooking") UUID idBooking);
+
+    @Query("""
+        SELECT av
+        FROM AppliedVoucher av
+        JOIN FETCH av.voucher v
+        WHERE av.booking.idBooking IN :idBookings""")
+    List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingIds(@Param("idBookings") List<UUID> idBookings);
 
 
     void deleteAppliedVoucherByBookingTour_IdBookingTour(UUID idBookingTour);
@@ -31,6 +39,12 @@ public interface AppliedVoucherRepository extends JpaRepository<AppliedVoucher, 
         WHERE av.bookingTour.idBookingTour = :idBookingTour""")
     List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingTourId(@Param("idBookingTour") UUID idBookingTour);
 
+    @Query("""
+        SELECT av
+        FROM AppliedVoucher av
+        JOIN FETCH av.voucher v
+        WHERE av.bookingTour.idBookingTour IN :idBookingTours""")
+    List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingTourIds(@Param("idBookingTours") List<UUID> idBookingTours);
 
     void deleteAppliedVoucherByBookingTransport_IdBookingTransport(UUID idBookingTransport);
 
@@ -40,4 +54,11 @@ public interface AppliedVoucherRepository extends JpaRepository<AppliedVoucher, 
         JOIN FETCH av.voucher v
         WHERE av.bookingTransport.idBookingTransport = :idBookingTransport""")
     List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingTransportId(@Param("idBookingTransport") UUID idBookingTransport);
+
+    @Query("""
+        SELECT av
+        FROM AppliedVoucher av
+        JOIN FETCH av.voucher v
+        WHERE av.bookingTransport.idBookingTransport IN :idBookingTransports""")
+    List<AppliedVoucher> findAppliedVouchersWithVoucherByBookingTransportIds(@Param("idBookingTransports") List<UUID> idBookingTransports);
 }

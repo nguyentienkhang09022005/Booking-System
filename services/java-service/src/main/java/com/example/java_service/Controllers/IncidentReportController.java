@@ -33,17 +33,17 @@ public class IncidentReportController
                 .build();
     }
 
-    // Endpoint lấy danh sách báo cáo sự cố của khách sạn
-    @GetMapping("/get-list-incident-report-of-hotel")
-    public ApiResponse<List<IncidentReportResponse>> getIncidentReports(@RequestParam UUID idHotel)
+    // Endpoint lấy danh sách báo cáo sự cố của nơi cư trú
+    @GetMapping("/get-list-incident-report-of-accommodation")
+    public ApiResponse<List<IncidentReportResponse>> getIncidentReports(@RequestParam UUID idAccommodation)
     {
         return ApiResponse.<List<IncidentReportResponse>>builder()
                 .message("Lấy danh sách báo cáo sự cố thành công!")
-                .data(incidentReportService.getListIncidentReport(idHotel))
+                .data(incidentReportService.getListIncidentReport(idAccommodation))
                 .build();
     }
 
-    // Endpoint lấy danh sách báo cáo sự cố của khách sạn
+    // Endpoint lấy danh sách báo cáo sự cố của nơi cư trú
     @GetMapping("/get-list-incident-report-of-user")
     public ApiResponse<List<IncidentReportResponse>> getIncidentReportsOfUser(@RequestParam UUID idUser, @RequestParam UUID idBooking)
     {

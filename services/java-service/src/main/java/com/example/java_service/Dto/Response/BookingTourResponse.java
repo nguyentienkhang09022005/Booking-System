@@ -5,6 +5,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -24,4 +25,5 @@ public class BookingTourResponse
     PaymentInBookingResponse paymentInBookingResponse;
     LocalDateTime createdAt;
     TourResponse tourResponse;
+    List<VoucherViewResponse> voucherViewResponses;
 }

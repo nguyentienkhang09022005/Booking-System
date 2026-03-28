@@ -26,11 +26,11 @@ public class ServiceController
 
     // Endpoint lấy danh sách dịch vụ
     @GetMapping("/getListService")
-    public ApiResponse<List<ServiceResponse>> getServices(@RequestParam UUID idHotel)
+    public ApiResponse<List<ServiceResponse>> getServices(@RequestParam UUID idAccommodation)
     {
         return ApiResponse.<List<ServiceResponse>>builder()
                 .message("Lấy danh sách dịch vụ thành công!")
-                .data(serviceService.getListService(idHotel))
+                .data(serviceService.getListService(idAccommodation))
                 .build();
     }
 
