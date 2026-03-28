@@ -66,6 +66,7 @@ contract PaymentGateway is EIP712, Ownable {
     /// @param order     Structured payment data signed by the user
     /// @param signature EIP-712 signature from order.payer
     function executePayment(PaymentOrder calldata order, bytes calldata signature) external {
+        require(order.amount > 0, "Amount must be positive");
         require(!processedOrders[order.orderId], "Order already processed");
         require(block.timestamp <= order.deadline, "Order expired");
         require(nonces[order.payer] == order.nonce, "Invalid nonce");

@@ -129,6 +129,14 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 		return
 	}
 
+	// Pre-check deadline with 60s buffer for mining time — avoids wasting relayer gas
+	bufferSeconds := int64(60)
+	if time.Now().Unix()+bufferSeconds > req.Order.Deadline {
+		_ = vc._paymentRepository.UpdateVndPaymentFailed(idPayment, "")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment order has expired or will expire before mining"})
+		return
+	}
+
 	// Fail-fast: verify signature locally before spending relayer gas
 	valid, err := vc._blockchainService.VerifySignature(req.Order, req.Signature)
 	if err != nil || !valid {
@@ -138,13 +146,6 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 		}
 		_ = vc._paymentRepository.UpdateVndPaymentFailed(idPayment, "")
 		c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
-		return
-	}
-
-	// FIX 3: Pre-check deadline before spending relayer gas
-	if time.Now().Unix() > req.Order.Deadline {
-		_ = vc._paymentRepository.UpdateVndPaymentFailed(idPayment, "")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment order has expired"})
 		return
 	}
 

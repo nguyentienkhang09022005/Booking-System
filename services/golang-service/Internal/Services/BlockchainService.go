@@ -111,6 +111,11 @@ func (b *blockchainService) PreparePaymentOrder(
 		return nil, fmt.Errorf("failed to get nonce: %w", err)
 	}
 
+	// VND has 0 decimals — reject fractional amounts to prevent DB/on-chain discrepancy
+	if amount != float64(uint64(amount)) {
+		return nil, fmt.Errorf("amount must be a whole number (VND has no fractional units), got: %f", amount)
+	}
+
 	deadline := time.Now().Add(time.Hour).Unix()
 	amountInt := uint64(amount)
 
