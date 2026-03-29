@@ -3,9 +3,9 @@ import { NotificationModel } from '../../collection/Notification.ts';
 import { emitNotification } from '../../config/socket.ts'; 
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
-const EXCHANGE_NAME = 'notification-exchange';
-const QUEUE_NAME = 'notification-queue';
-const ROUTING_KEY = 'notification-routing-key';
+const EXCHANGE_NAME = process.env.EXCHANGE_NAME || 'exchange-notification-1';
+const QUEUE_NAME = process.env.QUEUE_NAME || 'queue-notification-1';
+const ROUTING_KEY = process.env.ROUTING_KEY || 'key-notification-1';
 
 export const startNotificationConsumer = async () => {
   try {
