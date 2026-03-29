@@ -1,14 +1,19 @@
 import amqp from 'amqplib';
 import { NotificationModel } from '../../collection/Notification.ts'; 
 import { emitNotification } from '../../config/socket.ts'; 
+import dotenv from 'dotenv';
 
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
-const EXCHANGE_NAME = process.env.EXCHANGE_NAME || 'exchange-notification-1';
-const QUEUE_NAME = process.env.QUEUE_NAME || 'queue-notification-1';
-const ROUTING_KEY = process.env.ROUTING_KEY || 'key-notification-1';
+dotenv.config(); 
 
 export const startNotificationConsumer = async () => {
+  const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqps://dzwsyynb:PAr89nKtXlcQTvzEktRhiqr8gkCXRfZv@armadillo.rmq.cloudamqp.com/dzwsyynb';
+  const EXCHANGE_NAME = process.env.EXCHANGE_NAME || 'exchange-notification-1';
+  const QUEUE_NAME = process.env.QUEUE_NAME || 'queue-notification-1';
+  const ROUTING_KEY = process.env.ROUTING_KEY || 'key-notification-1';
+
   try {
+    console.log(`👀 DEBUG - Đang kết nối tới RabbitMQ tại: ${RABBITMQ_URL}`);
+    
     const connection = await amqp.connect(RABBITMQ_URL);
     const channel = await connection.createChannel();
 
