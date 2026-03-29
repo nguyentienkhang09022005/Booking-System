@@ -35,7 +35,7 @@ export const startNotificationConsumer = async () => {
             content: eventData.content,
             type: eventData.type,
             refId: eventData.idRef,
-            isRead: eventData.isRead,
+            isRead: eventData.isReadm ?? false,
             createdAt: new Date(eventData.createdAt)
         });
 
