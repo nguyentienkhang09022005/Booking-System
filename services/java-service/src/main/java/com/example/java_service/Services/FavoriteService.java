@@ -84,7 +84,7 @@ public class FavoriteService {
         favorite.setCreatedAt(LocalDateTime.now());
         favoriteRepository.save(favorite);
 
-        String fullName = String.join(" ", user.getFirstName(), user.getLastName());
+        String fullName = String.join("", user.getFirstName(), user.getLastName());
 
         // Gửi sự kiện vào Exchanges
         NotificationCreatedEvent event = NotificationCreatedEvent.builder()
