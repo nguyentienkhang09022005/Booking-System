@@ -575,7 +575,7 @@ var startNotificationConsumer = async () => {
           content: eventData.content,
           type: eventData.type,
           refId: eventData.idRef,
-          isRead: eventData.isRead,
+          isRead: eventData.read ?? false,
           createdAt: new Date(eventData.createdAt)
         });
         await newNotification.save();
