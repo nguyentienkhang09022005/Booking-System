@@ -366,20 +366,19 @@ var notification_default = router2;
 import swaggerJsdoc from "swagger-jsdoc";
 import dotenv2 from "dotenv";
 dotenv2.config();
-var serverUrl = process.env.SERVER_URL || "/";
 var options = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "Node.js Chat Service API",
-      version: "1.0.0",
+      version: "2.0.0",
       description: "API documentation for the Chat Service"
     },
     servers: [
-      {
-        url: serverUrl,
-        description: "Server"
-      },
+      // {
+      //   url: serverUrl, 
+      //   description: "Server",
+      // },
       {
         url: "http://localhost:3000",
         description: "Local"
@@ -552,9 +551,9 @@ async function connectMongo() {
 // src/services/rabbitmq/NotificationConsumer.ts
 import amqp from "amqplib";
 var RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
-var EXCHANGE_NAME = "notification-exchange";
-var QUEUE_NAME = "notification-queue";
-var ROUTING_KEY = "notification-routing-key";
+var EXCHANGE_NAME = process.env.EXCHANGE_NAME || "exchange-notification-1";
+var QUEUE_NAME = process.env.QUEUE_NAME || "queue-notification-1";
+var ROUTING_KEY = process.env.ROUTING_KEY || "key-notification-1";
 var startNotificationConsumer = async () => {
   try {
     const connection = await amqp.connect(RABBITMQ_URL);
