@@ -12,6 +12,7 @@ import com.example.java_service.Dto.Response.PaymentResponse;
 import com.example.java_service.Dto.Response.VoucherViewResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
+import com.example.java_service.Helpers.VoucherValidationHelper;
 import com.example.java_service.Mappers.BookingTourMapper;
 import com.example.java_service.Mappers.VoucherMapper;
 import com.example.java_service.Models.*;
@@ -34,9 +35,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,6 +62,7 @@ public class BookingTourService {
     RabbitConfig rabbitConfig;
     ObjectMapper objectMapper;
     WebClient webClient;
+    VoucherValidationHelper voucherValidationHelper;
 
     @NonFinal
     BookingTourService self;
@@ -113,9 +113,18 @@ public class BookingTourService {
         BookingTour savedBookingTour = bookingTourRepository.save(bookingTour);
 
         if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
+            List<UUID> voucherIds = request.getUserVoucherRequests().stream()
+                    .map(UserVoucherCreationRequest::getIdVoucher)
+                    .toList();
+            List<Voucher> vouchers = voucherRepository.findAllWithAccommodationAndUsersByIds(voucherIds);
+            Map<UUID, Voucher> voucherMap = vouchers.stream().collect(Collectors.toMap(Voucher::getIdVoucher, v -> v));
+            voucherValidationHelper.validateVouchersForTour(vouchers, tour.getUsers().getIdUser());
+
             for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
-                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
-                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+                Voucher voucher = voucherMap.get(userVoucherRequest.getIdVoucher());
+                if (voucher == null) {
+                    throw new ApiException(ErrorCode.VOUCHER_NOT_FOUND);
+                }
 
                 userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
 
@@ -403,22 +412,31 @@ public class BookingTourService {
 
             BigDecimal totalPrice = adultPrice.multiply(BigDecimal.valueOf(qtyAdult)).add(childPrice.multiply(BigDecimal.valueOf(qtyChild)));
 
-            if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
+                if (request.getUserVoucherRequests() != null && !request.getUserVoucherRequests().isEmpty()) {
 
-                appliedVoucherService.deleteAppliedVoucherForTour(bookingTour.getIdBookingTour());
+                    appliedVoucherService.deleteAppliedVoucherForTour(bookingTour.getIdBookingTour());
 
-                List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingTourId(bookingTour.getIdBookingTour());
-                usedVouchers.forEach(uv -> {
-                    uv.setIsUsed(false);
-                    uv.setUsedAt(null);
-                });
-                userVoucherRepository.saveAll(usedVouchers);
+                    List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingTourId(bookingTour.getIdBookingTour());
+                    usedVouchers.forEach(uv -> {
+                        uv.setIsUsed(false);
+                        uv.setUsedAt(null);
+                    });
+                    userVoucherRepository.saveAll(usedVouchers);
 
-                for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
-                    Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
-                            .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+                    List<UUID> voucherIds = request.getUserVoucherRequests().stream()
+                            .map(UserVoucherCreationRequest::getIdVoucher)
+                            .toList();
+                    List<Voucher> vouchers = voucherRepository.findAllWithAccommodationAndUsersByIds(voucherIds);
+                    Map<UUID, Voucher> voucherMap = vouchers.stream().collect(Collectors.toMap(Voucher::getIdVoucher, v -> v));
+                    voucherValidationHelper.validateVouchersForTour(vouchers, bookingTour.getTour().getUsers().getIdUser());
 
-                    userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
+                    for (UserVoucherCreationRequest userVoucherRequest : request.getUserVoucherRequests()) {
+                        Voucher voucher = voucherMap.get(userVoucherRequest.getIdVoucher());
+                        if (voucher == null) {
+                            throw new ApiException(ErrorCode.VOUCHER_NOT_FOUND);
+                        }
+
+                        userVoucherService.saveUserVoucherForBookingTourAndTicket(userVoucherRequest, request.getIdUser());
 
                     AppliedVoucherRequest appliedVoucherRequest = AppliedVoucherRequest.builder()
                             .idUser(request.getIdUser())

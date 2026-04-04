@@ -30,4 +30,7 @@ public interface VoucherRepository extends JpaRepository<Voucher, UUID>
     WHERE v.idVoucher = :idVoucher AND v.quantity >= :defaultQuantity""")
     int decreaseVoucherQuantity(@Param("idVoucher") UUID idVoucher,
                                 @Param("defaultQuantity") int defaultQuantity);
+
+    @Query("SELECT v FROM Voucher v LEFT JOIN FETCH v.accommodation ac LEFT JOIN FETCH ac.users WHERE v.idVoucher IN :ids")
+    List<Voucher> findAllWithAccommodationAndUsersByIds(@Param("ids") List<UUID> ids);
 }

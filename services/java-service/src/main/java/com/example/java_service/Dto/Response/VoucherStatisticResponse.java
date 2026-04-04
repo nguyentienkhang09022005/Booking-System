@@ -10,7 +10,8 @@ import java.math.BigDecimal;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VoucherStatisticResponse {
-    String applyTo; // ALL, ROOM, SERVICE, TOUR, TICKET
+    String applyTo;
+    String sponsorType;
     int quantityUsed;
     BigDecimal totalDiscountValue;
 }

@@ -1,6 +1,7 @@
 package com.example.java_service.Services;
 
 import com.example.java_service.Constant.PredefinedApplyTo;
+import com.example.java_service.Constant.PredefinedSponsorType;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Mappers.BookingMapper;
 import com.example.java_service.Mappers.BookingTourMapper;
@@ -71,9 +72,12 @@ public class BookingFilterService {
         Map<UUID, List<AppliedVoucher>> voucherMap = allAppliedVouchers.stream().collect(Collectors.groupingBy(av -> av.getBooking().getIdBooking()));
 
         Map<String, Object[]> statsMap = new HashMap<>();
-        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL, new Object[]{0, BigDecimal.ZERO});
-        statsMap.put(PredefinedApplyTo.APPLY_TO_ROOM, new Object[]{0, BigDecimal.ZERO});
-        statsMap.put(PredefinedApplyTo.APPLY_TO_SERVICE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL + "_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL + "_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ROOM + "_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ROOM + "_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_SERVICE + "_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_SERVICE + "_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
 
         for (Booking booking : bookings) {
             UUID bId = booking.getIdBooking();
@@ -98,6 +102,8 @@ public class BookingFilterService {
                 if (voucher.getDiscountPercent() == null || voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+                String sponsorType = voucher.getSponsorType() != null ? voucher.getSponsorType().toUpperCase() : PredefinedSponsorType.SYSTEM_TYPE;
+                String statKey = applyTo + "_" + sponsorType;
                 BigDecimal targetPrice = BigDecimal.ZERO;
 
                 switch (applyTo) {
@@ -127,7 +133,11 @@ public class BookingFilterService {
                         break;
                 }
 
-                Object[] stat = statsMap.get(applyTo);
+                Object[] stat = statsMap.get(statKey);
+                if (stat == null) {
+                    stat = new Object[]{0, BigDecimal.ZERO};
+                    statsMap.put(statKey, stat);
+                }
                 stat[0] = (int) stat[0] + 1;
                 stat[1] = ((BigDecimal) stat[1]).add(discount);
             }
@@ -135,11 +145,15 @@ public class BookingFilterService {
 
         List<VoucherStatisticResponse> voucherStats = statsMap.entrySet().stream()
                 .filter(entry -> (int) entry.getValue()[0] > 0)
-                .map(entry -> VoucherStatisticResponse.builder()
-                        .applyTo(entry.getKey())
-                        .quantityUsed((int) entry.getValue()[0])
-                        .totalDiscountValue((BigDecimal) entry.getValue()[1])
-                        .build())
+                .map(entry -> {
+                    String[] parts = entry.getKey().split("_");
+                    return VoucherStatisticResponse.builder()
+                            .applyTo(parts[0])
+                            .sponsorType(parts[1])
+                            .quantityUsed((int) entry.getValue()[0])
+                            .totalDiscountValue((BigDecimal) entry.getValue()[1])
+                            .build();
+                })
                 .toList();
 
         List<BookingListResponse> bookingListResponses = bookings.stream()
@@ -162,8 +176,10 @@ public class BookingFilterService {
                 .collect(Collectors.groupingBy(av -> av.getBookingTour().getIdBookingTour()));
 
         Map<String, Object[]> statsMap = new HashMap<>();
-        statsMap.put(PredefinedApplyTo.APPLY_TO_TOUR, new Object[]{0, BigDecimal.ZERO});
-        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_TOUR + "_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_TOUR + "_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL + "_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL + "_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
 
         for (BookingTour booking : bookings) {
             UUID bId = booking.getIdBookingTour();
@@ -178,6 +194,8 @@ public class BookingFilterService {
                 if (voucher.getDiscountPercent() == null || voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+                String sponsorType = voucher.getSponsorType() != null ? voucher.getSponsorType().toUpperCase() : PredefinedSponsorType.SYSTEM_TYPE;
+                String statKey = applyTo + "_" + sponsorType;
 
                 if (remainingPrice.compareTo(BigDecimal.ZERO) <= 0) continue;
 
@@ -189,8 +207,11 @@ public class BookingFilterService {
 
                 remainingPrice = remainingPrice.subtract(discount);
 
-                statsMap.putIfAbsent(applyTo, new Object[]{0, BigDecimal.ZERO});
-                Object[] stat = statsMap.get(applyTo);
+                Object[] stat = statsMap.get(statKey);
+                if (stat == null) {
+                    stat = new Object[]{0, BigDecimal.ZERO};
+                    statsMap.put(statKey, stat);
+                }
                 stat[0] = (int) stat[0] + 1;
                 stat[1] = ((BigDecimal) stat[1]).add(discount);
             }
@@ -198,11 +219,15 @@ public class BookingFilterService {
 
         List<VoucherStatisticResponse> voucherStats = statsMap.entrySet().stream()
                 .filter(entry -> (int) entry.getValue()[0] > 0)
-                .map(entry -> VoucherStatisticResponse.builder()
-                        .applyTo(entry.getKey())
-                        .quantityUsed((int) entry.getValue()[0])
-                        .totalDiscountValue((BigDecimal) entry.getValue()[1])
-                        .build())
+                .map(entry -> {
+                    String[] parts = entry.getKey().split("_");
+                    return VoucherStatisticResponse.builder()
+                            .applyTo(parts[0])
+                            .sponsorType(parts[1])
+                            .quantityUsed((int) entry.getValue()[0])
+                            .totalDiscountValue((BigDecimal) entry.getValue()[1])
+                            .build();
+                })
                 .toList();
 
         List<BookingTourResponse> bookingResponses = bookings.stream()
@@ -235,8 +260,10 @@ public class BookingFilterService {
                 .collect(Collectors.groupingBy(av -> av.getBookingTransport().getIdBookingTransport()));
 
         Map<String, Object[]> statsMap = new HashMap<>();
-        statsMap.put("TICKET", new Object[]{0, BigDecimal.ZERO});
-        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put("TICKET_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put("TICKET_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL + "_" + PredefinedSponsorType.SYSTEM_TYPE, new Object[]{0, BigDecimal.ZERO});
+        statsMap.put(PredefinedApplyTo.APPLY_TO_ALL + "_" + PredefinedSponsorType.BUSINESS_TYPE, new Object[]{0, BigDecimal.ZERO});
 
         for (BookingTransport booking : bookings) {
             UUID bId = booking.getIdBookingTransport();
@@ -251,6 +278,8 @@ public class BookingFilterService {
                 if (voucher.getDiscountPercent() == null || voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 String applyTo = voucher.getApplyTo() != null ? voucher.getApplyTo().toUpperCase() : PredefinedApplyTo.APPLY_TO_ALL;
+                String sponsorType = voucher.getSponsorType() != null ? voucher.getSponsorType().toUpperCase() : PredefinedSponsorType.SYSTEM_TYPE;
+                String statKey = applyTo + "_" + sponsorType;
 
                 if (remainingPrice.compareTo(BigDecimal.ZERO) <= 0) continue;
 
@@ -262,8 +291,11 @@ public class BookingFilterService {
 
                 remainingPrice = remainingPrice.subtract(discount);
 
-                statsMap.putIfAbsent(applyTo, new Object[]{0, BigDecimal.ZERO});
-                Object[] stat = statsMap.get(applyTo);
+                Object[] stat = statsMap.get(statKey);
+                if (stat == null) {
+                    stat = new Object[]{0, BigDecimal.ZERO};
+                    statsMap.put(statKey, stat);
+                }
                 stat[0] = (int) stat[0] + 1;
                 stat[1] = ((BigDecimal) stat[1]).add(discount);
             }
@@ -271,11 +303,15 @@ public class BookingFilterService {
 
         List<VoucherStatisticResponse> voucherStats = statsMap.entrySet().stream()
                 .filter(entry -> (int) entry.getValue()[0] > 0)
-                .map(entry -> VoucherStatisticResponse.builder()
-                        .applyTo(entry.getKey())
-                        .quantityUsed((int) entry.getValue()[0])
-                        .totalDiscountValue((BigDecimal) entry.getValue()[1])
-                        .build())
+                .map(entry -> {
+                    String[] parts = entry.getKey().split("_");
+                    return VoucherStatisticResponse.builder()
+                            .applyTo(parts[0])
+                            .sponsorType(parts[1])
+                            .quantityUsed((int) entry.getValue()[0])
+                            .totalDiscountValue((BigDecimal) entry.getValue()[1])
+                            .build();
+                })
                 .toList();
 
         List<BookingTransportResponse> bookingResponses = bookings.stream()

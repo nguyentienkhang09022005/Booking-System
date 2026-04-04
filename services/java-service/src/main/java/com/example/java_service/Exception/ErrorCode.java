@@ -98,6 +98,8 @@ public enum ErrorCode
     SYSTEM_VOUCHER_MODIFICATION_DENIED("SYSTEM_VOUCHER_MODIFICATION_DENIED", "Không thể chỉnh sửa voucher của hệ thống thông qua API này!", HttpStatus.BAD_REQUEST),
     BUSINESS_VOUCHER_MODIFICATION_DENIED("BUSINESS_VOUCHER_MODIFICATION_DENIED", "Không thể chỉnh sửa voucher của doanh nghiệp thông qua API này!", HttpStatus.BAD_REQUEST),
     VOUCHER_NOT_APPLICABLE("VOUCHER_NOT_APPLICABLE", "Đơn hàng không có hạng mục phù hợp để áp dụng voucher này!", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_BELONG_TO_TOUR("VOUCHER_NOT_BELONG_TO_TOUR", "Voucher không thuộc về tour này!", HttpStatus.BAD_REQUEST),
+    VOUCHER_NOT_BELONG_TO_TRANSPORT("VOUCHER_NOT_BELONG_TO_TRANSPORT", "Voucher không thuộc về vé di chuyển này!", HttpStatus.BAD_REQUEST),
 
     // Lỗi UserVoucher
     VOUCHER_ALREADY_SAVED("VOUCHER_ALREADY_SAVED", "Voucher đã được lưu!", HttpStatus.CONFLICT),

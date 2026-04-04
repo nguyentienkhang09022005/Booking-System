@@ -6,6 +6,7 @@ import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
+import com.example.java_service.Helpers.VoucherValidationHelper;
 import com.example.java_service.Mappers.BookingMapper;
 import com.example.java_service.Mappers.RoomMapper;
 import com.example.java_service.Mappers.ServiceMapper;
@@ -32,9 +33,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,6 +65,7 @@ public class BookingHandleService
     AppliedVoucherService appliedVoucherService;
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
+    VoucherValidationHelper voucherValidationHelper;
 
     @NonFinal //
     BookingHandleService self;
@@ -240,9 +240,10 @@ public class BookingHandleService
                     () -> new ApiException(ErrorCode.USER_NOT_FOUND)
             );
 
-            Accommodation accommodation = accommodationRepository.findById(bookingRequest.getIdAccommodation()).orElseThrow(
-                    () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
-            );
+            Accommodation accommodation = accommodationRepository.findByIdWithUsers(bookingRequest.getIdAccommodation());
+            if (accommodation == null) {
+                throw new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND);
+            }
 
             if (!bookingRequest.getCheckoutDate().isAfter(bookingRequest.getCheckinDate())) {
                 throw new ApiException(ErrorCode.CHECKOUT_DATE_BEFORE_CHECKIN_DATE);
@@ -297,14 +298,18 @@ public class BookingHandleService
 
             // Xữ lý nếu có voucher
             if (bookingRequest.getUserVoucherRequests() != null && !bookingRequest.getUserVoucherRequests().isEmpty()) {
+                List<UUID> voucherIds = bookingRequest.getUserVoucherRequests().stream()
+                        .map(UserVoucherRequest::getIdVoucher)
+                        .toList();
+                List<Voucher> vouchers = voucherRepository.findAllWithAccommodationAndUsersByIds(voucherIds);
+                Map<UUID, Voucher> voucherMap = vouchers.stream().collect(Collectors.toMap(Voucher::getIdVoucher, v -> v));
+                voucherValidationHelper.validateVouchersForAccommodation(vouchers, accommodation.getIdAccommodation(), accommodation.getUsers().getIdUser());
+
                 for (UserVoucherRequest userVoucherRequest : bookingRequest.getUserVoucherRequests())
                 {
-                    Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
-                            .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
-
-                    // Kiểm tra voucher có thuộc Accommodation của booking (Bỏ qua nếu là voucher SYSTEM)
-                    if (!PredefinedSponsorType.SYSTEM_TYPE.equals(voucher.getSponsorType()) && (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(bookingRequest.getIdAccommodation()))) {
-                        throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_ACCOMMODATION);
+                    Voucher voucher = voucherMap.get(userVoucherRequest.getIdVoucher());
+                    if (voucher == null) {
+                        throw new ApiException(ErrorCode.VOUCHER_NOT_FOUND);
                     }
 
                     // Lưu voucher
@@ -605,29 +610,33 @@ public class BookingHandleService
         BigDecimal remainingServicePrice = totalPriceService;
         BigDecimal totalPrice = remainingRoomPrice.add(remainingServicePrice);
 
-        // Nếu có cập nhật voucher
-        if (bookingUpdateRequest.getUserVoucherRequests() != null && !bookingUpdateRequest.getUserVoucherRequests().isEmpty()) {
-            //----------Xữ lý voucher đã tạo trước đó---------------
-            // Xóa danh sách voucher đã apply
-            appliedVoucherService.deleteAppliedVoucher(booking.getIdBooking());
+            // Nếu có cập nhật voucher
+            if (bookingUpdateRequest.getUserVoucherRequests() != null && !bookingUpdateRequest.getUserVoucherRequests().isEmpty()) {
+                //----------Xữ lý voucher đã tạo trước đó---------------
+                // Xóa danh sách voucher đã apply
+                appliedVoucherService.deleteAppliedVoucher(booking.getIdBooking());
 
-            // Reset lại is_used và usedAt của voucher còn hạn
-            List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingId(booking.getIdBooking());
-            usedVouchers.forEach(uv -> {
-                uv.setIsUsed(false);
-                uv.setUsedAt(null);
-            });
-            userVoucherRepository.saveAll(usedVouchers);
+                // Reset lại is_used và usedAt của voucher còn hạn
+                List<UserVoucher> usedVouchers = userVoucherRepository.findUsedVouchersByBookingId(booking.getIdBooking());
+                usedVouchers.forEach(uv -> {
+                    uv.setIsUsed(false);
+                    uv.setUsedAt(null);
+                });
+                userVoucherRepository.saveAll(usedVouchers);
 
-            for (UserVoucherRequest userVoucherRequest : bookingUpdateRequest.getUserVoucherRequests())
-            {
-                Voucher voucher = voucherRepository.findById(userVoucherRequest.getIdVoucher())
-                        .orElseThrow(() -> new ApiException(ErrorCode.VOUCHER_NOT_FOUND));
+                List<UUID> voucherIds = bookingUpdateRequest.getUserVoucherRequests().stream()
+                        .map(UserVoucherRequest::getIdVoucher)
+                        .toList();
+                List<Voucher> vouchers = voucherRepository.findAllWithAccommodationAndUsersByIds(voucherIds);
+                Map<UUID, Voucher> voucherMap = vouchers.stream().collect(Collectors.toMap(Voucher::getIdVoucher, v -> v));
+                voucherValidationHelper.validateVouchersForAccommodation(vouchers, booking.getAccommodation().getIdAccommodation(), booking.getAccommodation().getUsers().getIdUser());
 
-                // Kiểm tra voucher có thuộc Accommodation của booking
-                if (!PredefinedSponsorType.SYSTEM_TYPE.equals(voucher.getSponsorType()) && (voucher.getAccommodation() == null || !voucher.getAccommodation().getIdAccommodation().equals(booking.getAccommodation().getIdAccommodation()))) {
-                    throw new ApiException(ErrorCode.VOUCHER_NOT_BELONG_TO_ACCOMMODATION);
-                }
+                for (UserVoucherRequest userVoucherRequest : bookingUpdateRequest.getUserVoucherRequests())
+                {
+                    Voucher voucher = voucherMap.get(userVoucherRequest.getIdVoucher());
+                    if (voucher == null) {
+                        throw new ApiException(ErrorCode.VOUCHER_NOT_FOUND);
+                    }
 
                 // Lưu voucher
                 userVoucherService.saveUserVoucherForBooking(userVoucherRequest);
