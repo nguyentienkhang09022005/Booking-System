@@ -48,7 +48,9 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                 || path.contains("/room/getInfRoom")
                 || path.contains("/service/getListService")
                 || path.contains("/get-list-accommodation-approved")
-                || path.contains("/accommodation/getInfAccommodation")){
+                || path.contains("/accommodation/getInfAccommodation")
+                || path.contains("/socket.io/")
+                || path.contains("/hubs/")){
             return chain.filter(exchange);
         }
 
