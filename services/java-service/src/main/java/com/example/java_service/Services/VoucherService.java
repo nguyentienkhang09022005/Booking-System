@@ -125,7 +125,6 @@ public class VoucherService
                 .toList();
     }
 
-    // Lấy danh sách voucher
     public List<VoucherViewAllResponse> listVouchersApproved(UUID idUser)
     {
         if (!userRepository.existsByIdUser(idUser)){
@@ -166,6 +165,24 @@ public class VoucherService
                     response.setIsSaved(savedVoucherSet.contains(voucher.getIdVoucher()));
                     response.setUrlImage(voucherImagesMap.get(voucherIdStr));
 
+                    return response;
+                })
+                .toList();
+    }
+
+    public List<VoucherViewAllResponse> searchVouchers(String keyword)
+    {
+        List<Voucher> vouchers = voucherRepository.findAll();
+        String lowerKeyword = keyword.toLowerCase();
+
+        return vouchers.stream()
+                .filter(v -> v.getApproved() && (
+                        v.getNameVoucher().toLowerCase().contains(lowerKeyword) ||
+                        (v.getCode() != null && v.getCode().toLowerCase().contains(lowerKeyword)) ||
+                        (v.getConditions() != null && v.getConditions().toLowerCase().contains(lowerKeyword))))
+                .map(voucher -> {
+                    VoucherViewAllResponse response = voucherMapper.toVoucherViewAllResponse(voucher);
+                    response.setIsSaved(false);
                     return response;
                 })
                 .toList();

@@ -107,8 +107,28 @@ public class TransportTicketService {
                 .collect(Collectors.toList());
     }
 
+    public List<TransportTicketOverviewResponse> getListTransportTicketApproved() {
+        return transportTicketRepository.findByApprovedTrue().stream()
+                .map(this::toTransportTicketOverviewResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<TransportTicketOverviewResponse> getListTicketCreatedByUser(UUID idUser) {
         return transportTicketRepository.findByUsers_IdUser(idUser).stream()
+                .map(this::toTransportTicketOverviewResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<TransportTicketOverviewResponse> searchTransportTickets(String keyword)
+    {
+        List<TransportTicket> tickets = transportTicketRepository.findByApprovedTrue();
+        String lowerKeyword = keyword.toLowerCase();
+
+        return tickets.stream()
+                .filter(t -> t.getProviderName().toLowerCase().contains(lowerKeyword) ||
+                        t.getDepartureLocation().toLowerCase().contains(lowerKeyword) ||
+                        t.getArrivalLocation().toLowerCase().contains(lowerKeyword) ||
+                        t.getTicketType().toLowerCase().contains(lowerKeyword))
                 .map(this::toTransportTicketOverviewResponse)
                 .collect(Collectors.toList());
     }

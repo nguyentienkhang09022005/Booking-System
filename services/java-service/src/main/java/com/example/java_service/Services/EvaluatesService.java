@@ -5,9 +5,9 @@ import com.example.java_service.Constant.PredefinedRefFavoriteAndEvaluate;
 import com.example.java_service.Constant.PredefinedTimeChangeEvaluate;
 import com.example.java_service.Dto.Request.EvaluateCreationRequest;
 import com.example.java_service.Dto.Request.EvaluateUpdateRequest;
-import com.example.java_service.Dto.Request.MessageHistoryItem;
+//import com.example.java_service.Dto.Request.MessageHistoryItem;
 import com.example.java_service.Dto.Response.EvaluateResponse;
-import com.example.java_service.Dto.Response.ModerationResult;
+//import com.example.java_service.Dto.Response.ModerationResult;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
@@ -45,7 +45,7 @@ public class EvaluatesService {
     AccommodationRepository accommodationRepository;
     TourRepository tourRepository; // Bổ sung repository của Tour
     UserRepository userRepository;
-    GeminiService geminiService;
+    //    GeminiService geminiService;
     SystemParameterService systemParameterService;
     ObjectMapper objectMapper;
     EvaluateMapper evaluateMapper;
@@ -125,11 +125,11 @@ public class EvaluatesService {
             throw new ApiException(ErrorCode.USER_EVALUATED_ACCOMMODATION); // Có thể đổi tên Exception thành USER_EVALUATED_ALREADY
         }
 
-        ModerationResult moderation = moderate(request.getComment());
-
-        if (moderation.getStatus().equalsIgnoreCase("REJECTED")) {
-            throw new ApiException(ErrorCode.COMMENT_REJECTED_BY_AI, moderation.getReason());
-        }
+//        ModerationResult moderation = moderate(request.getComment());
+//
+//        if (moderation.getStatus().equalsIgnoreCase("REJECTED")) {
+//            throw new ApiException(ErrorCode.COMMENT_REJECTED_BY_AI, moderation.getReason());
+//        }
 
         Evaluates evaluates = evaluateMapper.toEvaluate(request);
         evaluates.setCreatedAt(LocalDateTime.now());
@@ -181,11 +181,11 @@ public class EvaluatesService {
             throw new ApiException(ErrorCode.EVALUATE_UPDATE_TIME_EXPIRED);
         }
 
-        ModerationResult moderation = moderate(request.getComment());
-
-        if (moderation.getStatus().equalsIgnoreCase("REJECTED")) {
-            throw new ApiException(ErrorCode.COMMENT_REJECTED_BY_AI, moderation.getReason());
-        }
+//        ModerationResult moderation = moderate(request.getComment());
+//
+//        if (moderation.getStatus().equalsIgnoreCase("REJECTED")) {
+//            throw new ApiException(ErrorCode.COMMENT_REJECTED_BY_AI, moderation.getReason());
+//        }
 
         evaluateMapper.updateEvaluateFromRequest(request, evaluate);
         evaluatesRepository.save(evaluate);
@@ -214,61 +214,69 @@ public class EvaluatesService {
         return average != null ? average : 0.0;
     }
 
+    public List<EvaluateResponse> getEvaluates(String refId, String refType) {
+        validateServiceExists(refId, refType);
+        List<Evaluates> evaluates = evaluatesRepository.findTop3ByRefIdAndRefTypeOrderByCreatedAtAsc(refId, refType);
+        return evaluates.stream()
+                .map(evaluateMapper::toEvaluateResponse)
+                .toList();
+    }
+
     // AI kiểm duyệt nội dung (Đã cập nhật prompt để dùng chung cho mọi dịch vụ)
-    public String automaticNegativeCommentModeration(String comment) {
-        String systemIntroduction = String.format("""
-        Bạn là hệ thống kiểm duyệt bình luận **BookingNext Moderation AI**, có nhiệm vụ phân tích mức độ phù hợp của bình luận do người dùng gửi lên. Đây là chế độ kiểm duyệt nghiêm ngặt, không được tư vấn dịch vụ, không được phân tích dữ liệu nội bộ, không được tiết lộ thông tin người dùng.
-        
-        NHIỆM VỤ:
-        1. Phân tích nội dung bình luận và phân loại vào đúng một trong các trạng thái:
-           - **APPROVED**: Bình luận hợp lệ, lịch sự, không chứa nội dung nhạy cảm hoặc tiêu cực nghiêm trọng.
-           - **REJECTED**: Bình luận chứa các nội dung bị cấm:
-             * Ngôn từ xúc phạm, chửi thề, đe doạ, khiêu khích
-             * Ngôn ngữ độc hại hoặc phân biệt đối xử
-             * Spam / quảng cáo / đường dẫn độc hại
-             * Tiết lộ thông tin cá nhân (số điện thoại, email, CCCD…)
-             * Nội dung liên quan tấn công hệ thống (SQL injection, mã độc…)
-             * Nội dung vi phạm pháp luật hoặc tục tĩu
-        
-        2. PHẢI trả về kết quả dưới dạng JSON **duy nhất**, đúng mẫu sau:
-        {
-          "status": "APPROVED | REJECTED",
-          "reason": "Giải thích ngắn gọn và chính xác vì sao bình luận được phân loại như vậy"
-        }
-        
-        3. Quy tắc nghiêm ngặt:
-           - Không được tạo thêm văn bản ngoài JSON.
-           - Không được thêm lời khuyên, nhận xét phụ hoặc câu giải thích ngoài JSON.
-           - Không được bịa đặt thông tin không xuất hiện trong bình luận.
-           - Nếu không chắc chắn, chọn mức **an toàn hơn** (REJECTED).
-        
-        4. Bảo mật:
-           - Không hiển thị bất kỳ dữ liệu hệ thống, id người dùng, token hoặc thông tin nhạy cảm nào.
-           - Chỉ phân tích nội dung bình luận đã cho — không truy xuất thêm dữ liệu nào khác.
-        
-        Hãy phân tích bình luận sau và trả về JSON theo đúng định dạng trên.
-        Bình luận: "%s"
-        """, comment
-        );
-
-        List<MessageHistoryItem> historyItems = new ArrayList<>();
-        String aiMessage = geminiService.GenerateChatUserModelResponse(
-                systemIntroduction,
-                historyItems,
-                comment);
-
-        aiMessage = aiMessage.replace("\\n", "\n").replace("\\r", "");
-        return aiMessage;
-    }
-
-    public ModerationResult moderate(String comment) {
-        String json = automaticNegativeCommentModeration(comment);
-
-        String cleanedJson = json.replaceAll("(?s)^```json\\s*|\\s*```$", "");
-        try {
-            return objectMapper.readValue(cleanedJson, ModerationResult.class);
-        } catch (Exception e) {
-            throw new ApiException(ErrorCode.AI_MODERATION_INVALID_RESPONSE, e.getMessage());
-        }
-    }
+//    public String automaticNegativeCommentModeration(String comment) {
+//        String systemIntroduction = String.format("""
+//        Bạn là hệ thống kiểm duyệt bình luận **BookingNext Moderation AI**, có nhiệm vụ phân tích mức độ phù hợp của bình luận do người dùng gửi lên. Đây là chế độ kiểm duyệt nghiêm ngặt, không được tư vấn dịch vụ, không được phân tích dữ liệu nội bộ, không được tiết lộ thông tin người dùng.
+//
+//        NHIỆM VỤ:
+//        1. Phân tích nội dung bình luận và phân loại vào đúng một trong các trạng thái:
+//           - **APPROVED**: Bình luận hợp lệ, lịch sự, không chứa nội dung nhạy cảm hoặc tiêu cực nghiêm trọng.
+//           - **REJECTED**: Bình luận chứa các nội dung bị cấm:
+//             * Ngôn từ xúc phạm, chửi thề, đe doạ, khiêu khích
+//             * Ngôn ngữ độc hại hoặc phân biệt đối xử
+//             * Spam / quảng cáo / đường dẫn độc hại
+//             * Tiết lộ thông tin cá nhân (số điện thoại, email, CCCD…)
+//             * Nội dung liên quan tấn công hệ thống (SQL injection, mã độc…)
+//             * Nội dung vi phạm pháp luật hoặc tục tĩu
+//
+//        2. PHẢI trả về kết quả dưới dạng JSON **duy nhất**, đúng mẫu sau:
+//        {
+//          "status": "APPROVED | REJECTED",
+//          "reason": "Giải thích ngắn gọn và chính xác vì sao bình luận được phân loại như vậy"
+//        }
+//
+//        3. Quy tắc nghiêm ngặt:
+//           - Không được tạo thêm văn bản ngoài JSON.
+//           - Không được thêm lời khuyên, nhận xét phụ hoặc câu giải thích ngoài JSON.
+//           - Không được bịa đặt thông tin không xuất hiện trong bình luận.
+//           - Nếu không chắc chắn, chọn mức **an toàn hơn** (REJECTED).
+//
+//        4. Bảo mật:
+//           - Không hiển thị bất kỳ dữ liệu hệ thống, id người dùng, token hoặc thông tin nhạy cảm nào.
+//           - Chỉ phân tích nội dung bình luận đã cho — không truy xuất thêm dữ liệu nào khác.
+//
+//        Hãy phân tích bình luận sau và trả về JSON theo đúng định dạng trên.
+//        Bình luận: "%s"
+//        """, comment
+//        );
+//
+//        List<MessageHistoryItem> historyItems = new ArrayList<>();
+//        String aiMessage = geminiService.GenerateChatUserModelResponse(
+//                systemIntroduction,
+//                historyItems,
+//                comment);
+//
+//        aiMessage = aiMessage.replace("\\n", "\n").replace("\\r", "");
+//        return aiMessage;
+//    }
+//
+//    public ModerationResult moderate(String comment) {
+//        String json = automaticNegativeCommentModeration(comment);
+//
+//        String cleanedJson = json.replaceAll("(?s)^```json\\s*|\\s*```$", "");
+//        try {
+//            return objectMapper.readValue(cleanedJson, ModerationResult.class);
+//        } catch (Exception e) {
+//            throw new ApiException(ErrorCode.AI_MODERATION_INVALID_RESPONSE, e.getMessage());
+//        }
+//    }
 }

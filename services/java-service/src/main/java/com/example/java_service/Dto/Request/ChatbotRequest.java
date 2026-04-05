@@ -11,11 +11,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AddPointRequest
+public class ChatbotRequest
 {
-    UUID idUser;
-    BigDecimal amount;
-    UUID idBooking;
-    UUID idBookingTour;
-    UUID idBookingTransport;
+    String idUser;
+    String userMessage;
 }

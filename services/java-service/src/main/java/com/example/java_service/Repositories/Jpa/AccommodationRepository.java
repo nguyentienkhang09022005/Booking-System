@@ -28,4 +28,6 @@ public interface AccommodationRepository extends JpaRepository<Accommodation, UU
 
     @Query("SELECT a FROM Accommodation a LEFT JOIN FETCH a.users WHERE a.idAccommodation = :id")
     Accommodation findByIdWithUsers(@Param("id") UUID idAccommodation);
+
+    List<Accommodation> findByIdAccommodationIn(List<UUID> ids);
 }

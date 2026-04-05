@@ -18,4 +18,6 @@ public interface FavoriteRepository extends MongoRepository<Favorite, String> {
     void deleteByRefIdAndRefType(String refId, String refType);
 
     void deleteByIdUserAndRefIdAndRefType(String idUser, String refId, String refType);
+
+    List<Favorite> findByIdUserAndRefType(String idUser, String refType);
 }

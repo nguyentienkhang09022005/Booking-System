@@ -3,17 +3,21 @@ package com.example.java_service.Services;
 import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Constant.PredefinedRefFavoriteAndEvaluate;
 import com.example.java_service.Dto.Request.FavoriteRequest;
+import com.example.java_service.Dto.Response.GetListAccommodationResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
+import com.example.java_service.Dto.Response.TourOverviewResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.FavoriteMapper;
 import com.example.java_service.Models.Accommodation;
+import com.example.java_service.Models.Favorite;
 import com.example.java_service.Models.Tour;
 import com.example.java_service.Models.Users;
 import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.TourRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.FavoriteRepository;
+import com.example.java_service.Repositories.Mongodb.ImagesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +28,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -36,12 +42,68 @@ public class FavoriteService {
     TourRepository tourRepository;
     UserRepository userRepository;
     FavoriteRepository favoriteRepository;
+    ImagesRepository imagesRepository;
     FavoriteMapper favoriteMapper;
     ObjectMapper objectMapper;
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
 
-    // Hàm tạo yêu thích
+    public List<GetListAccommodationResponse> getListFavoriteAccommodation(String idUser) {
+        List<Favorite> favorites = favoriteRepository.findByIdUserAndRefType(
+                idUser, PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
+
+        if (favorites.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> accommodationIds = favorites.stream()
+                .map(Favorite::getRefId)
+                .collect(Collectors.toList());
+
+        return accommodationRepository.findByIdAccommodationIn(
+                        accommodationIds.stream().map(UUID::fromString).collect(Collectors.toList())
+                ).stream()
+                .map(acc -> GetListAccommodationResponse.builder()
+                        .idAccommodation(acc.getIdAccommodation())
+                        .accommodationName(acc.getAccommodationName())
+                        .accommodationType(acc.getAccommodationType())
+                        .city(acc.getCity())
+                        .street(acc.getStreet())
+                        .ward(acc.getWard())
+                        .province(acc.getProvince())
+                        .checkinTime(acc.getCheckinTime())
+                        .checkoutTime(acc.getCheckoutTime())
+                        .description(acc.getDescription())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public List<TourOverviewResponse> getListFavoriteTour(String idUser) {
+        List<Favorite> favorites = favoriteRepository.findByIdUserAndRefType(
+                idUser, PredefinedRefFavoriteAndEvaluate.REF_TOUR);
+
+        if (favorites.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> tourIds = favorites.stream()
+                .map(Favorite::getRefId)
+                .collect(Collectors.toList());
+
+        return tourRepository.findByIdTourIn(
+                        tourIds.stream().map(UUID::fromString).collect(Collectors.toList())
+                ).stream()
+                .map(tour -> TourOverviewResponse.builder()
+                        .idTour(tour.getIdTour())
+                        .tourName(tour.getTourName())
+                        .durationMinutes(tour.getDurationMinutes())
+                        .adultPrice(tour.getAdultPrice())
+                        .childPrice(tour.getChildPrice())
+                        .status(tour.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     public ResponseEntity<String> saveFavorite(FavoriteRequest request) {
         Users user = userRepository.findById(UUID.fromString(request.getIdUser())).orElseThrow(
                 () -> new ApiException(ErrorCode.USER_NOT_FOUND)

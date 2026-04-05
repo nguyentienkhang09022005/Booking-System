@@ -122,8 +122,20 @@ public class TourService
                 .collect(Collectors.toList());
     }
 
-    public List<TourOverviewResponse> getListTourCreatedByUser(UUID idUser) {
+    public List<TourOverviewResponse> getListTourCreatedByUser(UUID idUser)
+    {
         return tourRepository.findByUsers_IdUser(idUser).stream()
+                .map(this::mapToTourOverviewResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<TourOverviewResponse> searchTours(String keyword)
+    {
+        List<Tour> tours = tourRepository.findByApprovedTrue();
+        String lowerKeyword = keyword.toLowerCase();
+
+        return tours.stream()
+                .filter(tour -> tour.getTourName().toLowerCase().contains(lowerKeyword))
                 .map(this::mapToTourOverviewResponse)
                 .collect(Collectors.toList());
     }

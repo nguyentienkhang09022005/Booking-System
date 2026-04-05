@@ -154,7 +154,29 @@ public class AccommodationService
                 .toList();
     }
 
-    // Lấy thông tin chi tiết của nơi cư trú qua id (bổ sung lấy thêm evaluates top 5 gần nhất)
+    public List<GetListAccommodationResponse> searchAccommodations(String keyword)
+    {
+        List<Accommodation> accommodations = accommodationRepository.findAllByApprovedTrue();
+        String lowerKeyword = keyword.toLowerCase();
+
+        return accommodations.stream()
+                .filter(acc -> acc.getAccommodationName().toLowerCase().contains(lowerKeyword) ||
+                        acc.getCity().toLowerCase().contains(lowerKeyword) ||
+                        acc.getProvince().toLowerCase().contains(lowerKeyword) ||
+                        (acc.getUsers().getAddress() != null && acc.getUsers().getAddress().toLowerCase().contains(lowerKeyword)))
+                .map(acc -> {
+                    GetListAccommodationResponse response = accommodationMapper.toGetListAccommodationResponse(acc);
+                    List<String> imageUrls = imagesRepository.findByRefId(acc.getIdAccommodation().toString())
+                            .stream()
+                            .map(Images::getUrl)
+                            .toList();
+                    response.setImageAccommodationUrl(imageUrls);
+                    return response;
+                })
+                .toList();
+    }
+
+    // Hàm lấy thông tin chi tiết của nơi cư trú qua id (bổ sung lấy thêm evaluates top 5 gần nhất)
     public GetDetailAccommodationResponse getAccommodationDetail(UUID idAccommodation, UUID idUser)
     {
         Accommodation accommodation = accommodationRepository.findById(idAccommodation).orElseThrow(

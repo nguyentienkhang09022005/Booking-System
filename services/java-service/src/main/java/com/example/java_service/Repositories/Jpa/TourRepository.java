@@ -27,4 +27,9 @@ public interface TourRepository extends JpaRepository<Tour, UUID>
 
     @Query("SELECT new com.example.java_service.Dto.Response.SimpleItemResponse(t.idTour, t.tourName) FROM Tour t WHERE t.approved = true")
     List<SimpleItemResponse> findAllSimpleTours();
+
+    @Query("SELECT new com.example.java_service.Dto.Response.SimpleItemResponse(t.idTour, t.tourName) FROM Tour t WHERE t.approved = true AND LOWER(t.tourName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<SimpleItemResponse> searchByName(@Param("keyword") String keyword);
+
+    List<Tour> findByIdTourIn(List<UUID> ids);
 }

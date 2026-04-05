@@ -32,7 +32,6 @@ public class ServiceService
     TypeServiceRepository typeServiceRepository;
     ServiceMapper serviceMapper;
 
-    // Hàm lấy danh sách dịch vụ
     public List<ServiceResponse> getListService(UUID idAccommodation)
     {
         accommodationRepository.findById(idAccommodation).orElseThrow(
@@ -49,6 +48,18 @@ public class ServiceService
                     ServiceResponse response = serviceMapper.toServiceResponse(service);
                     return response;
                 }).toList();
+    }
+
+    public List<ServiceResponse> searchServices(String keyword)
+    {
+        List<Service> allServices = serviceRepository.findAll();
+        String lowerKeyword = keyword.toLowerCase();
+
+        return allServices.stream()
+                .filter(s -> s.getServiceName().toLowerCase().contains(lowerKeyword) ||
+                        (s.getDescription() != null && s.getDescription().toLowerCase().contains(lowerKeyword)))
+                .map(service -> serviceMapper.toServiceResponse(service))
+                .toList();
     }
 
     // Hàm lấy thông tin chi tiết dịch vụ
