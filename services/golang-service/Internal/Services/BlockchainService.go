@@ -234,13 +234,14 @@ func (b *blockchainService) ExecutePayment(idPayment uuid.UUID, order Request.Pa
 	}
 
 	// Build PaymentOrder struct for ABI encoding
+	// Field names must match Solidity ABI names exactly (camelCase)
 	type PaymentOrderABI struct {
-		OrderID   [32]byte
-		Payer     common.Address
-		Amount    *big.Int
-		BookingID [32]byte
-		Nonce     *big.Int
-		Deadline  *big.Int
+		OrderId   [32]byte       `abi:"orderId"`
+		Payer     common.Address `abi:"payer"`
+		Amount    *big.Int       `abi:"amount"`
+		BookingId [32]byte       `abi:"bookingId"`
+		Nonce     *big.Int       `abi:"nonce"`
+		Deadline  *big.Int       `abi:"deadline"`
 	}
 
 	var orderIDBytes [32]byte
@@ -265,10 +266,10 @@ func (b *blockchainService) ExecutePayment(idPayment uuid.UUID, order Request.Pa
 	}
 
 	orderABI := PaymentOrderABI{
-		OrderID:   orderIDBytes,
+		OrderId:   orderIDBytes,
 		Payer:     common.HexToAddress(order.Payer),
 		Amount:    new(big.Int).SetUint64(order.Amount),
-		BookingID: bookingIDBytes,
+		BookingId: bookingIDBytes,
 		Nonce:     new(big.Int).SetUint64(order.Nonce),
 		Deadline:  new(big.Int).SetInt64(order.Deadline),
 	}
