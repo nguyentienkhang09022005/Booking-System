@@ -11,6 +11,7 @@ public enum ErrorCode
     PERCENT_NOT_NEGATIVE("PERCENT_NOT_NEGATIVE", "Phần trăm không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
     INTERNAL_ERROR("INTERNAL_ERROR", "Lỗi phía máy chủ", HttpStatus.INTERNAL_SERVER_ERROR),
     AI_MODERATION_INVALID_RESPONSE("AI_MODERATION_INVALID_RESPONSE", "Mô hình AI đang gặp sự cố, không thể kiểm duệt bình luận", HttpStatus.INTERNAL_SERVER_ERROR),
+    AI_MODERATION_SERVICE_UNAVAILABLE("AI_MODERATION_SERVICE_UNAVAILABLE", "Dịch vụ kiểm duyệt AI tạm thời không khả dụng", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_DATA("INVALID_DATA", "Dữ liệu không hợp lệ!", HttpStatus.BAD_REQUEST),
 
     // Lỗi xác thực người dùng
@@ -134,6 +135,23 @@ public enum ErrorCode
 
     // Lỗi Loyalty Transaction
     LOYALTY_TRANSACTION_NOT_FOUND("LOYALTY_TRANSACTION_NOT_FOUND", "Không tìm thấy giao dịch tích điểm!", HttpStatus.NOT_FOUND),
+
+    // Lỗi User Preferences
+    USER_PREFERENCES_NOT_FOUND("USER_PREFERENCES_NOT_FOUND", "Không tìm thấy sở thích người dùng!", HttpStatus.NOT_FOUND),
+    USER_PREFERENCES_ALREADY_EXISTS("USER_PREFERENCES_ALREADY_EXISTS", "Sở thích người dùng đã tồn tại!", HttpStatus.CONFLICT),
+
+    // Lỗi Itinerary
+    ITINERARY_NOT_FOUND("ITINERARY_NOT_FOUND", "Không tìm thấy lịch trình!", HttpStatus.NOT_FOUND),
+    INVALID_ITINERARY_DATE("INVALID_ITINERARY_DATE", "Ngày kết thúc phải sau ngày bắt đầu!", HttpStatus.BAD_REQUEST),
+    ITINERARY_CANNOT_GENERATE("ITINERARY_CANNOT_GENERATE", "Không thể tạo lịch trình AI!", HttpStatus.BAD_REQUEST),
+    ITINERARY_NOT_IN_DRAFT_STATUS("ITINERARY_NOT_IN_DRAFT_STATUS", "Chỉ có thể tạo lịch trình từ trạng thái DRAFT!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Itinerary Item
+    ITINERARY_ITEM_NOT_FOUND("ITINERARY_ITEM_NOT_FOUND", "Không tìm thấy hạng mục lịch trình!", HttpStatus.NOT_FOUND),
+    INVALID_ITINERARY_ITEM_STATUS("INVALID_ITINERARY_ITEM_STATUS", "Trạng thái hạng mục không hợp lệ!", HttpStatus.BAD_REQUEST),
+    INVALID_ITEM_TYPE("INVALID_ITEM_TYPE", "Loại hạng mục không hợp lệ!", HttpStatus.BAD_REQUEST),
+    INVALID_ITEM_DATE("INVALID_ITEM_DATE", "Ngày của hạng mục không nằm trong khoảng lịch trình!", HttpStatus.BAD_REQUEST),
+    INVALID_DISPLAY_ORDER("INVALID_DISPLAY_ORDER", "Thứ tự hiển thị không hợp lệ!", HttpStatus.BAD_REQUEST)
     ;
 
     private final String code;

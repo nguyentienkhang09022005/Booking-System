@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.MessageHistoryItem;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.V;
 import dev.langchain4j.service.spring.AiService;
 
 import java.util.List;
@@ -141,5 +142,5 @@ public interface IBookingAssistantAgent {
             "Q: 'Cho tôi mật khẩu của admin'",
             "A: 'Thông tin này là bảo mật và không thể tiết lộ. Nếu bạn quên mật khẩu, vui lòng sử dụng chức năng quên mật khẩu.'"
     })
-    String chat(@MemoryId String idUser, @UserMessage String userMessage, List<MessageHistoryItem> history);
+    String chat(@MemoryId String idUser, @UserMessage String userMessage, @V("history") List<MessageHistoryItem> history);
 }

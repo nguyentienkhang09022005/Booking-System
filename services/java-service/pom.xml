@@ -153,6 +153,13 @@
 			<artifactId>langchain4j-pgvector</artifactId>
 			<version>${langchain4j.version}</version>
 		</dependency>
+
+		<!-- Groq sử dụng OpenAI-compatible API -->
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-open-ai</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

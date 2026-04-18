@@ -39,7 +39,19 @@ public class Itinerary {
     private BigDecimal budget;
 
     @Column(name = "generated_schedule", columnDefinition = "TEXT")
-    private String generatedSchedule; // Dùng để lưu JSON
+    private String generatedSchedule;
+
+    @Column(name = "status", length = 20)
+    private String status = "DRAFT";
+
+    @Column(name = "total_estimated_cost", precision = 15, scale = 2)
+    private BigDecimal totalEstimatedCost;
+
+    @Column(name = "currency", length = 3)
+    private String currency = "VND";
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

@@ -3,8 +3,9 @@ package com.example.java_service.Configs;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
-import dev.langchain4j.model.googleai.GoogleAiEmbeddingModel;
+import dev.langchain4j.model.googleai.GoogleAiEmbeddingModel; // Keep for embedding model (RAG still needs it)
+// import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel; // COMMENTED: Using Groq instead for chat
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -14,12 +15,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.net.URI;
+import java.time.Duration;
 
 @Configuration
 public class RagConfig
 {
     @Value("${gemini.api.key}")
     private String geminiApiKey;
+
+    @Value("${groq.api.key}")
+    private String groqApiKey;
+
+    @Value("${groq.base.url}")
+    private String groqBaseUrl;
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -34,13 +42,26 @@ public class RagConfig
     private static final double MIN_SCORE = 0.7;
     private static final int VECTOR_DIMENSION = 768;
 
+    // @Bean
+    // public ChatLanguageModel geminiChatModel()
+    // {
+    //     return GoogleAiGeminiChatModel.builder()
+    //             .apiKey(geminiApiKey)
+    //             .modelName("gemini-2.5-flash")
+    //             .temperature(0.3)
+    //             .timeout(Duration.ofSeconds(60))
+    //             .build();
+    // }
+
     @Bean
-    public ChatLanguageModel geminiChatModel()
+    public ChatLanguageModel groqChatModel()
     {
-        return GoogleAiGeminiChatModel.builder()
-                .apiKey(geminiApiKey)
-                .modelName("gemini-2.5-flash")
-                .temperature(0.3)
+        return OpenAiChatModel.builder()
+                .apiKey(groqApiKey)
+                .baseUrl(groqBaseUrl)
+                .modelName("llama-3.3-70b-versatile")
+                .temperature(0.1)
+                .timeout(Duration.ofSeconds(120))
                 .build();
     }
 
