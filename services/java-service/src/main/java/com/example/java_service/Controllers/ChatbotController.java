@@ -41,6 +41,7 @@ public class ChatbotController
         log.info("Chat request - idUser: {}, message: {}", request.getIdUser(), request.getUserMessage());
 
         List<MessageHistoryItem> history = chatHistoryService.getHistoryChat(request.getIdUser());
+        
         String answer = assistantAgent.chat(request.getIdUser(), request.getUserMessage(), history);
 
         chatHistoryService.saveChat(

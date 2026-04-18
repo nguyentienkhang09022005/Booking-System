@@ -42,6 +42,10 @@ public class VoucherService
     AccommodationRepository accommodationRepository;
     ImagesRepository imagesRepository;
     VoucherMapper voucherMapper;
+    RagCacheService ragCacheService;
+
+    private static final String CACHE_TYPE = "voucher";
+    private static final long CACHE_TTL_SECONDS = 300;
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -172,10 +176,20 @@ public class VoucherService
 
     public List<VoucherViewAllResponse> searchVouchers(String keyword)
     {
+        String cacheKey = "search:" + keyword.toLowerCase().trim();
+        List<VoucherViewAllResponse> cached = ragCacheService.getList(CACHE_TYPE, cacheKey,
+                new com.fasterxml.jackson.core.type.TypeReference<List<VoucherViewAllResponse>>() {});
+
+        if (cached != null) {
+            log.debug("Cache hit for voucher search: {}", keyword);
+            return cached;
+        }
+
+        log.debug("Cache miss for voucher search: {}", keyword);
         List<Voucher> vouchers = voucherRepository.findAll();
         String lowerKeyword = keyword.toLowerCase();
 
-        return vouchers.stream()
+        List<VoucherViewAllResponse> result = vouchers.stream()
                 .filter(v -> v.getApproved() && (
                         v.getNameVoucher().toLowerCase().contains(lowerKeyword) ||
                         (v.getCode() != null && v.getCode().toLowerCase().contains(lowerKeyword)) ||
@@ -186,6 +200,9 @@ public class VoucherService
                     return response;
                 })
                 .toList();
+
+        ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);
+        return result;
     }
 
     // Lấy danh sách voucher chưa phê duyệt (cho admin)

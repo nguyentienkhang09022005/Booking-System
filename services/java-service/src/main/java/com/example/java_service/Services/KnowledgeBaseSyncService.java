@@ -35,11 +35,15 @@ public class KnowledgeBaseSyncService
     TypeServiceRepository typeServiceRepository;
     EmbeddingModel embeddingModel;
     EmbeddingStore<TextSegment> embeddingStore;
+    RagCacheService ragCacheService;
 
     private static final int CHUNK_SIZE = 500;
     private static final int CHUNK_OVERLAP = 50;
+    private static final int BATCH_SIZE = 20;
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_DELAY_MS = 50_000;
 
-    @Transactional(readOnly = true)
+@Transactional(readOnly = true)
     public String syncDataToVectorDb()
     {
         log.info("Bắt đầu đồng bộ dữ liệu vào Vector DB");
@@ -62,13 +66,65 @@ public class KnowledgeBaseSyncService
             Document document = Document.from(corpus.toString());
             List<TextSegment> segments = DocumentSplitters.recursive(CHUNK_SIZE, CHUNK_OVERLAP).split(document);
 
-            List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-            embeddingStore.addAll(embeddings, segments);
+            embedAndStoreInBatches(segments);
 
             log.info("Đã đồng bộ {} segments vào Vector DB", segments.size());
         }
 
-        return String.format("Đồng bộ thành công %d segments!", totalSegments);
+        ragCacheService.evictAllRagCache();
+        log.info("Đã xóa cache RAG sau khi sync hoàn tất");
+
+return String.format("Đồng bộ thành công %d segments!", totalSegments);
+    }
+
+    private void embedAndStoreInBatches(List<TextSegment> segments) {
+        int totalBatches = (int) Math.ceil((double) segments.size() / BATCH_SIZE);
+        log.info("Processing {} segments in {} batches", segments.size(), totalBatches);
+
+        for (int i = 0; i < segments.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, segments.size());
+            List<TextSegment> batch = segments.subList(i, end);
+            int batchNumber = (i / BATCH_SIZE) + 1;
+
+            int attempts = 0;
+            boolean success = false;
+
+            while (attempts < MAX_RETRIES && !success) {
+                try {
+                    List<Embedding> embeddings = embeddingModel.embedAll(batch).content();
+                    embeddingStore.addAll(embeddings, batch);
+                    log.info("Processed batch {}/{} ({} segments)",
+                            batchNumber, totalBatches, batch.size());
+                    success = true;
+                } catch (Exception e) {
+                    attempts++;
+                    if (attempts >= MAX_RETRIES) {
+                        log.error("Failed to process batch {} after {} attempts: {}",
+                                batchNumber, MAX_RETRIES, e.getMessage());
+                        throw e;
+                    }
+
+                    boolean isRateLimit = e.getMessage() != null &&
+                            (e.getMessage().contains("RESOURCE_EXHAUSTED") ||
+                             e.getMessage().contains("429") ||
+                             e.getMessage().contains("rate limit"));
+
+                    if (isRateLimit) {
+                        log.warn("Rate limit hit on batch {}, waiting {}ms before retry (attempt {}/{})",
+                                batchNumber, RETRY_DELAY_MS, attempts, MAX_RETRIES);
+                        try {
+                            Thread.sleep(RETRY_DELAY_MS);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("Interrupted while waiting to retry", ie);
+                        }
+                    } else {
+                        log.error("Non-rate-limit error on batch {}: {}", batchNumber, e.getMessage());
+                        throw e;
+                    }
+                }
+            }
+        }
     }
 
     private int syncGeneralRegulations(StringBuilder corpus)

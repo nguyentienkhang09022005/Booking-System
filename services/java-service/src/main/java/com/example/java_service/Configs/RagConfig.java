@@ -3,19 +3,18 @@ package com.example.java_service.Configs;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.googleai.GoogleAiEmbeddingModel; // Keep for embedding model (RAG still needs it)
-// import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel; // COMMENTED: Using Groq instead for chat
+import dev.langchain4j.model.googleai.GoogleAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.UUID;
 
 @Configuration
 public class RagConfig
@@ -42,25 +41,15 @@ public class RagConfig
     private static final double MIN_SCORE = 0.7;
     private static final int VECTOR_DIMENSION = 768;
 
-    // @Bean
-    // public ChatLanguageModel geminiChatModel()
-    // {
-    //     return GoogleAiGeminiChatModel.builder()
-    //             .apiKey(geminiApiKey)
-    //             .modelName("gemini-2.5-flash")
-    //             .temperature(0.3)
-    //             .timeout(Duration.ofSeconds(60))
-    //             .build();
-    // }
-
     @Bean
-    public ChatLanguageModel groqChatModel()
+    @Primary
+    public ChatLanguageModel chatModel()
     {
         return OpenAiChatModel.builder()
                 .apiKey(groqApiKey)
                 .baseUrl(groqBaseUrl)
-                .modelName("llama-3.3-70b-versatile")
-                .temperature(0.1)
+                .modelName("llama-3.1-8b-instant")
+                .temperature(0.3)
                 .timeout(Duration.ofSeconds(120))
                 .build();
     }
@@ -100,15 +89,29 @@ public class RagConfig
         }
     }
 
-    @Bean
-    public ContentRetriever contentRetriever(EmbeddingStore<TextSegment> embeddingStore,
-                                             EmbeddingModel embeddingModel)
-    {
-        return EmbeddingStoreContentRetriever.builder()
-                .embeddingStore(embeddingStore)
-                .embeddingModel(embeddingModel)
-                .maxResults(MAX_RESULTS)
-                .minScore(MIN_SCORE)
-                .build();
+    // ContentRetriever bị DISABLE vì gây tràn context với llama-3.1-8b-instant
+    // Search tools đã đủ để truy vấn dữ liệu từ database
+    // @Bean
+    // public ContentRetriever contentRetriever(EmbeddingStore<TextSegment> embeddingStore,
+    //                                          EmbeddingModel embeddingModel)
+    // {
+    //     return EmbeddingStoreContentRetriever.builder()
+    //             .embeddingStore(embeddingStore)
+    //             .embeddingModel(embeddingModel)
+    //             .maxResults(MAX_RESULTS)
+    //             .minScore(MIN_SCORE)
+    //             .build();
+    // }
+
+    public static boolean isValidUuid(String str) {
+        if (str == null || str.isBlank()) {
+            return false;
+        }
+        try {
+            UUID.fromString(str);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

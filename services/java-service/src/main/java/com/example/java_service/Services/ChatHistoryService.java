@@ -25,6 +25,9 @@ public class ChatHistoryService
     static final String PREFIX = "chat_history:";
     ObjectMapper objectMapper;
 
+    private static final int MAX_HISTORY_MESSAGES = 15;
+    private static final long DEFAULT_TTL_SECONDS = 604800L;
+
     private String getKey(String idUser) {
         return PREFIX + idUser;
     }
@@ -42,6 +45,12 @@ public class ChatHistoryService
             }
 
             history.add(messageHistoryItem);
+
+            if (history.size() > MAX_HISTORY_MESSAGES) {
+                int excess = history.size() - MAX_HISTORY_MESSAGES;
+                history = history.subList(excess, history.size());
+                log.info("Truncated chat history for user {}, removed {} old messages", idUser, excess);
+            }
 
             String json = objectMapper.writeValueAsString(history);
 
@@ -61,12 +70,19 @@ public class ChatHistoryService
                 return new ArrayList<>();
             }
 
-            return objectMapper.readValue(json, new TypeReference<List<MessageHistoryItem>>() {});
+            List<MessageHistoryItem> history = objectMapper.readValue(json, new TypeReference<List<MessageHistoryItem>>() {});
+
+            if (history.size() > MAX_HISTORY_MESSAGES) {
+                return history.subList(history.size() - MAX_HISTORY_MESSAGES, history.size());
+            }
+
+            return history;
         }
         catch (Exception e) {
             log.error("Lỗi khi lấy lịch sử chat", e);
             return new ArrayList<>();
-        }    }
+        }
+    }
 
     public void deleteHistoryChat(String idUser) {
         redisTemplate.delete(getKey(idUser));

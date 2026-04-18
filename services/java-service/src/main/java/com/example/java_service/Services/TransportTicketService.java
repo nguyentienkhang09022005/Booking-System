@@ -39,6 +39,10 @@ public class TransportTicketService {
     UserRepository userRepository;
     TransportTicketMapper transportTicketMapper;
     UserMapper userMapper;
+    RagCacheService ragCacheService;
+
+    private static final String CACHE_TYPE = "transport";
+    private static final long CACHE_TTL_SECONDS = 300;
 
     private TransportTicketResponse toTransportTicketResponse(TransportTicket ticket) {
         if (ticket == null) return null;
@@ -121,16 +125,29 @@ public class TransportTicketService {
 
     public List<TransportTicketOverviewResponse> searchTransportTickets(String keyword)
     {
+        String cacheKey = "search:" + keyword.toLowerCase().trim();
+        List<TransportTicketOverviewResponse> cached = ragCacheService.getList(CACHE_TYPE, cacheKey,
+                new com.fasterxml.jackson.core.type.TypeReference<List<TransportTicketOverviewResponse>>() {});
+
+        if (cached != null) {
+            log.debug("Cache hit for transport ticket search: {}", keyword);
+            return cached;
+        }
+
+        log.debug("Cache miss for transport ticket search: {}", keyword);
         List<TransportTicket> tickets = transportTicketRepository.findByApprovedTrue();
         String lowerKeyword = keyword.toLowerCase();
 
-        return tickets.stream()
+        List<TransportTicketOverviewResponse> result = tickets.stream()
                 .filter(t -> t.getProviderName().toLowerCase().contains(lowerKeyword) ||
                         t.getDepartureLocation().toLowerCase().contains(lowerKeyword) ||
                         t.getArrivalLocation().toLowerCase().contains(lowerKeyword) ||
                         t.getTicketType().toLowerCase().contains(lowerKeyword))
                 .map(this::toTransportTicketOverviewResponse)
                 .collect(Collectors.toList());
+
+        ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);
+        return result;
     }
 
     @Transactional

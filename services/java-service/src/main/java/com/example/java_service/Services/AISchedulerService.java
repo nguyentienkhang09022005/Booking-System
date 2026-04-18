@@ -19,11 +19,13 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.time.Duration;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,14 +42,31 @@ import java.util.Set;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AISchedulerService {
 
-    ChatLanguageModel chatLanguageModel;
+    private final ChatLanguageModel schedulerModel;
     UserPreferencesService userPreferencesService;
     ItineraryService itineraryService;
     ObjectMapper objectMapper;
+
+    public AISchedulerService(
+            @Value("${groq.api.key}") String groqApiKey,
+            @Value("${groq.base.url}") String groqBaseUrl,
+            UserPreferencesService userPreferencesService,
+            ItineraryService itineraryService,
+            ObjectMapper objectMapper)
+    {
+        this.schedulerModel = OpenAiChatModel.builder()
+                .apiKey(groqApiKey)
+                .baseUrl(groqBaseUrl)
+                .modelName("llama-3.3-70b-versatile")
+                .temperature(0.1)
+                .timeout(Duration.ofSeconds(120))
+                .build();
+        this.userPreferencesService = userPreferencesService;
+        this.itineraryService = itineraryService;
+        this.objectMapper = objectMapper;
+    }
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -80,7 +99,7 @@ public class AISchedulerService {
         ITEM_TYPE_ALIASES.put("tour", PredefinedItemType.TOUR);
     }
 
-    public ItineraryResponse generateSchedule(String idItinerary) {
+    public synchronized ItineraryResponse generateSchedule(String idItinerary) {
         Itinerary itinerary = itineraryService.getItineraryEntity(idItinerary);
 
         validateItineraryForGeneration(itinerary);
@@ -99,7 +118,7 @@ public class AISchedulerService {
                     ))
                     .build();
 
-            jsonResponse = chatLanguageModel.chat(request).aiMessage().text();
+            jsonResponse = schedulerModel.chat(request).aiMessage().text();
 
             jsonResponse = jsonResponse.replaceAll("(?s)```json\\s*", "").replaceAll("(?s)```\\s*$", "");
             jsonResponse = jsonResponse.trim();

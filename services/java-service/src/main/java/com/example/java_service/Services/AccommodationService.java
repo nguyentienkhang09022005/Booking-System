@@ -43,6 +43,10 @@ public class AccommodationService
     AccommodationMapper accommodationMapper;
     UserMapper userMapper;
     EvaluateMapper evaluateMapper;
+    RagCacheService ragCacheService;
+
+    private static final String CACHE_TYPE = "accommodation";
+    private static final long CACHE_TTL_SECONDS = 300;
 
     // Hàm lấy danh sách nơi cư trú đã được phê duyệt
     public List<GetListAccommodationResponse> getListAccommodationApproved(UUID idUser) {
@@ -156,14 +160,32 @@ public class AccommodationService
 
     public List<GetListAccommodationResponse> searchAccommodations(String keyword)
     {
+        String cacheKey = "search:" + keyword.toLowerCase().trim();
+        List<GetListAccommodationResponse> cached = ragCacheService.getList(CACHE_TYPE, cacheKey,
+                new com.fasterxml.jackson.core.type.TypeReference<List<GetListAccommodationResponse>>() {});
+
+        if (cached != null) {
+            log.debug("Cache hit for accommodation search: {}", keyword);
+            return cached;
+        }
+
+        log.debug("Cache miss for accommodation search: {}", keyword);
         List<Accommodation> accommodations = accommodationRepository.findAllByApprovedTrue();
         String lowerKeyword = keyword.toLowerCase();
 
-        return accommodations.stream()
-                .filter(acc -> acc.getAccommodationName().toLowerCase().contains(lowerKeyword) ||
-                        acc.getCity().toLowerCase().contains(lowerKeyword) ||
-                        acc.getProvince().toLowerCase().contains(lowerKeyword) ||
-                        (acc.getUsers().getAddress() != null && acc.getUsers().getAddress().toLowerCase().contains(lowerKeyword)))
+        List<GetListAccommodationResponse> result = accommodations.stream()
+                .filter(acc -> {
+                    String name = acc.getAccommodationName();
+                    String city = acc.getCity();
+                    String province = acc.getProvince();
+
+                    return (name != null && name.toLowerCase().contains(lowerKeyword)) ||
+                            (city != null && city.toLowerCase().contains(lowerKeyword)) ||
+                            (province != null && province.toLowerCase().contains(lowerKeyword)) ||
+                            (acc.getUsers() != null &&
+                             acc.getUsers().getAddress() != null &&
+                             acc.getUsers().getAddress().toLowerCase().contains(lowerKeyword));
+                })
                 .map(acc -> {
                     GetListAccommodationResponse response = accommodationMapper.toGetListAccommodationResponse(acc);
                     List<String> imageUrls = imagesRepository.findByRefId(acc.getIdAccommodation().toString())
@@ -174,6 +196,9 @@ public class AccommodationService
                     return response;
                 })
                 .toList();
+
+        ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);
+        return result;
     }
 
     // Hàm lấy thông tin chi tiết của nơi cư trú qua id (bổ sung lấy thêm evaluates top 5 gần nhất)

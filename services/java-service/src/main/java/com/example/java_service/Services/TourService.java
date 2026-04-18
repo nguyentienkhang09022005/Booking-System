@@ -47,6 +47,10 @@ public class TourService
     TourMapper tourMapper;
     TourScheduleMapper tourScheduleMapper;
     UserMapper userMapper;
+    RagCacheService ragCacheService;
+
+    private static final String CACHE_TYPE = "tour";
+    private static final long CACHE_TTL_SECONDS = 300;
 
     private TourResponse mapToTourResponse(Tour tour)
     {
@@ -131,13 +135,26 @@ public class TourService
 
     public List<TourOverviewResponse> searchTours(String keyword)
     {
+        String cacheKey = "search:" + keyword.toLowerCase().trim();
+        List<TourOverviewResponse> cached = ragCacheService.getList(CACHE_TYPE, cacheKey,
+                new com.fasterxml.jackson.core.type.TypeReference<List<TourOverviewResponse>>() {});
+
+        if (cached != null) {
+            log.debug("Cache hit for tour search: {}", keyword);
+            return cached;
+        }
+
+        log.debug("Cache miss for tour search: {}", keyword);
         List<Tour> tours = tourRepository.findByApprovedTrue();
         String lowerKeyword = keyword.toLowerCase();
 
-        return tours.stream()
+        List<TourOverviewResponse> result = tours.stream()
                 .filter(tour -> tour.getTourName().toLowerCase().contains(lowerKeyword))
                 .map(this::mapToTourOverviewResponse)
                 .collect(Collectors.toList());
+
+        ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);
+        return result;
     }
 
     @Transactional

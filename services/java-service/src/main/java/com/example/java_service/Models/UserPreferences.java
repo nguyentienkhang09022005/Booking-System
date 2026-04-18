@@ -16,7 +16,10 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_preferences")
+@Table(name = "user_preferences", indexes = {
+    @jakarta.persistence.Index(name = "idx_user_preferences_is_completed", columnList = "is_completed"),
+    @jakarta.persistence.Index(name = "idx_user_preferences_user_id", columnList = "id_user")
+})
 public class UserPreferences {
 
     @Id

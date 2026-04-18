@@ -31,6 +31,10 @@ public class ServiceService
     AccommodationRepository accommodationRepository;
     TypeServiceRepository typeServiceRepository;
     ServiceMapper serviceMapper;
+    RagCacheService ragCacheService;
+
+    private static final String CACHE_TYPE = "service";
+    private static final long CACHE_TTL_SECONDS = 300;
 
     public List<ServiceResponse> getListService(UUID idAccommodation)
     {
@@ -52,14 +56,27 @@ public class ServiceService
 
     public List<ServiceResponse> searchServices(String keyword)
     {
+        String cacheKey = "search:" + keyword.toLowerCase().trim();
+        List<ServiceResponse> cached = ragCacheService.getList(CACHE_TYPE, cacheKey,
+                new com.fasterxml.jackson.core.type.TypeReference<List<ServiceResponse>>() {});
+
+        if (cached != null) {
+            log.debug("Cache hit for service search: {}", keyword);
+            return cached;
+        }
+
+        log.debug("Cache miss for service search: {}", keyword);
         List<Service> allServices = serviceRepository.findAll();
         String lowerKeyword = keyword.toLowerCase();
 
-        return allServices.stream()
+        List<ServiceResponse> result = allServices.stream()
                 .filter(s -> s.getServiceName().toLowerCase().contains(lowerKeyword) ||
                         (s.getDescription() != null && s.getDescription().toLowerCase().contains(lowerKeyword)))
                 .map(service -> serviceMapper.toServiceResponse(service))
                 .toList();
+
+        ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);
+        return result;
     }
 
     // Hàm lấy thông tin chi tiết dịch vụ

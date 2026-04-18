@@ -1,6 +1,8 @@
 package com.example.java_service.Repositories.Jpa;
 
 import com.example.java_service.Models.Voucher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +35,6 @@ public interface VoucherRepository extends JpaRepository<Voucher, UUID>
 
     @Query("SELECT v FROM Voucher v LEFT JOIN FETCH v.accommodation ac LEFT JOIN FETCH ac.users WHERE v.idVoucher IN :ids")
     List<Voucher> findAllWithAccommodationAndUsersByIds(@Param("ids") List<UUID> ids);
+
+    Page<Voucher> findByApprovedTrue(Pageable pageable);
 }
