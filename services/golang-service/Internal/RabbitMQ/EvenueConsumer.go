@@ -18,13 +18,17 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 
 	conn, err := amqp091.Dial(url_rabbitMQ)
 	if err != nil {
-		log.Fatalf("Không thể kết nối đến RabbitMQ: %v", err)
+		log.Printf("Không thể kết nối đến RabbitMQ: %v — Revenue consumer unavailable", err)
+		return
 	}
+	defer conn.Close()
 
 	ch, err := conn.Channel()
 	if err != nil {
-		log.Fatalf("Không thể tạo channel: %v", err)
+		log.Printf("Không thể tạo channel: %v — Revenue consumer unavailable", err)
+		return
 	}
+	defer ch.Close()
 
 	_, err = ch.QueueDeclare(
 		queueName,
@@ -35,7 +39,8 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 		nil,
 	)
 	if err != nil {
-		log.Fatalf("Không thể khai báo queue create: %v", err)
+		log.Printf("Không thể khai báo queue create: %v — Revenue consumer unavailable", err)
+		return
 	}
 
 	msgsCreate, err := ch.Consume(
@@ -48,7 +53,8 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 		nil,
 	)
 	if err != nil {
-		log.Fatalf("Không thể bắt đầu tiêu thụ queue create: %v", err)
+		log.Printf("Không thể bắt đầu tiêu thụ queue create: %v — Revenue consumer unavailable", err)
+		return
 	}
 
 	_, err = ch.QueueDeclare(
@@ -60,7 +66,8 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 		nil,
 	)
 	if err != nil {
-		log.Fatalf("Không thể khai báo queue update: %v", err)
+		log.Printf("Không thể khai báo queue update: %v — Revenue consumer unavailable", err)
+		return
 	}
 
 	msgsUpdate, err := ch.Consume(
@@ -73,7 +80,8 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 		nil,
 	)
 	if err != nil {
-		log.Fatalf("Không thể bắt đầu tiêu thụ queue update: %v", err)
+		log.Printf("Không thể bắt đầu tiêu thụ queue update: %v — Revenue consumer unavailable", err)
+		return
 	}
 
 	log.Println("Consumer đã khởi động, đang lắng nghe cả sự kiện tạo và cập nhật doanh thu!")
@@ -119,4 +127,8 @@ func StartRevenueConsumer(reportRevenueDetailService Services.IReportRevenueDeta
 			log.Println("[update] Xử lý thành công")
 		}
 	}()
+
+	// Block this goroutine so defers don't fire while consumers are active.
+	// The goroutine spawned in main.go will keep running until the process exits.
+	select {}
 }

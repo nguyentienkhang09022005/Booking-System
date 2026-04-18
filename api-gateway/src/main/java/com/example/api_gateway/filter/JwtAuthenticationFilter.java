@@ -50,7 +50,12 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                 || path.contains("/get-list-accommodation-approved")
                 || path.contains("/accommodation/getInfAccommodation")
                 || path.contains("/socket.io/")
-                || path.contains("/hubs/")){
+                || path.contains("/hubs/")
+                || path.contains("/tour/get-list-approved")
+                || path.contains("/tour/detail")
+                || path.contains("/transport-ticket/get-list-approved")
+                || path.contains("/transport-ticket/detail")
+                || path.contains("/evaluate/getListEvaluate")){
             return chain.filter(exchange);
         }
 

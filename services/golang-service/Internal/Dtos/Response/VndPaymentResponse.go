@@ -26,9 +26,10 @@ type EIP712TypedData struct {
 }
 
 type PrepareVndPaymentResponse struct {
-	IDPayment uuid.UUID       `json:"id_payment"`
-	TypedData EIP712TypedData `json:"typed_data"`
-	OrderID   string          `json:"order_id"`
+	IDPayment       uuid.UUID       `json:"id_payment"`
+	TypedData       EIP712TypedData `json:"typed_data"`
+	OrderID         string          `json:"order_id"`
+	VndTokenAddress string          `json:"vnd_token_address"`
 }
 
 type ExecuteVndPaymentResponse struct {

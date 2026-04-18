@@ -21,9 +21,8 @@ func main() {
 	db := Configs.ConnectToDB()
 
 	// Kết nối ZaloPay
-	err := Configs.ZaloPayConfig()
-	if err != nil {
-		return
+	if err := Configs.ZaloPayConfig(); err != nil {
+		log.Printf("Warning: ZaloPay config failed (%v) — ZaloPay payment unavailable", err)
 	}
 
 	// Kết nối Blockchain (Sepolia)

@@ -21,8 +21,11 @@ func ConnectToDB() *gorm.DB {
 	channelBinding := os.Getenv("DB_CHANNELBINDING")
 
 	// Tạo chuỗi kết nối
-	connectString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s channelBinding=%s",
-		host, port, user, password, dbName, sslmode, channelBinding)
+	connectString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbName, sslmode)
+	if channelBinding != "" {
+		connectString += fmt.Sprintf(" channel_binding=%s", channelBinding)
+	}
 
 	db, err := gorm.Open(postgres.Open(connectString), &gorm.Config{})
 	if err != nil {

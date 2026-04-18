@@ -25,7 +25,8 @@ func ZaloPayConfig() error {
 
 	ZaloPayAppID, err = strconv.ParseInt(appIDStr, 10, 64)
 	if err != nil {
-		log.Fatalf("Error parsing ZALOPAY_APP_ID: %v", err)
+		log.Printf("Warning: Error parsing ZALOPAY_APP_ID: %v — ZaloPay payment unavailable", err)
+		return fmt.Errorf("ZALOPAY_APP_ID not configured: %w", err)
 	}
 
 	// Đọc các key và endpoint
