@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/api/chatbot")
+@RequestMapping("/chatbot")
 public class ChatbotController
 {
     IBookingAssistantAgent assistantAgent;
@@ -77,8 +77,8 @@ public class ChatbotController
                 .build();
     }
 
-    @DeleteMapping("/memory/{idUser}")
-    public ApiResponse<String> clearMemory(@PathVariable String idUser)
+    @DeleteMapping("/memory")
+    public ApiResponse<String> clearMemory(@RequestParam String idUser)
     {
         log.info("Clear chat memory - idUser: {}", idUser);
         chatHistoryService.deleteHistoryChat(idUser);
