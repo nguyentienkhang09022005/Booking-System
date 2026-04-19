@@ -32,4 +32,12 @@ public interface TourRepository extends JpaRepository<Tour, UUID>
     List<SimpleItemResponse> searchByName(@Param("keyword") String keyword);
 
     List<Tour> findByIdTourIn(List<UUID> ids);
+
+    List<Tour> findByTourNameContainingIgnoreCaseAndApprovedTrue(String name);
+
+    List<Tour> findByDescriptionContainingIgnoreCaseAndApprovedTrue(String keyword);
+
+    List<Tour> findByTourNameContainingIgnoreCase(String name);
+
+    List<Tour> findByDescriptionContainingIgnoreCase(String keyword);
 }

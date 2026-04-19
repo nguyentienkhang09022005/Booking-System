@@ -7,6 +7,7 @@ import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Services.ChatHistoryService;
 import com.example.java_service.Services.Interfaces.IBookingAssistantAgent;
 import com.example.java_service.Services.KnowledgeBaseSyncService;
+import dev.ai4j.openai4j.OpenAiHttpException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,8 +42,23 @@ public class ChatbotController
         log.info("Chat request - idUser: {}, message: {}", request.getIdUser(), request.getUserMessage());
 
         List<MessageHistoryItem> history = chatHistoryService.getHistoryChat(request.getIdUser());
-        
-        String answer = assistantAgent.chat(request.getIdUser(), request.getUserMessage(), history);
+        if (history.size() > 5) {
+            history = history.subList(history.size() - 5, history.size());
+        }
+
+        String answer;
+        try {
+            answer = assistantAgent.chat(request.getIdUser(), request.getUserMessage(), history);
+        } catch (OpenAiHttpException e) {
+            if (e.getMessage() != null && e.getMessage().contains("rate_limit")) {
+                log.warn("Rate limit hit for user: {}, message: {}", request.getIdUser(), e.getMessage());
+                return ApiResponse.<String>builder()
+                        .message("Hệ thống đang bận, vui lòng thử lại sau 1 phút.")
+                        .data(null)
+                        .build();
+            }
+            throw e;
+        }
 
         chatHistoryService.saveChat(
                 request.getIdUser(),

@@ -26,4 +26,5 @@ public class ItineraryResponse {
     String notes;
     LocalDateTime createdAt;
     List<ItineraryItemResponse> items;
+    List<TourForScheduleResponse> suggestedTours;
 }

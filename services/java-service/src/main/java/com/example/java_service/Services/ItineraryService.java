@@ -60,9 +60,9 @@ public class ItineraryService {
         ITEM_TYPE_ALIASES.put("airplane", PredefinedItemType.FLIGHT);
         ITEM_TYPE_ALIASES.put("plane", PredefinedItemType.FLIGHT);
         ITEM_TYPE_ALIASES.put("flight", PredefinedItemType.FLIGHT);
-        ITEM_TYPE_ALIASES.put("hotel", PredefinedItemType.HOTEL);
-        ITEM_TYPE_ALIASES.put("homestay", PredefinedItemType.HOTEL);
-        ITEM_TYPE_ALIASES.put("resort", PredefinedItemType.HOTEL);
+        ITEM_TYPE_ALIASES.put("hotel", PredefinedItemType.ACCOMMODATION);
+        ITEM_TYPE_ALIASES.put("homestay", PredefinedItemType.ACCOMMODATION);
+        ITEM_TYPE_ALIASES.put("resort", PredefinedItemType.ACCOMMODATION);
         ITEM_TYPE_ALIASES.put("restaurant", PredefinedItemType.MEAL);
         ITEM_TYPE_ALIASES.put("food", PredefinedItemType.MEAL);
         ITEM_TYPE_ALIASES.put("sightseeing", PredefinedItemType.ACTIVITY);
@@ -213,15 +213,6 @@ public class ItineraryService {
         if (request.getRefId() != null) {
             item.setRefId(UUID.fromString(request.getRefId()));
         }
-        if (request.getBookingStatus() != null) {
-            item.setBookingStatus(request.getBookingStatus());
-        }
-        if (request.getPaymentStatus() != null) {
-            item.setPaymentStatus(request.getPaymentStatus());
-        }
-        if (request.getBookingId() != null) {
-            item.setBookingId(UUID.fromString(request.getBookingId()));
-        }
 
         ItineraryItem saved = itineraryItemRepository.save(item);
         return itineraryItemMapper.toResponse(saved);
@@ -302,16 +293,6 @@ public class ItineraryService {
         ItineraryItem item = itineraryItemRepository.findById(uuid)
                 .orElseThrow(() -> new ApiException(ErrorCode.ITINERARY_ITEM_NOT_FOUND));
 
-        if (request.getBookingStatus() != null) {
-            item.setBookingStatus(request.getBookingStatus());
-        }
-        if (request.getPaymentStatus() != null) {
-            item.setPaymentStatus(request.getPaymentStatus());
-        }
-        if (request.getBookingId() != null) {
-            item.setBookingId(UUID.fromString(request.getBookingId()));
-        }
-
         ItineraryItem saved = itineraryItemRepository.save(item);
         return itineraryItemMapper.toResponse(saved);
     }
@@ -370,7 +351,7 @@ public class ItineraryService {
         }
         if (Arrays.asList(
                 PredefinedItemType.FLIGHT,
-                PredefinedItemType.HOTEL,
+                PredefinedItemType.ACCOMMODATION,
                 PredefinedItemType.TOUR,
                 PredefinedItemType.TRANSPORT,
                 PredefinedItemType.ACTIVITY,
@@ -388,7 +369,7 @@ public class ItineraryService {
         String normalized = type.toLowerCase().trim();
         if (!Arrays.asList(
                 PredefinedItemType.FLIGHT,
-                PredefinedItemType.HOTEL,
+                PredefinedItemType.ACCOMMODATION,
                 PredefinedItemType.TOUR,
                 PredefinedItemType.TRANSPORT,
                 PredefinedItemType.ACTIVITY,

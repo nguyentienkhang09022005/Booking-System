@@ -23,8 +23,8 @@ public class ItineraryItemResponse {
     String suggestedLocation;
     BigDecimal suggestedPrice;
     Integer estimatedDurationMinutes;
-    String bookingStatus;
-    String bookingId;
-    String paymentStatus;
+//    String bookingStatus;
+//    String bookingId;
+//    String paymentStatus;
     Integer displayOrder;
 }

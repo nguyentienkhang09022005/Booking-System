@@ -38,9 +38,6 @@ public class Itinerary {
     @Column(name = "budget", precision = 15, scale = 2)
     private BigDecimal budget;
 
-    @Column(name = "generated_schedule", columnDefinition = "TEXT")
-    private String generatedSchedule;
-
     @Column(name = "status", length = 20)
     private String status = "DRAFT";
 

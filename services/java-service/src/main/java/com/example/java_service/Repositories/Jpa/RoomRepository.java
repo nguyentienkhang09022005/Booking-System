@@ -57,4 +57,10 @@ public interface RoomRepository extends JpaRepository<Room, UUID>
     WHERE r.idRoom IN :roomIds""")
     void updateStatusForRoomIds(@Param("roomIds") List<UUID> idRoom, @Param("status") String status);
 
+    List<Room> findByRoomNameContainingIgnoreCase(String roomName);
+
+    List<Room> findByAccommodation_IdAccommodationAndStatus(UUID idAccommodation, String status);
+
+    List<Room> findByTypeRoom_TypeRoomContainingIgnoreCase(String typeRoom);
+
 }

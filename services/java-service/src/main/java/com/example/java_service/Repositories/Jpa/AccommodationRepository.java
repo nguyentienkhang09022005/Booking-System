@@ -34,4 +34,16 @@ public interface AccommodationRepository extends JpaRepository<Accommodation, UU
     Accommodation findByIdWithUsers(@Param("id") UUID idAccommodation);
 
     List<Accommodation> findByIdAccommodationIn(List<UUID> ids);
+
+    List<Accommodation> findByAccommodationNameContainingIgnoreCase(String name);
+
+    List<Accommodation> findByAccommodationNameContainingIgnoreCaseAndApprovedTrue(String name);
+
+    List<Accommodation> findByCityContainingIgnoreCaseAndApprovedTrue(String city);
+
+    List<Accommodation> findByProvinceContainingIgnoreCaseAndApprovedTrue(String province);
+
+    List<Accommodation> findByCityContainingIgnoreCase(String city);
+
+    List<Accommodation> findByProvinceContainingIgnoreCase(String province);
 }

@@ -45,44 +45,14 @@
 
 ## Các file chính
 
-### 1. ChatbotController
-**Đường dẫn:** `Controllers/ChatbotController.java`
-**Chức năng:** REST controller nhận request từ Node.js frontend
-**Endpoints:**
-- `POST /api/v1/chatbot/ask` - Giao tiếp chat
-- `POST /api/v1/chatbot/admin/sync-knowledge` - Admin sync toàn bộ knowledge base
-- `DELETE /api/v1/chatbot/memory/{sessionId}` - Xóa chat memory
-
-### 2. IBookingAssistantAgent
-**Đường dẫn:** `Services/Interfaces/IBookingAssistantAgent.java`
-**Chức năng:** Interface cho AI Agent, được LangChain4j implement tự động
-**SystemMessage:** Định nghĩa behavior và rules cho AI - hướng dẫn AI cách xử lý từng loại câu hỏi
-
-### 3. RagConfig
-**Đường dẫn:** `Configs/RagConfig.java`
-**Chức năng:** Cấu hình tất cả LangChain4j beans
-**Beans được tạo:**
-- `ChatLanguageModel` - Gemini 2.0 Flash (suy nghĩ và trả lời)
-- `EmbeddingModel` - Google text-embedding-004 (chuyển text → vector số)
-- `EmbeddingStore` - PgVector connection đến PostgreSQL
-- `ContentRetriever` - Tìm kiếm vector gần nhất với câu hỏi
-- `ChatMemoryProvider` - Session memory (20 messages/session)
-
-### 4. BookingChatTools
-**Đường dẫn:** `Helpers/BookingChatTools.java`
-**Chức năng:** Chứa các @Tool methods cho AI agent gọi - là cầu nối giữa AI và Database
-**Mỗi method public với @Tool annotation = 1 Tool cho AI**
-
-### 5. KnowledgeBaseSyncService
-**Đường dẫn:** `Services/KnowledgeBaseSyncService.java`
-**Chức năng:** Sync dữ liệu từ PostgreSQL sang Vector DB (RAG)
-**Đồng bộ:** General Regulations, Tours, Accommodations, Services, Vouchers
-
-### 6. ChatMemoryManager
-**Đường dẫn:** `Helpers/ChatMemoryManager.java`
-**Chức năng:** Quản lý chat memory (clear, count messages)
-
----
+| Component | Path | Mô tả |
+|-----------|------|-------|
+| Controller | `Controllers/ChatbotController.java` | REST controller nhận request |
+| Agent Interface | `Services/Interfaces/IBookingAssistantAgent.java` | AI Agent interface |
+| Config | `Configs/RagConfig.java` | LangChain4j beans configuration |
+| Tools | `Helpers/BookingChatTools.java` | 8 @Tool methods cho AI gọi |
+| Knowledge Sync | `Services/KnowledgeBaseSyncService.java` | Sync PostgreSQL → Vector DB |
+| Chat History | `Services/ChatHistoryService.java` | Lưu trữ lịch sử chat |
 
 ## TOOLS TRONG BOOKINGCHATTOOLS
 
@@ -97,58 +67,13 @@
 | `searchTransportTickets` | Tìm vé di chuyển | Hỏi về vé phương tiện |
 | `searchServices` | Tìm dịch vụ | Hỏi về dịch vụ |
 
----
+## API Endpoints
 
-## Hướng dẫn thêm Tool mới
-
-### Ví dụ: Thêm Tool kiểm tra trạng thái booking
-
-#### Bước 1: Thêm method vào BookingChatTools
-
-```java
-@Tool("Kiểm tra trạng thái đặt phòng của khách hàng khi có booking ID hoặc email")
-public String checkBookingStatus(String bookingIdentifier)
-{
-    try {
-        BookingResponse booking = bookingService.findBooking(bookingIdentifier);
-        return objectMapper.writeValueAsString(booking);
-    } catch (Exception e) {
-        log.error("Tool Error - checkBookingStatus: {}", e.getMessage());
-        return "Không tìm thấy thông tin đặt phòng.";
-    }
-}
-```
-
-#### Bước 2: Thêm BookingService vào constructor
-
-BookingChatTools đã có `@RequiredArgsConstructor` nên chỉ cần thêm field:
-
-```java
-@Component
-public class BookingChatTools
-{
-    RoomService roomService;
-    TourService tourService;
-    AccommodationService accommodationService;
-    VoucherService voucherService;
-    TransportTicketService transportTicketService;
-    ServiceService serviceService;
-    BookingService bookingService;  // ← Thêm dòng này
-    ObjectMapper objectMapper;
-    // ...
-}
-```
-
-#### Bước 3: Cập nhật SystemMessage trong IBookingAssistantAgent (nếu cần)
-
-Thêm vào phần "--- BOOKING ---":
-```
-"Khi khách hỏi về trạng thái đặt phòng, lịch sử đặt:"
-"1. Gọi checkBookingStatus với booking ID hoặc email."
-"2. Trả lời với thông tin: ngày đặt, ngày nhận/trả phòng, trạng thái."
-```
-
----
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
+| POST | `/api/v1/chatbot/ask` | Giao tiếp chat |
+| POST | `/api/v1/chatbot/admin/sync-knowledge` | Admin sync knowledge base |
+| DELETE | `/api/v1/chatbot/memory/{sessionId}` | Xóa chat memory |
 
 ## Database Schema - Vector Table
 
@@ -165,8 +90,6 @@ ON booking_knowledge_base
 USING hnsw (embedding vector_cosine_ops);
 ```
 
----
-
 ## Environment Variables cần thiết
 
 ```properties
@@ -176,87 +99,45 @@ SPRING_DATASOURCE_USERNAME=postgres
 SPRING_DATASOURCE_PASSWORD=password
 ```
 
----
-
 ## Flow xử lý câu hỏi
-
-### Ví dụ 1: "Tour Đà Lạt giá bao nhiêu?"
 
 ```
 1. User gửi câu hỏi
          ↓
 2. Controller nhận request, gọi assistantAgent.chat()
          ↓
-3. AI phân tích: "Đây là câu hỏi về tour"
+3. AI phân tích: "Đây là câu hỏi về..."
          ↓
-4. AI gọi searchTours("Đà Lạt") → Nhận danh sách tour
+4. AI gọi tool(s) phù hợp → Nhận kết quả từ DB
          ↓
-5. AI chọn tour phù hợp, gọi getTourDetails("uuid-tour")
-         ↓
-6. AI nhận chi tiết tour (giá, lịch trình)
-         ↓
-7. AI tổng hợp → Trả lời user bằng tiếng Việt
+5. AI tổng hợp → Trả lời user bằng tiếng Việt
 ```
-
-### Ví dụ 2: "Có voucher giảm giá nào không?"
-
-```
-1. User gửi câu hỏi
-         ↓
-2. AI phân tích: "Đây là câu hỏi về voucher"
-         ↓
-3. AI gọi searchVouchers("") → Nhận danh sách voucher đang hoạt động
-         ↓
-4. AI format kết quả → Trả lời user với danh sách voucher
-```
-
-### Ví dụ 3: "Khách sạn ở Hà Nội có gì?"
-
-```
-1. User gửi câu hỏi
-         ↓
-2. AI phân tích: "Đây là câu hỏi về nơi cư trú"
-         ↓
-3. AI gọi searchAccommodations("Hà Nội") → Nhận danh sách khách sạn
-         ↓
-4. AI format kết quả → Trả lời user với top khách sạn ở Hà Nội
-```
-
----
 
 ## Sync Knowledge Base (Admin)
 
 Admin gọi `POST /api/v1/chatbot/admin/sync-knowledge` để đồng bộ:
 
-1. **General Regulations** - Quy định, chính sách khách sạn
+1. **General Regulations** - Quy định, chính sách
 2. **Tours** - Thông tin tour du lịch
 3. **Accommodations** - Thông tin nơi cư trú
 4. **Services** - Dịch vụ khách sạn
 5. **Vouchers** - Mã giảm giá
 
-Dữ liệu được:
-- Ghép thành corpus lớn
-- Chia nhỏ thành chunks (500 ký tự, overlap 50)
-- Embed thành vectors (768 chiều)
-- Lưu vào Vector DB
-
----
-
 ## Troubleshooting
 
-### Lỗi "embedding dimension mismatch"
-- Kiểm tra `dimension(768)` trong RagConfig khớp với model embedding
+| Lỗi | Nguyên nhân | Xử lý |
+|-----|-------------|--------|
+| `embedding dimension mismatch` | Dimension không khớp | Kiểm tra `dimension(768)` trong RagConfig |
+| `Table not found` | Vector table chưa tạo | Chạy script `sql/rag_vector_table.sql` |
+| `API key invalid` | GEMINI_APIKEY sai | Kiểm tra environment variable |
+| Không tìm thấy kết quả RAG | Data chưa sync | Gọi sync-knowledge endpoint |
+| AI không gọi đúng tool | @Tool description không rõ | Cập nhật SystemMessage |
 
-### Lỗi "Table not found"
-- Chạy script `sql/rag_vector_table.sql`
-- Kiểm tra `spring.datasource.url` đúng database
+## Tài liệu chi tiết
 
-### Lỗi "API key invalid"
-- Kiểm tra `GEMINI_APIKEY` environment variable
-
-### Không tìm thấy kết quả RAG
-- Gọi `POST /api/v1/chatbot/admin/sync-knowledge` để sync data
-
-### AI không gọi đúng tool
-- Kiểm tra @Tool description có rõ ràng không
-- Kiểm tra SystemMessage trong IBookingAssistantAgent
+Xem [SPEC_CHATBOT_AI.md](./SPEC_CHATBOT_AI.md) để biết thêm chi tiết về:
+- Chi tiết từng component
+- Cách thêm tool mới
+- Cấu hình ChatMemory
+- Example conversation flows
+- Error handling

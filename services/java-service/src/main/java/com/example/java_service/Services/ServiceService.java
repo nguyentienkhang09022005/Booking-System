@@ -3,6 +3,7 @@ package com.example.java_service.Services;
 import com.example.java_service.Constant.PredefinedStatusService;
 import com.example.java_service.Dto.Request.ServiceCreationRequest;
 import com.example.java_service.Dto.Request.ServiceUpdateRequest;
+import com.example.java_service.Dto.Response.ServiceDetailResponse;
 import com.example.java_service.Dto.Response.ServiceResponse;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
@@ -73,6 +74,64 @@ public class ServiceService
                 .filter(s -> s.getServiceName().toLowerCase().contains(lowerKeyword) ||
                         (s.getDescription() != null && s.getDescription().toLowerCase().contains(lowerKeyword)))
                 .map(service -> serviceMapper.toServiceResponse(service))
+                .toList();
+
+        ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);
+        return result;
+    }
+
+    public ServiceDetailResponse getServiceDetail(UUID idService)
+    {
+        Service service = serviceRepository.findById(idService).orElseThrow(
+                () -> new ApiException(ErrorCode.SERVICE_NOT_FOUND)
+        );
+
+        Accommodation accommodation = service.getAccommodation();
+
+        return ServiceDetailResponse.builder()
+                .idService(service.getIdService())
+                .typeService(service.getTypeService() != null ? service.getTypeService().getTypeService() : null)
+                .serviceName(service.getServiceName())
+                .servicePrice(service.getServicePrice())
+                .status(service.getStatus())
+                .quantity(service.getQuantity())
+                .description(service.getDescription())
+                .accommodationName(accommodation != null ? accommodation.getAccommodationName() : null)
+                .accommodationStreet(accommodation != null ? accommodation.getStreet() : null)
+                .accommodationWard(accommodation != null ? accommodation.getWard() : null)
+                .accommodationCity(accommodation != null ? accommodation.getCity() : null)
+                .accommodationProvince(accommodation != null ? accommodation.getProvince() : null)
+                .build();
+    }
+
+    public List<ServiceResponse> searchServicesByType(String type)
+    {
+        String cacheKey = "searchByType:" + type.toLowerCase().trim();
+        List<ServiceResponse> cached = ragCacheService.getList(CACHE_TYPE, cacheKey,
+                new com.fasterxml.jackson.core.type.TypeReference<List<ServiceResponse>>() {});
+
+        if (cached != null) {
+            log.debug("Cache hit for service search by type: {}", type);
+            return cached;
+        }
+
+        log.debug("Cache miss for service search by type: {}", type);
+        List<com.example.java_service.Models.Service> services = serviceRepository
+                .findByServiceNameContainingIgnoreCase(type);
+
+        if (services.isEmpty()) {
+            var typeServices = typeServiceRepository.findByTypeServiceContainingIgnoreCase(type);
+            if (!typeServices.isEmpty()) {
+                String typeName = typeServices.get(0).getTypeService();
+                services = serviceRepository.findAll().stream()
+                        .filter(s -> s.getTypeService() != null &&
+                                s.getTypeService().getTypeService().equalsIgnoreCase(typeName))
+                        .toList();
+            }
+        }
+
+        List<ServiceResponse> result = services.stream()
+                .map(serviceMapper::toServiceResponse)
                 .toList();
 
         ragCacheService.set(CACHE_TYPE, cacheKey, result, CACHE_TTL_SECONDS);

@@ -48,7 +48,7 @@ public class RagConfig
         return OpenAiChatModel.builder()
                 .apiKey(groqApiKey)
                 .baseUrl(groqBaseUrl)
-                .modelName("llama-3.1-8b-instant")
+                .modelName("meta-llama/llama-4-scout-17b-16e-instruct")
                 .temperature(0.3)
                 .timeout(Duration.ofSeconds(120))
                 .build();

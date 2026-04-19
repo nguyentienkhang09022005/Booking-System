@@ -54,14 +54,14 @@ public class ItineraryItem {
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDurationMinutes;
 
-    @Column(name = "booking_status", length = 20)
-    private String bookingStatus = "PENDING";
+//    @Column(name = "booking_status", length = 20)
+//    private String bookingStatus = "PENDING";
+//
+//    @Column(name = "booking_id")
+//    private UUID bookingId;
 
-    @Column(name = "booking_id")
-    private UUID bookingId;
-
-    @Column(name = "payment_status", length = 20)
-    private String paymentStatus = "UNPAID";
+//    @Column(name = "payment_status", length = 20)
+//    private String paymentStatus = "UNPAID";
 
     @Column(name = "display_order")
     private Integer displayOrder;

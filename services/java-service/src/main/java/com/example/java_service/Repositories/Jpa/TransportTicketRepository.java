@@ -24,4 +24,16 @@ public interface TransportTicketRepository extends JpaRepository<TransportTicket
     List<SimpleItemResponse> findAllSimpleTransportTickets();
 
     Page<TransportTicket> findByApprovedTrue(Pageable pageable);
+
+    List<TransportTicket> findByProviderNameContainingIgnoreCaseAndApprovedTrue(String providerName);
+
+    List<TransportTicket> findByDepartureLocationContainingIgnoreCaseAndApprovedTrue(String departure);
+
+    List<TransportTicket> findByArrivalLocationContainingIgnoreCaseAndApprovedTrue(String arrival);
+
+    List<TransportTicket> findByTicketTypeContainingIgnoreCaseAndApprovedTrue(String ticketType);
+
+    List<TransportTicket> findByDepartureLocationContainingIgnoreCase(String departure);
+
+    List<TransportTicket> findByArrivalLocationContainingIgnoreCase(String arrival);
 }

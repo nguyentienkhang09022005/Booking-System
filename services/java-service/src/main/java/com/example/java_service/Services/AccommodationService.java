@@ -33,6 +33,7 @@ public class AccommodationService
 {
     UserRepository userRepository;
     AccommodationRepository accommodationRepository;
+    RoomRepository roomRepository;
     FavoriteRepository favoriteRepository;
     ImagesRepository imagesRepository;
     EvaluatesRepository evaluatesRepository;
@@ -494,5 +495,52 @@ public class AccommodationService
         evaluatesRepository.deleteByRefIdAndRefType(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
         accommodationRepository.delete(accommodation);
         return ResponseEntity.ok("Xóa nơi cư trú thành công!");
+    }
+
+    public AccommodationBasicInfoResponse getAccommodationBasicInfo(UUID idAccommodation)
+    {
+        Accommodation accommodation = accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
+        );
+
+        Integer allEvaluate = evaluatesService.getAllEvaluate(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
+        Double stars = evaluatesService.getAverageStar(idAccommodation.toString(), PredefinedRefFavoriteAndEvaluate.REF_ACCOMMODATION);
+
+        return AccommodationBasicInfoResponse.builder()
+                .idAccommodation(accommodation.getIdAccommodation())
+                .accommodationName(accommodation.getAccommodationName())
+                .accommodationType(accommodation.getAccommodationType())
+                .street(accommodation.getStreet())
+                .ward(accommodation.getWard())
+                .city(accommodation.getCity())
+                .province(accommodation.getProvince())
+                .checkinTime(accommodation.getCheckinTime())
+                .checkoutTime(accommodation.getCheckoutTime())
+                .description(accommodation.getDescription())
+                .allEvaluates(allEvaluate)
+                .averageStar(stars)
+                .favorite(false)
+                .build();
+    }
+
+    public List<RoomBasicResponse> getAccommodationRoomList(UUID idAccommodation)
+    {
+        accommodationRepository.findById(idAccommodation).orElseThrow(
+                () -> new ApiException(ErrorCode.ACCOMMODATION_NOT_FOUND)
+        );
+
+        List<Room> rooms = roomRepository.findByAccommodation_IdAccommodation(idAccommodation);
+
+        return rooms.stream()
+                .map(room -> RoomBasicResponse.builder()
+                        .idRoom(room.getIdRoom())
+                        .typeRoom(room.getTypeRoom() != null ? room.getTypeRoom().getTypeRoom() : null)
+                        .roomName(room.getRoomName())
+                        .roomPrice(room.getRoomPrice())
+                        .size(room.getSize())
+                        .status(room.getStatus())
+                        .quantity(room.getQuantity())
+                        .build())
+                .toList();
     }
 }
