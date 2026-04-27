@@ -3,8 +3,6 @@ import { MessageModel } from "../../collection/Message.ts";
 import type { Receiver } from "../../type/Chat.ts";
 
 export const getReceivers = async (idSender: string): Promise<Receiver[]> => {
-  console.log(idSender);
-  
   const messages = await MessageModel.find({
     $or: [
       { idSender },
@@ -29,7 +27,7 @@ export const getReceivers = async (idSender: string): Promise<Receiver[]> => {
   }
 
   const receivers = await sql`
-    SELECT id_user, first_name, last_name, email
+    SELECT id_user AS "idUser", first_name AS "firstName", last_name AS "lastName", email
     FROM users
     WHERE id_user = ANY(${allUserIds})
   `;

@@ -1,6 +1,7 @@
 export interface Receiver {
-  firstname: string;
-  lastname: string;
+  idUser: string;
+  firstName: string;
+  lastName: string;
   email: string;
 }
 
