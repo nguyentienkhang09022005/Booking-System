@@ -94,6 +94,16 @@ public class ChatbotController
                 .build();
     }
 
+@GetMapping("/history")
+    public ApiResponse<List<MessageHistoryItem>> getChatHistory(@RequestParam String idUser)
+    {
+        List<MessageHistoryItem> history = chatHistoryService.getHistoryChat(idUser);
+        return ApiResponse.<List<MessageHistoryItem>>builder()
+                .message("Lấy lịch sử chat thành công!")
+                .data(history)
+                .build();
+    }
+
     @DeleteMapping("/memory")
     public ApiResponse<String> clearMemory(@RequestParam String idUser)
     {
