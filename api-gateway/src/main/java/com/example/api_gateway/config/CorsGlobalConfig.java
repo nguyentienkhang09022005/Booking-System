@@ -15,7 +15,10 @@ public class CorsGlobalConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
 
-        corsConfig.setAllowedOriginPatterns(List.of("*"));
+        corsConfig.setAllowedOriginPatterns(List.of(
+            "http://localhost:3000",
+            "https://booking-next-system.vercel.app"
+        ));
         corsConfig.setAllowedMethods(List.of("*"));
         corsConfig.setAllowedHeaders(List.of("*"));
         corsConfig.setAllowCredentials(true);
