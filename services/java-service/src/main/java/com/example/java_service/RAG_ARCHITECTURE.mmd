@@ -1,0 +1,86 @@
+flowchart TB
+    subgraph Chat_Flow["Chat Flow"]
+        direction TB
+        U["User"] -->|POST /api/v1/chatbot/ask| C["ChatbotController"]
+        C -->|1. getHistoryChat| CH[(Redis ChatHistory)]
+        C -->|2. chat| A["IBookingAssistantAgent"]
+        
+        A -->|3. Analyze + Call Tools| T["BookingChatTools"]
+        
+        T -->|4a. Query| PG[(PostgreSQL)]
+        T -->|4b. Check Cache| RC[RagCacheService]
+        RC -->|cache miss| PG
+        
+        PG -->|5. Results| T
+        T -->|6. Tool Results| A
+        
+        A -->|7. Synthesize Response| C
+        C -->|8. saveChat| CH
+        C -->|HTTP Response| U
+    end
+
+    subgraph Admin_Sync["Admin Sync Knowledge Base"]
+        direction TB
+        A2["Admin"] -->|POST /admin/sync-knowledge| KS["KnowledgeBaseSyncService"]
+        
+        KS -->|Fetch 9 data sources| PG2[(PostgreSQL)]
+        KS -->|Build corpus| KB["Knowledge Corpus"]
+        
+        KB -->|Split chunks| CS["Chunking 500/50"]
+        CS -->|Batch 20| EMB["EmbeddingModel"]
+        
+        EMB -->|Embeddings| Vec[(PgVector)]
+        KS -->|evictAllRagCache| RC
+    end
+
+    subgraph Components["Services used by BookingChatTools"]
+        direction LR
+        RS[RoomService]
+        TS[TourService]
+        AS[AccommodationService]
+        VS[VoucherService]
+        SS[ServiceService]
+        TTS[TransportTicketService]
+        
+        T --> RS
+        T --> TS
+        T --> AS
+        T --> VS
+        T --> SS
+        T --> TTS
+        
+        RS --> RC
+        TS --> RC
+        AS --> RC
+        VS --> RC
+        SS --> RC
+        TTS --> RC
+    end
+
+    subgraph DataSources["9 Data Sources synced to Vector DB"]
+        direction LR
+        GR[General Regulations]
+        TO[Tours]
+        AC[Accommodations]
+        RO[Rooms]
+        SV[Services]
+        VC[Vouchers]
+        TT[Transport Tickets]
+        RT[Room Types]
+        ST[Service Types]
+        
+        KS --> GR
+        KS --> TO
+        KS --> AC
+        KS --> RO
+        KS --> SV
+        KS --> VC
+        KS --> TT
+        KS --> RT
+        KS --> ST
+    end
+
+    style Vec fill:#ff6b6b,stroke:#333,color:#fff
+    style CH fill:#4ecdc4,stroke:#333,color:#fff
+    style PG fill:#45a7a8,stroke:#333,color:#fff
+    style PG2 fill:#45a7a8,stroke:#333,color:#fff

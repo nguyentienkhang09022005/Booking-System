@@ -260,6 +260,31 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/report-revenues-detail/update": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report Revenue Detail"
+                ],
+                "parameters": [
+                    {
+                        "description": "Thông tin cập nhật",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Request.RevenueUpdateEvent"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/report-revenues/create": {
             "post": {
                 "consumes": [
@@ -451,6 +476,9 @@ const docTemplate = `{
                 "order": {
                     "$ref": "#/definitions/Request.PaymentOrderData"
                 },
+                "permit": {
+                    "$ref": "#/definitions/Request.PermitData"
+                },
                 "signature": {
                     "type": "string"
                 }
@@ -500,6 +528,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id_user": {
+                    "type": "string"
+                }
+            }
+        },
+        "Request.PermitData": {
+            "type": "object",
+            "properties": {
+                "deadline": {
+                    "type": "integer"
+                },
+                "r": {
+                    "type": "string"
+                },
+                "s": {
+                    "type": "string"
+                },
+                "v": {
+                    "type": "integer"
+                },
+                "value": {
                     "type": "string"
                 }
             }
@@ -566,6 +614,20 @@ const docTemplate = `{
                 },
                 "year": {
                     "type": "integer"
+                }
+            }
+        },
+        "Request.RevenueUpdateEvent": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "idBooking": {
+                    "type": "string"
+                },
+                "idExpense": {
+                    "type": "string"
                 }
             }
         },
@@ -653,6 +715,9 @@ const docTemplate = `{
                 },
                 "typed_data": {
                     "$ref": "#/definitions/Response.EIP712TypedData"
+                },
+                "vnd_token_address": {
+                    "type": "string"
                 }
             }
         },
@@ -672,11 +737,11 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "",
 	Host:             "",
-	BasePath:         "/",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Golang-Service API",
+	Title:            "",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

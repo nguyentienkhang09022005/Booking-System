@@ -6,26 +6,19 @@ import (
 	"log"
 	"os"
 	"payment-service/Configs"
-	"payment-service/Internal/RabbitMQ"
 	"payment-service/Internal/Repositories"
 	"payment-service/Internal/Services"
 	"payment-service/Routes"
 	_ "payment-service/docs"
 )
 
-// @title Golang-Service API
-// @version 1.0
-// @BasePath /
 func main() {
-	// Kết nối database
 	db := Configs.ConnectToDB()
 
-	// Kết nối ZaloPay
 	if err := Configs.ZaloPayConfig(); err != nil {
 		log.Printf("Warning: ZaloPay config failed (%v) — ZaloPay payment unavailable", err)
 	}
 
-	// Kết nối Blockchain (Sepolia)
 	if err := Configs.BlockchainConfig(); err != nil {
 		log.Printf("Warning: Blockchain config failed (%v) — VND Stablecoin payment unavailable", err)
 	}
@@ -35,23 +28,19 @@ func main() {
 	accommodationRepository := Repositories.AccommodationRepository(db)
 	reportRevenueDetailService := Services.ReportRevenueDetailService(reportRevenueRepository, reportRevenueDetailRepository, accommodationRepository)
 
-	// Khởi động RabbitMQ consumer
-	go func() {
-		log.Println("Starting Revenue Consumer...")
-		RabbitMQ.StartRevenueConsumer(reportRevenueDetailService)
-	}()
+	_ = Services.PaymentService(
+		Repositories.PaymentRepository(db),
+		reportRevenueDetailService,
+	)
 
-	// Chạy Gin Framework
 	r := gin.Default()
 
-	// Thiết lập router
 	Routes.SwaggerRouter(r)
 	Routes.PaymentRouter(r, db)
 	Routes.ReportRevenueRouter(r, db)
 	Routes.ReportRevenueDetailRouter(r, db)
 	Routes.ReportRoomBookingRouter(r, db)
 
-	// Chạy server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8081"

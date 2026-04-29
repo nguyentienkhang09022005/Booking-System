@@ -41,3 +41,28 @@ func (r *reportRevenueDetailController) CreateReportRevenueDetail(c *gin.Context
 	}
 	Helper.Created(c, "Tạo chi tiết báo cáo doanh thu thành công!", reportRevenueDetailResponse)
 }
+
+// UpdateReportRevenueDetail cập nhật chi tiết báo cáo doanh thu
+// @Tags Report Revenue Detail
+// @Accept json
+// @Produce json
+// @Param request body Request.RevenueUpdateEvent true "Thông tin cập nhật"
+// @Router /report-revenues-detail/update [put]
+func (r *reportRevenueDetailController) UpdateReportRevenueDetail(c *gin.Context) {
+	var revenueUpdateEvent Request.RevenueUpdateEvent
+	if err := c.ShouldBindJSON(&revenueUpdateEvent); err != nil {
+		Helper.Error(c, http.StatusBadRequest, "Dữ liệu gửi lên không hợp lệ: "+err.Error())
+		return
+	}
+	err := r._reportRevenueDetailService.UpdateReportRevenueDetail(revenueUpdateEvent)
+	if err != nil {
+		if customErr, ok := err.(*Errors.ApiError); ok {
+			Helper.Error(c, customErr.Status, customErr.Message)
+			return
+		}
+
+		Helper.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	Helper.Success(c, "Cập nhật chi tiết báo cáo doanh thu thành công!", nil)
+}

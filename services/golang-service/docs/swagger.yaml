@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   Request.ExecuteVndPaymentRequest:
     properties:
@@ -6,6 +5,8 @@ definitions:
         type: string
       order:
         $ref: '#/definitions/Request.PaymentOrderData'
+      permit:
+        $ref: '#/definitions/Request.PermitData'
       signature:
         type: string
     required:
@@ -44,6 +45,19 @@ definitions:
     required:
     - amount
     - id_user
+    type: object
+  Request.PermitData:
+    properties:
+      deadline:
+        type: integer
+      r:
+        type: string
+      s:
+        type: string
+      v:
+        type: integer
+      value:
+        type: string
     type: object
   Request.PrepareVndPaymentRequest:
     properties:
@@ -87,6 +101,15 @@ definitions:
         type: integer
       year:
         type: integer
+    type: object
+  Request.RevenueUpdateEvent:
+    properties:
+      amount:
+        type: number
+      idBooking:
+        type: string
+      idExpense:
+        type: string
     type: object
   Request.ZaloPayCallBackRequest:
     properties:
@@ -144,6 +167,8 @@ definitions:
         type: string
       typed_data:
         $ref: '#/definitions/Response.EIP712TypedData'
+      vnd_token_address:
+        type: string
     type: object
   Response.TypeField:
     properties:
@@ -154,8 +179,6 @@ definitions:
     type: object
 info:
   contact: {}
-  title: Golang-Service API
-  version: "1.0"
 paths:
   /api/v1/payments:
     post:
@@ -315,6 +338,22 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/Request.RevenueCreatedEvent'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Report Revenue Detail
+  /report-revenues-detail/update:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Thông tin cập nhật
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/Request.RevenueUpdateEvent'
       produces:
       - application/json
       responses: {}
