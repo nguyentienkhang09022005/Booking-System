@@ -110,6 +110,9 @@ public enum ErrorCode
     EXPENSE_NOT_FOUND("EXPENSE_NOT_FOUND", "Không tìm thấy chi tiêu!", HttpStatus.NOT_FOUND),
     INVALID_AMOUNT("INVALID_AMOUNT", "Số tiền không được âm!", HttpStatus.BAD_REQUEST),
 
+    // Lỗi Báo cáo Doanh thu
+    REVENUE_REPORT_FAILED("REVENUE_REPORT_FAILED", "Gọi API báo cáo doanh thu thất bại!", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // Lỗi báo cáo sự cố
     INCIDENT_REPORT_NOT_FOUND("INCIDENT_REPORT_NOT_FOUND", "Không tìm thấy báo cáo sự cố!", HttpStatus.NOT_FOUND),
     INVALID_INCIDENT_REPORT("INVALID_INCIDENT_REPORT", "Báo cáo sự cố đã được xữ lý không thể thay đổi thông tin!", HttpStatus.BAD_REQUEST),

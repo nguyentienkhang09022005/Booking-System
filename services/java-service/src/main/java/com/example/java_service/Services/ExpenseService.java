@@ -1,6 +1,5 @@
 package com.example.java_service.Services;
 
-import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Dto.Request.ExpenseCreationRequest;
 import com.example.java_service.Dto.Request.ExpenseUpdateRequest;
 import com.example.java_service.Dto.Response.RevenueCreatedEvent;
@@ -15,12 +14,10 @@ import com.example.java_service.Repositories.Jpa.ExpenseRepository;
 import com.example.java_service.Repositories.Jpa.AccommodationRepository;
 import com.example.java_service.Repositories.Jpa.UserRepository;
 import com.example.java_service.Repositories.Mongodb.ImagesRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -40,11 +37,8 @@ public class ExpenseService
     UserRepository userRepository;
     ImagesRepository imagesRepository;
     ExpenseMapper expenseMapper;
-    ObjectMapper objectMapper;
-    RabbitTemplate rabbitTemplate;
-    RabbitConfig rabbitConfig;
+    ReportRevenueClient reportRevenueClient;
 
-    // Hàm lấy danh sách chi tiêu của nơi cư trú
     public List<ExpenseResponse> getListExpense(UUID idAccommodation)
     {
         accommodationRepository.findById(idAccommodation).orElseThrow(
@@ -78,7 +72,6 @@ public class ExpenseService
                 }).toList();
     }
 
-    // Hàm lấy thông tin chi tiêu
     public ExpenseResponse getInfExpense(UUID idExpense)
     {
         Expense expense = expenseRepository.findById(idExpense).orElseThrow(
@@ -103,7 +96,6 @@ public class ExpenseService
         return expenseResponse;
     }
 
-    // Hàm thêm chi tiêu mới
     public ExpenseResponse saveExpense(ExpenseCreationRequest request)
     {
         Users user = userRepository.findById(request.getIdUser()).orElseThrow(
@@ -124,7 +116,6 @@ public class ExpenseService
 
         Expense savedExpense = expenseRepository.save(expense);
 
-        // Gửi sự kiện vào Exchanges
         RevenueCreatedEvent event = RevenueCreatedEvent.builder()
                 .idExpense(savedExpense.getIdExpense())
                 .idAccommodation(savedExpense.getAccommodation().getIdAccommodation())
@@ -133,16 +124,7 @@ public class ExpenseService
                 .year(savedExpense.getCreateAt().getYear())
                 .build();
 
-        try {
-            String message = objectMapper.writeValueAsString(event);
-            rabbitTemplate.convertAndSend(
-                    rabbitConfig.EXCHANGE_REPORT,
-                    rabbitConfig.ROUTING_KEY_REPORT,
-                    message
-            );
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        reportRevenueClient.createRevenueDetail(event);
 
         ExpenseResponse expenseResponse = expenseMapper.toExpenseResponse(savedExpense);
         String avatarUrl = imagesRepository.findByRefId(user.getIdUser().toString())
@@ -162,7 +144,6 @@ public class ExpenseService
         return expenseResponse;
     }
 
-    //  Hàm xóa chi tiêu thêm xữ lý bên report
     public ResponseEntity<String> deleteExpense(UUID idExpense)
     {
         Expense expense = expenseRepository.findById(idExpense).orElseThrow(
@@ -173,7 +154,6 @@ public class ExpenseService
         return ResponseEntity.ok("Xóa chi tiêu thành công!");
     }
 
-    // Hàm thay đổi thông tin chi tiêu thêm xữ lý bên report
     public ExpenseResponse updateExpense(ExpenseUpdateRequest request, UUID idExpense)
     {
         Expense expense = expenseRepository.findById(idExpense).orElseThrow(
@@ -209,16 +189,7 @@ public class ExpenseService
                 .amount(updatedExpense.getAmount())
                 .build();
 
-        try {
-            String message = objectMapper.writeValueAsString(event);
-            rabbitTemplate.convertAndSend(
-                    rabbitConfig.EXCHANGE_UPDATE_REPORT,
-                    rabbitConfig.ROUTING_KEY_UPDATE_REPORT,
-                    message
-            );
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        reportRevenueClient.updateRevenueDetail(event);
         return expenseResponse;
     }
 }

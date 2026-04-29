@@ -12,67 +12,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig
 {
-    // Report Creation Queue Config
-    @NonFinal
-    @Value("${rabbitmq.exchange.report}")
-    public String EXCHANGE_REPORT;
-
-    @NonFinal
-    @Value("${rabbitmq.queue.report}")
-    public String QUEUE_REPORT;
-
-    @NonFinal
-    @Value("${rabbitmq.routing.key.report}")
-    public String ROUTING_KEY_REPORT;
-
-    @Bean
-    public DirectExchange reportExchange() {
-        return new DirectExchange(EXCHANGE_REPORT);
-    }
-
-    @Bean
-    public Queue reportQueue() {
-        return new Queue(QUEUE_REPORT, true);
-    }
-
-    @Bean
-    public Binding binding(Queue reportQueue, DirectExchange reportExchange) {
-        return BindingBuilder.bind(reportQueue)
-                .to(reportExchange)
-                .with(ROUTING_KEY_REPORT);
-    }
-
-    // Report Update Queue Config
-    @NonFinal
-    @Value("${rabbitmq.exchange.update.report}")
-    public String EXCHANGE_UPDATE_REPORT;
-
-    @NonFinal
-    @Value("${rabbitmq.queue.update.report}")
-    public String QUEUE_UPDATE_REPORT;
-
-    @NonFinal
-    @Value("${rabbitmq.routing.key.update.report}")
-    public String ROUTING_KEY_UPDATE_REPORT;
-
-    @Bean
-    public DirectExchange updateReportExchange() {
-        return new DirectExchange(EXCHANGE_UPDATE_REPORT);
-    }
-
-    @Bean
-    public Queue updateReportQueue() {
-        return new Queue(QUEUE_UPDATE_REPORT, true);
-    }
-
-    @Bean
-    public Binding updateReportBinding(Queue updateReportQueue, DirectExchange updateReportExchange) {
-        return BindingBuilder.bind(updateReportQueue)
-                .to(updateReportExchange)
-                .with(ROUTING_KEY_UPDATE_REPORT);
-    }
-
-    // Notification queue config
     @NonFinal
     @Value("${rabbitmq.exchange.notification}")
     public String EXCHANGE_NOTIFICATION;
