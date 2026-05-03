@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public interface UserRepository extends JpaRepository<Users, UUID>
     List<Users> findUsersWithoutSegmentList();
 
     @Modifying
+    @Transactional
     @Query("UPDATE Users u SET u.customerSegment = :segment, u.segmentConfidence = :confidence, u.segmentAnalyzedAt = :analyzedAt WHERE u.idUser = :userId")
     void updateCustomerSegment(@Param("userId") UUID userId, @Param("segment") String segment, @Param("confidence") Double confidence, @Param("analyzedAt") LocalDateTime analyzedAt);
 

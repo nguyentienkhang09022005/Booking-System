@@ -778,10 +778,10 @@ public class BookingHandleService
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalPriceBooking = booking.getTotalPrice();
-        if (booking.getCheckinDate().isAfter(request.getCheckinDateActual()))
+        if (booking.getCheckinDate().isAfter(request.getCheckinDateActual().atStartOfDay()))
         {
             long minutesDiff  = ChronoUnit.MINUTES.between(
-                    request.getCheckinDateActual(),
+                    request.getCheckinDateActual().atStartOfDay(),
                     booking.getCheckinDate());
             if (minutesDiff  < 0) {
                 minutesDiff  = 0;
@@ -798,11 +798,11 @@ public class BookingHandleService
             totalPriceBooking = totalPriceBooking.add(priceEarly);
         }
 
-        if (booking.getCheckoutDate().isBefore(request.getCheckoutDateActual()))
+        if (booking.getCheckoutDate().isBefore(request.getCheckoutDateActual().atStartOfDay()))
         {
             long minutesDiff = ChronoUnit.MINUTES.between(
                     booking.getCheckoutDate(),
-                    request.getCheckoutDateActual());
+                    request.getCheckoutDateActual().atStartOfDay());
             if (minutesDiff < 0) {
                 minutesDiff = 0;
             }

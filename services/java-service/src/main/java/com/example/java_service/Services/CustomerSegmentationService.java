@@ -52,7 +52,6 @@ public class CustomerSegmentationService {
         return CompletableFuture.completedFuture(null);
     }
 
-    @Transactional
     public void analyzeAndUpdateSegment(UUID userId) {
         Users user = userRepository.findById(userId).orElse(null);
         if (user == null) {
@@ -83,12 +82,16 @@ public class CustomerSegmentationService {
             }
 
             if (shouldUpdateSegment(user, result.getSegment(), result.getConfidence())) {
-                userRepository.updateCustomerSegment(userId, result.getSegment(), result.getConfidence(), LocalDateTime.now());
+                performSegmentUpdate(userId, result.getSegment(), result.getConfidence());
                 log.info("Updated segment for user {}: {} (confidence: {})", userId, result.getSegment(), result.getConfidence());
             }
         } catch (Exception e) {
             log.error("Error parsing AI response for user {}: {}", userId, e.getMessage());
         }
+    }
+
+    public void performSegmentUpdate(UUID userId, String segment, Double confidence) {
+        userRepository.updateCustomerSegment(userId, segment, confidence, LocalDateTime.now());
     }
 
     private CustomerSegmentationResponse parseSegmentationResponse(String aiResponse) {
@@ -104,9 +107,35 @@ public class CustomerSegmentationService {
                     .reasoning(reasoning)
                     .build();
         } catch (Exception e) {
+            String jsonStr = extractJsonFromText(aiResponse);
+            if (jsonStr != null) {
+                try {
+                    JsonNode jsonResponse = objectMapper.readTree(jsonStr);
+                    String segment = jsonResponse.has("segment") ? jsonResponse.get("segment").asText() : null;
+                    double confidence = jsonResponse.has("confidence") ? jsonResponse.get("confidence").asDouble() : 0.5;
+                    String reasoning = jsonResponse.has("reasoning") ? jsonResponse.get("reasoning").asText() : null;
+
+                    return CustomerSegmentationResponse.builder()
+                            .segment(segment)
+                            .confidence(confidence)
+                            .reasoning(reasoning)
+                            .build();
+                } catch (Exception ex) {
+                    log.error("Error parsing extracted JSON: {}", ex.getMessage());
+                }
+            }
             log.error("Error parsing segmentation response: {}", e.getMessage());
             return null;
         }
+    }
+
+    private String extractJsonFromText(String text) {
+        int start = text.indexOf("{");
+        int end = text.lastIndexOf("}");
+        if (start >= 0 && end > start) {
+            return text.substring(start, end + 1);
+        }
+        return null;
     }
 
     private boolean shouldSkipAnalysis(Users user) {

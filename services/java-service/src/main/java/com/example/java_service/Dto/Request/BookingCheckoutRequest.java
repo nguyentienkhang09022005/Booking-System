@@ -3,7 +3,7 @@ package com.example.java_service.Dto.Request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -12,6 +12,6 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookingCheckoutRequest
 {
-    LocalDateTime checkinDateActual;
-    LocalDateTime checkoutDateActual;
+    LocalDate checkinDateActual;
+    LocalDate checkoutDateActual;
 }

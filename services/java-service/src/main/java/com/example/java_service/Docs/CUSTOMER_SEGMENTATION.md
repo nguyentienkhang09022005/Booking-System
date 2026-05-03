@@ -378,6 +378,9 @@ void updateCustomerSegment(UUID userId, String segment, Double confidence, Local
 ```
 Bạn là chuyên gia phân tích phân khúc khách hàng du lịch.
 
+IMPORTANT: KHÔNG ĐƯỢC GỌI BẤT KỲ TOOL NÀO. CHỈ PHÂN TÍCH DỮ LIỆU VÀ TRẢ JSON.
+IMPORTANT: Chỉ trả về duy nhất JSON, KHÔNG có text giải thích trước hoặc sau JSON.
+
 Phân loại khách hàng vào 1 trong 5 nhóm:
 - FAMILY: Đi du lịch gia đình, có con nhỏ, ưu tiên an toàn, tiện nghi, booking trước 1-2 tuần, thường đặt nhiều phòng
 - COUPLES: Cặp đôi, honeymoon, ưu tiên romantic, riêng tư, đi 2 người, booking value cao
@@ -599,11 +602,67 @@ Hệ thống sử dụng các chiến lược sau để tránh N+1 queries:
 3. **Pagination**: Sử dụng `Pageable` cho batch operations
 4. **Async Processing**: Thread pool riêng cho các tác vụ phân khúc
 
+---
+
+## Lịch sử cập nhật
+
+| Ngày | Mô tả | File thay đổi |
+|------|-------|---------------|
+| 2026-05-03 | Fix Transaction Boundary Issue - di chuyển @Transactional từ service sang repository | UserRepository.java, CustomerSegmentationService.java |
+| 2026-05-03 | Fix Tool Leakage Issue - thêm instruction cấm gọi tool trong SystemMessage | ICustomerSegmentationAgent.java |
+
+**Last Updated**: 2026-05-03
+
 ## Xử lý lỗi
 
 - Nếu AI call thất bại: Ghi log error, bỏ qua phân tích (không retry)
 - Nếu user không tìm thấy: Ghi log warning, bỏ qua
 - Nếu AI response không hợp lệ: Ghi log warning, bỏ qua
+
+## Các lỗi đã xử lý (Bugs Fixed)
+
+### 1. Transaction Boundary Issue
+
+**Mô tả lỗi**: Khi `@Async` method gọi `@Transactional` method trong thread khác, transaction proxy không hoạt động → lỗi "Executing an update/delete query".
+
+**Stack trace lỗi**:
+```
+@Async analyzeAndUpdateSegmentAsync() [segment-1 thread]
+  └─→ analyzeAndUpdateSegment()
+        └─→ performSegmentUpdate() [@Transactional] ← Proxy fails!
+              └─→ userRepository.updateCustomerSegment()
+                    ❌ No transaction context = ERROR
+```
+
+**Giải pháp**: Di chuyển `@Transactional` từ service method sang repository method.
+
+**File thay đổi**:
+- `UserRepository.java` (line 34-36): Thêm `@Transactional` vào method `updateCustomerSegment()`
+- `CustomerSegmentationService.java` (line 93): Loại bỏ `@Transactional` khỏi method `performSegmentUpdate()`
+
+**Trạng thái**: ✅ Đã fix (2026-05-03)
+
+---
+
+### 2. Tool Leakage Issue
+
+**Mô tả lỗi**: AI model (Llama) gọi nhầm tool `getVouchersByAccommodation` từ `BookingChatTools` trong khi `ICustomerSegmentationAgent` không có tools nào được chỉ định.
+
+**Log lỗi**:
+```
+ERROR 9980 --- [java-service] [      segment-1] c.e.j.Helpers.BookingChatTools : Tool Error - getVouchersByAccommodation: Không tìm thấy người dùng!
+```
+
+**Root cause**: LangChain4j `@AiService` auto-discovery expose TẤT CẢ `@Tool` methods trong Spring context cho MỌI `@AiService`. `BookingChatTools` là `@Component` với 40+ `@Tool` methods → bị expose cho `ICustomerSegmentationAgent`.
+
+**Giải pháp**: Thêm instruction trong `@SystemMessage` của `ICustomerSegmentationAgent` để cấm gọi tool.
+
+**File thay đổi**:
+- `ICustomerSegmentationAgent.java` (line 11-13): Thêm `IMPORTANT: KHÔNG ĐƯỢC GỌI BẤT KỲ TOOL NÀO. CHỈ PHÂN TÍCH DỮ LIỆU VÀ TRẢ JSON.`
+
+**Trạng thái**: ✅ Đã fix (2026-05-03)
+
+---
 
 ## Các cải tiến trong tương lai
 

@@ -10,6 +10,9 @@ public interface ICustomerSegmentationAgent {
     @SystemMessage("""
         Bạn là chuyên gia phân tích phân khúc khách hàng du lịch.
 
+        IMPORTANT: KHÔNG ĐƯỢC GỌI BẤT KỲ TOOL NÀO. CHỈ PHÂN TÍCH DỮ LIỆU VÀ TRẢ JSON.
+        IMPORTANT: Chỉ trả về duy nhất JSON, KHÔNG có text giải thích trước hoặc sau JSON.
+
         Phân loại khách hàng vào 1 trong 5 nhóm:
         - FAMILY: Đi du lịch gia đình, có con nhỏ, ưu tiên an toàn, tiện nghi, booking trước 1-2 tuần, thường đặt nhiều phòng
         - COUPLES: Cặp đôi, honeymoon, ưu tiên romantic, riêng tư, đi 2 người, booking value cao
@@ -35,12 +38,8 @@ public interface ICustomerSegmentationAgent {
         4. Giá trị trung bình booking
         5. Thời gian lưu trú/trip duration
 
-        Trả lời JSON format:
-        {
-          "segment": "FAMILY|COUPLES|GROUP|TOURIST|BUSINESS",
-          "confidence": 0.0-1.0,
-          "reasoning": "Mô tả ngắn tại sao phân loại như vậy (tối đa 100 ký tự)"
-        }
+        Trả lời CHÍNH XÁC format JSON sau, KHÔNG thêm bất kỳ text nào khác:
+        {"segment": "FAMILY|COUPLES|GROUP|TOURIST|BUSINESS", "confidence": 0.0-1.0, "reasoning": "..."}
         """)
     String analyzeCustomer(@UserMessage String customerDataJson);
 }
