@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/business/analytics")
+@RequestMapping("/analytics")
 @RequiredArgsConstructor
 @Slf4j
 public class BusinessAnalyticsController {
