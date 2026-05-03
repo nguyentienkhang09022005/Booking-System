@@ -10,6 +10,7 @@ import com.example.java_service.Dto.Response.BookingTransportResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Dto.Response.PaymentResponse;
 import com.example.java_service.Dto.Response.VoucherViewResponse;
+import com.example.java_service.Events.BookingCompletedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Helpers.VoucherValidationHelper;
@@ -26,6 +27,7 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -48,7 +50,7 @@ public class BookingTransportTicketService {
     TransportTicketRepository transportTicketRepository;
     UserRepository userRepository;
     PaymentRepository paymentRepository;
-    BookingTransportTicketMapper bookingTransportMapper;
+    BookingTransportTicketMapper bookingTransportTicketMapper;
     VoucherRepository voucherRepository;
     UserVoucherRepository userVoucherRepository;
     UserVoucherService userVoucherService;
@@ -63,6 +65,7 @@ public class BookingTransportTicketService {
     ObjectMapper objectMapper;
     WebClient webClient;
     VoucherValidationHelper voucherValidationHelper;
+    ApplicationEventPublisher eventPublisher;
 
     @NonFinal
     BookingTransportTicketService self;
@@ -264,10 +267,10 @@ public class BookingTransportTicketService {
                 () -> new ApiException(ErrorCode.BOOKING_NOT_FOUND)
         );
 
-        BookingTransportResponse response = bookingTransportMapper.toBookingTransportResponse(booking);
+        BookingTransportResponse response = bookingTransportTicketMapper.toBookingTransportResponse(booking);
         Payment payment = paymentRepository.findByBookingTransport_IdBookingTransport(idBookingTransport);
         if (payment != null) {
-            response.setPaymentInBookingResponse(bookingTransportMapper.toPaymentInBookingResponse(payment));
+            response.setPaymentInBookingResponse(bookingTransportTicketMapper.toPaymentInBookingResponse(payment));
         }
 
         // Lấy danh sách Voucher áp dụng
@@ -320,10 +323,10 @@ public class BookingTransportTicketService {
         Map<String, String> voucherImagesMap = images.stream().collect(Collectors.toMap(Images::getRefId, Images::getUrl, (a, b) -> a));
 
         return bookings.stream().map(booking -> {
-            BookingTransportResponse response = bookingTransportMapper.toBookingTransportResponse(booking);
+            BookingTransportResponse response = bookingTransportTicketMapper.toBookingTransportResponse(booking);
             Payment payment = paymentMap.get(booking.getIdBookingTransport());
             if (payment != null) {
-                response.setPaymentInBookingResponse(bookingTransportMapper.toPaymentInBookingResponse(payment));
+                response.setPaymentInBookingResponse(bookingTransportTicketMapper.toPaymentInBookingResponse(payment));
             }
 
             List<AppliedVoucher> avs = voucherMap.getOrDefault(booking.getIdBookingTransport(), List.of());
@@ -364,6 +367,14 @@ public class BookingTransportTicketService {
             booking.setStatus(request.getStatus());
             bookingTransportRepository.save(booking);
 
+            if (PredefinedStatusBookingTransport.STATUS_BOOKING_SUCCESS.equals(request.getStatus())) {
+                eventPublisher.publishEvent(BookingCompletedEvent.builder()
+                        .userId(booking.getUsers().getIdUser())
+                        .bookingType("TRANSPORT")
+                        .bookingId(booking.getIdBookingTransport())
+                        .build());
+            }
+
             NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                     .idNotification(UUID.randomUUID())
                     .idUser(booking.getUsers().getIdUser())
@@ -386,7 +397,7 @@ public class BookingTransportTicketService {
                     .build();
 
         } else {
-            bookingTransportMapper.updateBookingTransportFromRequest(request, booking);
+            bookingTransportTicketMapper.updateBookingTransportFromRequest(request, booking);
 
             BigDecimal totalPrice = booking.getPriceBookingTransport();
 

@@ -61,6 +61,12 @@ public class Users {
     @Column(name = "customer_segment", length = 50)
     private String customerSegment;
 
+    @Column(name = "segment_confidence")
+    private Double segmentConfidence;
+
+    @Column(name = "segment_analyzed_at")
+    private LocalDateTime segmentAnalyzedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createAt;

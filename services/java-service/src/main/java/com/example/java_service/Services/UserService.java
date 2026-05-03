@@ -5,6 +5,7 @@ import com.example.java_service.Constant.PredefinedTypeUser;
 import com.example.java_service.Dto.Request.UserCreationRequest;
 import com.example.java_service.Dto.Request.UserUpdateRequest;
 import com.example.java_service.Dto.Response.UserResponse;
+import com.example.java_service.Events.BookingCompletedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.UserMapper;
@@ -20,6 +21,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,7 @@ public class UserService
     EvaluatesRepository evaluatesRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    ApplicationEventPublisher eventPublisher;
 
     // Giới hạn số điện thoại
     static final int MAX_LENGTH_OF_PHONE = 12;
@@ -175,6 +180,11 @@ public class UserService
         userResponse.setRole(savedUser.getRole());
         userResponse.setTypeUser(getDefaultTypeUser());
         userResponse.setAvatar(request.getAvatar());
+
+        eventPublisher.publishEvent(BookingCompletedEvent.builder()
+                .userId(savedUser.getIdUser())
+                .build());
+
         return userResponse;
     }
 

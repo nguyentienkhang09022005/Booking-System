@@ -4,6 +4,7 @@ import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Constant.*;
 import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.*;
+import com.example.java_service.Events.BookingCompletedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Helpers.VoucherValidationHelper;
@@ -22,6 +23,7 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -66,6 +68,7 @@ public class BookingHandleService
     RabbitTemplate rabbitTemplate;
     RabbitConfig rabbitConfig;
     VoucherValidationHelper voucherValidationHelper;
+    ApplicationEventPublisher eventPublisher;
 
     @NonFinal //
     BookingHandleService self;
@@ -414,6 +417,30 @@ public class BookingHandleService
                 );
             } catch (Exception ex) {
                 ex.printStackTrace();
+            }
+
+            NotificationCreatedEvent ownerEvent = NotificationCreatedEvent.builder()
+                    .idNotification(UUID.randomUUID())
+                    .idUser(booking.getAccommodation().getUsers().getIdUser())
+                    .title("Có người đặt phòng mới")
+                    .content(String.format("Khách hàng %s vừa đặt phòng tại %s.",
+                            booking.getUsers().getLastName(),
+                            booking.getAccommodation().getAccommodationName()))
+                    .type("booking")
+                    .idRef(booking.getIdBooking().toString())
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            try {
+                String ownerMessage = objectMapper.writeValueAsString(ownerEvent);
+                rabbitTemplate.convertAndSend(
+                        rabbitConfig.EXCHANGE_NOTIFICATION,
+                        rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                        ownerMessage
+                );
+            } catch (Exception ex) {
+                log.error("Lỗi gửi thông báo cho owner đặt phòng: {}", ex.getMessage());
             }
 
             return booking;
@@ -829,6 +856,12 @@ public class BookingHandleService
         booking.setStatus(PredefinedStatusBooking.STATUS_BOOKING_CHECKED_OUT);
         bookingRepository.save(booking);
 
+        eventPublisher.publishEvent(BookingCompletedEvent.builder()
+                .userId(booking.getUsers().getIdUser())
+                .bookingType("ACCOMMODATION")
+                .bookingId(booking.getIdBooking())
+                .build());
+
         // Gửi sự kiện vào Exchanges
         NotificationCreatedEvent event = NotificationCreatedEvent.builder()
                 .idNotification(UUID.randomUUID())
@@ -1037,6 +1070,30 @@ public class BookingHandleService
         userVoucherRepository.saveAll(usedVouchers);
 
         bookingRepository.save(booking);
+
+        NotificationCreatedEvent cancelOwnerEvent = NotificationCreatedEvent.builder()
+                .idNotification(UUID.randomUUID())
+                .idUser(booking.getAccommodation().getUsers().getIdUser())
+                .title("Khách hàng hủy đặt phòng")
+                .content(String.format("Khách hàng %s đã hủy đặt phòng tại %s.",
+                        booking.getUsers().getLastName(),
+                        booking.getAccommodation().getAccommodationName()))
+                .type("booking")
+                .idRef(booking.getIdBooking().toString())
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            String cancelMessage = objectMapper.writeValueAsString(cancelOwnerEvent);
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_NOTIFICATION,
+                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                    cancelMessage
+            );
+        } catch (Exception ex) {
+            log.error("Lỗi gửi thông báo hủy đặt phòng cho owner: {}", ex.getMessage());
+        }
 
         return ResponseEntity.ok("Hủy đặt phòng thành công!");
     }

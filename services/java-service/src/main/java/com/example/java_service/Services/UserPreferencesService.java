@@ -5,6 +5,7 @@ import com.example.java_service.Constant.PredefinedTravelStyle;
 import com.example.java_service.Constant.PredefinedTravelingWith;
 import com.example.java_service.Dto.Request.UserPreferencesRequest;
 import com.example.java_service.Dto.Response.UserPreferencesResponse;
+import com.example.java_service.Events.BookingCompletedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Mappers.UserPreferencesMapper;
@@ -17,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ public class UserPreferencesService {
     UserPreferencesRepository userPreferencesRepository;
     UserRepository userRepository;
     UserPreferencesMapper userPreferencesMapper;
+    ApplicationEventPublisher eventPublisher;
 
     private static final Set<String> VALID_TRAVEL_STYLES = new HashSet<>(Arrays.asList(
             PredefinedTravelStyle.ADVENTURE,
@@ -98,6 +101,11 @@ public class UserPreferencesService {
         validateAndNormalizePreferences(preferences);
 
         UserPreferences saved = userPreferencesRepository.save(preferences);
+
+        eventPublisher.publishEvent(BookingCompletedEvent.builder()
+                .userId(userUuid)
+                .build());
+
         return userPreferencesMapper.toResponse(saved);
     }
 

@@ -30,7 +30,6 @@ public class UserResponse
     String address;
     String email;
     Integer loyaltyPoints;
-    String customerSegment;
     LocalDateTime createAt;
     String avatar;
 }

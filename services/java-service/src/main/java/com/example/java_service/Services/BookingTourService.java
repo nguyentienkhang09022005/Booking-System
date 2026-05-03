@@ -10,6 +10,7 @@ import com.example.java_service.Dto.Response.BookingTourResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Dto.Response.PaymentResponse;
 import com.example.java_service.Dto.Response.VoucherViewResponse;
+import com.example.java_service.Events.BookingCompletedEvent;
 import com.example.java_service.Exception.ApiException;
 import com.example.java_service.Exception.ErrorCode;
 import com.example.java_service.Helpers.VoucherValidationHelper;
@@ -26,6 +27,7 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -63,6 +65,7 @@ public class BookingTourService {
     ObjectMapper objectMapper;
     WebClient webClient;
     VoucherValidationHelper voucherValidationHelper;
+    ApplicationEventPublisher eventPublisher;
 
     @NonFinal
     BookingTourService self;
@@ -380,6 +383,14 @@ public class BookingTourService {
 
             bookingTour.setStatus(request.getStatus());
             bookingTourRepository.save(bookingTour);
+
+            if (PredefinedStatusBookingTour.STATUS_BOOKING_SUCCESS.equals(request.getStatus())) {
+                eventPublisher.publishEvent(BookingCompletedEvent.builder()
+                        .userId(bookingTour.getUsers().getIdUser())
+                        .bookingType("TOUR")
+                        .bookingId(bookingTour.getIdBookingTour())
+                        .build());
+            }
 
             NotificationCreatedEvent userEvent = NotificationCreatedEvent.builder()
                     .idNotification(UUID.randomUUID())
