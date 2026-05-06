@@ -191,7 +191,7 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 	}
 
 	// Trigger revenue creation (mirrors ZaloPay callback flow)
-	if payment.Booking.IDAccommodation != uuid.Nil {
+	if payment.Booking != nil && payment.Booking.IDAccommodation != uuid.Nil {
 		now := time.Now()
 		revenueEvent := Request.RevenueCreatedEvent{
 			IDBooking:       payment.IDBooking,

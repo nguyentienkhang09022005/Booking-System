@@ -122,8 +122,12 @@ func (b *blockchainService) PreparePaymentOrder(
 	orderIDBytes := crypto.Keccak256(append(bookingIDBytes, tsBytes...))
 	orderIDHex := "0x" + hex.EncodeToString(orderIDBytes)
 
-	// bookingId as bytes32 (hex)
-	bookingIDHex := "0x" + hex.EncodeToString(idBooking[:])
+	// bookingId as bytes32 (hex). UUID is 16 bytes — right-pad with zeros to 32
+	// bytes so it matches the on-chain encoding from copy(bookingIDBytes[:], uuid)
+	// (which left-aligns the UUID into a [32]byte).
+	var bookingIDPadded [32]byte
+	copy(bookingIDPadded[:], idBooking[:])
+	bookingIDHex := "0x" + hex.EncodeToString(bookingIDPadded[:])
 
 	// Get nonce from chain
 	nonce, err := b.GetNonce(payerAddress)
