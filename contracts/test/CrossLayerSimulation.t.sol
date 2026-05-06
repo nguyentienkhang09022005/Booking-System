@@ -205,7 +205,7 @@ contract CrossLayerSimulation is Test {
         bytes32 bookingId = keccak256("booking-field-map-test");
         bytes32 orderId = keccak256(abi.encodePacked(bookingId, block.timestamp));
 
-        // This is what the frontend sends as JSON to /api/v1/payments/vnd/execute:
+        // This is what the frontend sends as JSON to /web3/payment/execute:
         // {
         //   "id_payment": "uuid-here",           → Go: req.IDPayment
         //   "order": {

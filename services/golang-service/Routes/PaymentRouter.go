@@ -35,8 +35,9 @@ func PaymentRouter(router *gin.Engine, db *gorm.DB) {
 		paymentRoutes.POST("/callback", paymentController.HandleCallBack)
 	}
 
-	// VND Stablecoin routes (new)
-	vndRoutes := router.Group("/api/v1/payments/vnd")
+	// Web3 / VND Stablecoin routes — namespaced separately from /api/v1/payments
+	// to avoid the deployed gateway routing /api/v1/** to the Java service.
+	vndRoutes := router.Group("/web3/payment")
 	{
 		vndRoutes.POST("/prepare", vndPaymentController.PrepareVndPayment)
 		vndRoutes.POST("/execute", vndPaymentController.ExecuteVndPayment)

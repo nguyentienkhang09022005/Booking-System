@@ -46,7 +46,7 @@ func VndPaymentController(
 // @Success 201 {object} Response.PrepareVndPaymentResponse
 // @Failure 400 {object} map[string]string "Bad Request"
 // @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /api/v1/payments/vnd/prepare [post]
+// @Router /web3/payment/prepare [post]
 func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 	var req Request.PrepareVndPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -96,7 +96,7 @@ func (vc *vndPaymentController) PrepareVndPayment(c *gin.Context) {
 // @Failure 404 {object} map[string]string "Payment record not found"
 // @Failure 409 {object} map[string]string "Conflict - Already being processed"
 // @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /api/v1/payments/vnd/execute [post]
+// @Router /web3/payment/execute [post]
 func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 	var req Request.ExecuteVndPaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -225,7 +225,7 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]string "Bad Request - Invalid Address"
 // @Failure 500 {object} map[string]string "Internal Server Error"
-// @Router /api/v1/payments/vnd/nonce/{address} [get]
+// @Router /web3/payment/nonce/{address} [get]
 func (vc *vndPaymentController) GetNonce(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {

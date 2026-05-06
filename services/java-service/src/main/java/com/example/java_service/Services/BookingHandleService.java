@@ -470,7 +470,7 @@ public class BookingHandleService
                 @SuppressWarnings("unchecked")
                 Map<String, Object> vndResponse = webClient
                         .post()
-                        .uri("/api/v1/payments/vnd/prepare")
+                        .uri("/web3/payment/prepare")
                         .header("Content-Type", "application/json")
                         .bodyValue(vndRequest)
                         .retrieve()
