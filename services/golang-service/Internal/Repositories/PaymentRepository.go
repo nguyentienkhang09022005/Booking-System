@@ -15,6 +15,7 @@ type IPaymentRepository interface {
 	UpdateVndPaymentSuccess(idPayment uuid.UUID, txHash string) error
 	ClaimForProcessing(idPayment uuid.UUID) (bool, error)
 	UpdateVndPaymentFailed(idPayment uuid.UUID, txHash string) error
+	GetDB() *gorm.DB
 }
 
 type paymentRepository struct {
@@ -154,4 +155,8 @@ func (p *paymentRepository) UpdateVndPaymentFailed(idPayment uuid.UUID, txHash s
 	return p._db.Model(&Models.Payment{}).
 		Where("id_payment = ?", idPayment).
 		Updates(updates).Error
+}
+
+func (p *paymentRepository) GetDB() *gorm.DB {
+	return p._db
 }

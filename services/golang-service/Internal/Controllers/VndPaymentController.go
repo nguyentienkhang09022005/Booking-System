@@ -1,9 +1,12 @@
 package Controllers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,6 +17,7 @@ import (
 	"payment-service/Constants"
 	"payment-service/Internal/Dtos/Request"
 	"payment-service/Internal/Dtos/Response"
+	"payment-service/Internal/Models"
 	"payment-service/Internal/Repositories"
 	"payment-service/Internal/Services"
 )
@@ -206,6 +210,12 @@ func (vc *vndPaymentController) ExecuteVndPayment(c *gin.Context) {
 		}
 	}
 
+	// Trigger loyalty points (same as ZaloPay)
+	go vc.triggerAddLoyaltyPoints(payment)
+
+	// Notify Java service to update company balance
+	go vc.notifyJavaServiceBalanceUpdate(payment, "VNDStablecoin")
+
 	explorerURL := fmt.Sprintf("https://sepolia.etherscan.io/tx/%s", txHash)
 
 	c.JSON(http.StatusOK, &Response.ExecuteVndPaymentResponse{
@@ -246,4 +256,117 @@ func (vc *vndPaymentController) GetNonce(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"address": address, "nonce": nonce})
+}
+
+// triggerAddLoyaltyPoints sends payment info to Java service to add loyalty points.
+func (vc *vndPaymentController) triggerAddLoyaltyPoints(payment *Models.Payment) {
+	javaServiceBaseURL := os.Getenv("JAVA_SERVICE")
+	if javaServiceBaseURL == "" {
+		javaServiceBaseURL = "http://localhost:8080"
+	}
+
+	javaServiceURL := fmt.Sprintf("%s/loyalty/add-points", javaServiceBaseURL)
+
+	reqBody := map[string]interface{}{
+		"idUser":             payment.IDUser,
+		"amount":             payment.Amount,
+		"idBooking":          payment.IDBooking,
+		"idBookingTour":      payment.IDBookingTour,
+		"idBookingTransport": payment.IDBookingTransport,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		fmt.Printf("Error marshaling loyalty request: %v\n", err)
+		return
+	}
+
+	resp, err := http.Post(javaServiceURL, "application/json", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		fmt.Printf("Error calling Java service for loyalty points: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		fmt.Printf("Java service returned error for loyalty points, Status: %d\n", resp.StatusCode)
+	} else {
+		fmt.Printf("Loyalty points triggered for user %s, payment %s\n", payment.IDUser.String(), payment.IDPayment.String())
+	}
+}
+
+// notifyJavaServiceBalanceUpdate sends payment success notification to Java service for balance update.
+func (vc *vndPaymentController) notifyJavaServiceBalanceUpdate(payment *Models.Payment, method string) {
+	businessID := vc.determineBusinessOwner(payment)
+	if businessID == uuid.Nil {
+		fmt.Printf("Could not determine business owner for payment %s\n", payment.IDPayment.String())
+		return
+	}
+
+	javaServiceBaseURL := os.Getenv("JAVA_SERVICE")
+	if javaServiceBaseURL == "" {
+		javaServiceBaseURL = "http://localhost:8080"
+	}
+
+	url := fmt.Sprintf("%s/internal/payment-success", javaServiceBaseURL)
+
+	notification := map[string]interface{}{
+		"id_payment":      payment.IDPayment,
+		"id_user":         businessID,
+		"amount":          payment.Amount,
+		"payment_method":  method,
+	}
+
+	if payment.IDBooking != nil {
+		notification["id_booking"] = payment.IDBooking
+	} else if payment.IDBookingTour != nil {
+		notification["id_booking_tour"] = payment.IDBookingTour
+	} else if payment.IDBookingTransport != nil {
+		notification["id_booking_transport"] = payment.IDBookingTransport
+	}
+
+	jsonBody, err := json.Marshal(notification)
+	if err != nil {
+		fmt.Printf("Error marshaling balance notification: %v\n", err)
+		return
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		fmt.Printf("Error calling Java service for balance update: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		fmt.Printf("Java service returned error for balance update, Status: %d\n", resp.StatusCode)
+	} else {
+		fmt.Printf("Balance update notified for business %s, payment %s\n", businessID.String(), payment.IDPayment.String())
+	}
+}
+
+// determineBusinessOwner finds the business user ID based on booking type.
+func (vc *vndPaymentController) determineBusinessOwner(payment *Models.Payment) uuid.UUID {
+	// Accommodation: booking -> accommodation -> id_user
+	if payment.IDBooking != nil && payment.Booking != nil && payment.Booking.IDAccommodation != uuid.Nil {
+		var accommodation Models.Accommodation
+		if err := vc._paymentRepository.GetDB().Where("id_accommodation = ?", payment.Booking.IDAccommodation).First(&accommodation).Error; err == nil {
+			return accommodation.IDUser
+		}
+	}
+	// Tour: booking_tour -> tour -> id_user
+	if payment.IDBookingTour != nil && payment.BookingTour != nil {
+		var tour Models.Tour
+		if err := vc._paymentRepository.GetDB().Where("id_tour = ?", payment.BookingTour.IDTour).First(&tour).Error; err == nil {
+			return tour.IDUser
+		}
+	}
+	// Transport: booking_transport -> transport_ticket -> id_user
+	if payment.IDBookingTransport != nil && payment.BookingTransport != nil {
+		var ticket Models.TransportTicket
+		if err := vc._paymentRepository.GetDB().Where("id_ticket = ?", payment.BookingTransport.IDTicket).First(&ticket).Error; err == nil {
+			return ticket.IDUser
+		}
+	}
+	return uuid.Nil
 }

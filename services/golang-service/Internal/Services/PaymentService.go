@@ -188,6 +188,9 @@ func (p *paymentService) ResolveCallBackZaloPay(zaloPayCallBackRequest Request.Z
 		go p.triggerAddLoyaltyPoints(payment)
 	}
 
+	// Notify Java service to update company balance
+	go p.notifyJavaServiceBalanceUpdate(payment, "ZaloPay")
+
 	fmt.Println("Đã cập nhật thanh toán và tạo báo cáo thành công.")
 	return nil
 }
@@ -226,6 +229,84 @@ func (p *paymentService) triggerAddLoyaltyPoints(payment *Models.Payment) {
 	} else {
 		fmt.Printf("Đã kích hoạt cộng điểm Loyalty thành công cho User: %s\n", payment.IDUser.String())
 	}
+}
+
+// notifyJavaServiceBalanceUpdate sends payment success notification to Java service for balance update.
+func (p *paymentService) notifyJavaServiceBalanceUpdate(payment *Models.Payment, method string) {
+	businessID := p.determineBusinessOwner(payment)
+	if businessID == uuid.Nil {
+		fmt.Printf("Could not determine business owner for payment %s\n", payment.IDPayment.String())
+		return
+	}
+
+	javaServiceBaseURL := os.Getenv("JAVA_SERVICE")
+	if javaServiceBaseURL == "" {
+		javaServiceBaseURL = "http://localhost:8080"
+	}
+
+	url := fmt.Sprintf("%s/internal/payment-success", javaServiceBaseURL)
+
+	notification := map[string]interface{}{
+		"id_payment":     payment.IDPayment,
+		"id_user":        businessID,
+		"amount":         payment.Amount,
+		"payment_method": method,
+	}
+
+	if payment.IDBooking != nil {
+		notification["id_booking"] = payment.IDBooking
+	} else if payment.IDBookingTour != nil {
+		notification["id_booking_tour"] = payment.IDBookingTour
+	} else if payment.IDBookingTransport != nil {
+		notification["id_booking_transport"] = payment.IDBookingTransport
+	}
+
+	jsonBody, err := json.Marshal(notification)
+	if err != nil {
+		fmt.Printf("Error marshaling balance notification: %v\n", err)
+		return
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		fmt.Printf("Error calling Java service for balance update: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		fmt.Printf("Java service returned error for balance update, Status: %d\n", resp.StatusCode)
+	} else {
+		fmt.Printf("Balance update notified for business %s, payment %s\n", businessID.String(), payment.IDPayment.String())
+	}
+}
+
+// determineBusinessOwner finds the business user ID based on booking type.
+func (p *paymentService) determineBusinessOwner(payment *Models.Payment) uuid.UUID {
+	db := p._paymentRepository.GetDB()
+
+	// Accommodation: booking -> accommodation -> id_user
+	if payment.IDBooking != nil && payment.Booking != nil && payment.Booking.IDAccommodation != uuid.Nil {
+		var accommodation Models.Accommodation
+		if err := db.Where("id_accommodation = ?", payment.Booking.IDAccommodation).First(&accommodation).Error; err == nil {
+			return accommodation.IDUser
+		}
+	}
+	// Tour: booking_tour -> tour -> id_user
+	if payment.IDBookingTour != nil && payment.BookingTour != nil {
+		var tour Models.Tour
+		if err := db.Where("id_tour = ?", payment.BookingTour.IDTour).First(&tour).Error; err == nil {
+			return tour.IDUser
+		}
+	}
+	// Transport: booking_transport -> transport_ticket -> id_user
+	if payment.IDBookingTransport != nil && payment.BookingTransport != nil {
+		var ticket Models.TransportTicket
+		if err := db.Where("id_ticket = ?", payment.BookingTransport.IDTicket).First(&ticket).Error; err == nil {
+			return ticket.IDUser
+		}
+	}
+	return uuid.Nil
 }
 
 // Hàm tạo chữ ký với Key 1
