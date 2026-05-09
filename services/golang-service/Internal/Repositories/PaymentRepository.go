@@ -59,7 +59,7 @@ func (p *paymentRepository) FindByAppTransID(IDAppTrans string) (*Models.Payment
 		}
 	}
 
-	// Lấy thông tin BookingTransport nếu có (THÊM MỚI)
+	// Lấy thông tin BookingTransport nếu có
 	if payment.IDBookingTransport != nil {
 		var bookingTransport Models.BookingTransport
 		if errTransport := p._db.Where("id_booking_transport = ?", payment.IDBookingTransport).First(&bookingTransport).Error; errTransport == nil {
