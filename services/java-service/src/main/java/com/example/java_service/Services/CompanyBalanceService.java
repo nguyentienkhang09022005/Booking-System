@@ -1,5 +1,6 @@
 package com.example.java_service.Services;
 
+import com.example.java_service.Configs.RabbitConfig;
 import com.example.java_service.Dto.Request.*;
 import com.example.java_service.Dto.Response.*;
 import com.example.java_service.Models.*;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,8 @@ public class CompanyBalanceService {
     WithdrawalRequestRepository withdrawalRequestRepository;
     UserRepository userRepository;
     ObjectMapper objectMapper;
+    RabbitTemplate rabbitTemplate;
+    RabbitConfig rabbitConfig;
 
     @Transactional
     public void addEarnings(PaymentSuccessNotification notification) {
@@ -219,6 +223,9 @@ public class CompanyBalanceService {
 
         log.info("Approved withdrawal {} for user {}, amount {}",
                 withdrawalId, userId, withdrawal.getAmount());
+
+        // Send notification to business
+        sendWithdrawalNotification(userId, withdrawalId, "approved", withdrawal.getAmount(), null);
     }
 
     @Transactional
@@ -238,6 +245,50 @@ public class CompanyBalanceService {
         UUID userId = withdrawal.getUsers().getIdUser();
         log.info("Rejected withdrawal {} for user {}, reason: {}",
                 withdrawalId, userId, adminNote);
+
+        // Send notification to business
+        sendWithdrawalNotification(userId, withdrawalId, "rejected", withdrawal.getAmount(), adminNote);
+    }
+
+    private void sendWithdrawalNotification(UUID userId, UUID withdrawalId, String status, BigDecimal amount, String reason) {
+        String title;
+        String content;
+
+        if ("approved".equals(status)) {
+            title = "Yêu cầu rút tiền đã được duyệt";
+            content = String.format("Yêu cầu rút tiền %sđ của bạn đã được phê duyệt.", formatAmount(amount));
+        } else {
+            title = "Yêu cầu rút tiền đã bị từ chối";
+            content = String.format("Yêu cầu rút tiền %sđ của bạn đã bị từ chối. Lý do: %s",
+                    formatAmount(amount), reason != null ? reason : "Không có");
+        }
+
+        NotificationCreatedEvent event = NotificationCreatedEvent.builder()
+                .idNotification(UUID.randomUUID())
+                .idUser(userId)
+                .title(title)
+                .content(content)
+                .type("system")
+                .idRef(withdrawalId.toString())
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            rabbitTemplate.convertAndSend(
+                    rabbitConfig.EXCHANGE_NOTIFICATION,
+                    rabbitConfig.ROUTING_KEY_NOTIFICATION,
+                    objectMapper.writeValueAsString(event)
+            );
+            log.info("Sent withdrawal {} notification to user {}", status, userId);
+        } catch (Exception e) {
+            log.error("Failed to send withdrawal notification: {}", e.getMessage());
+        }
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        if (amount == null) return "0";
+        return String.format("%,.0f", amount).replace(",", ".");
     }
 
     private WithdrawalRequestResponse mapToResponse(WithdrawalRequest withdrawal) {
