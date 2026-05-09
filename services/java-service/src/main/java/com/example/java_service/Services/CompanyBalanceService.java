@@ -60,7 +60,7 @@ public class CompanyBalanceService {
     }
 
     public CompanyBalanceResponse getBalance(UUID idUser) {
-        CompanyBalance balance = companyBalanceRepository.findByIdUserForUpdate(idUser)
+        CompanyBalance balance = companyBalanceRepository.findById(idUser)
                 .orElse(CompanyBalance.builder()
                         .build());
 
