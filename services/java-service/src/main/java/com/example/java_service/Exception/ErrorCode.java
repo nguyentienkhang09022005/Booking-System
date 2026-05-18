@@ -154,7 +154,26 @@ public enum ErrorCode
     INVALID_ITINERARY_ITEM_STATUS("INVALID_ITINERARY_ITEM_STATUS", "Trạng thái hạng mục không hợp lệ!", HttpStatus.BAD_REQUEST),
     INVALID_ITEM_TYPE("INVALID_ITEM_TYPE", "Loại hạng mục không hợp lệ!", HttpStatus.BAD_REQUEST),
     INVALID_ITEM_DATE("INVALID_ITEM_DATE", "Ngày của hạng mục không nằm trong khoảng lịch trình!", HttpStatus.BAD_REQUEST),
-    INVALID_DISPLAY_ORDER("INVALID_DISPLAY_ORDER", "Thứ tự hiển thị không hợp lệ!", HttpStatus.BAD_REQUEST)
+    INVALID_DISPLAY_ORDER("INVALID_DISPLAY_ORDER", "Thứ tự hiển thị không hợp lệ!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Bulletin Board
+    BULLETIN_NOT_FOUND("BULLETIN_NOT_FOUND", "Không tìm thấy bản tin!", HttpStatus.NOT_FOUND),
+    BULLETIN_ACCESS_DENIED("BULLETIN_ACCESS_DENIED", "Bạn không có quyền thực hiện thao tác này!", HttpStatus.FORBIDDEN),
+    BULLETIN_INVALID_TARGET("BULLETIN_INVALID_TARGET", "Target audience không hợp lệ!", HttpStatus.BAD_REQUEST),
+    BULLETIN_ALREADY_APPROVED("BULLETIN_ALREADY_APPROVED", "Bản tin đã được phê duyệt!", HttpStatus.BAD_REQUEST),
+    BULLETIN_ALREADY_REJECTED("BULLETIN_ALREADY_REJECTED", "Bản tin đã bị từ chối!", HttpStatus.BAD_REQUEST),
+    BULLETIN_TITLE_REQUIRED("BULLETIN_TITLE_REQUIRED", "Tiêu đề bản tin không được để trống!", HttpStatus.BAD_REQUEST),
+    BULLETIN_INVALID_STATUS("BULLETIN_INVALID_STATUS", "Trạng thái bản tin không hợp lệ!", HttpStatus.BAD_REQUEST),
+
+    // Lỗi Personal Notebook
+    NOTEBOOK_NOT_FOUND("NOTEBOOK_NOT_FOUND", "Không tìm thấy sổ tay!", HttpStatus.NOT_FOUND),
+    NOTEBOOK_ACCESS_DENIED("NOTEBOOK_ACCESS_DENIED", "Bạn không có quyền truy cập sổ tay này!", HttpStatus.FORBIDDEN),
+    NOTEBOOK_TITLE_REQUIRED("NOTEBOOK_TITLE_REQUIRED", "Tiêu đề sổ tay không được để trống!", HttpStatus.BAD_REQUEST),
+    NOTEBOOK_INVALID_TEMPLATE("NOTEBOOK_INVALID_TEMPLATE", "Template sổ tay không hợp lệ!", HttpStatus.BAD_REQUEST),
+    NOTE_NOT_FOUND("NOTE_NOT_FOUND", "Không tìm thấy trang!", HttpStatus.NOT_FOUND),
+    NOTE_TITLE_REQUIRED("NOTE_TITLE_REQUIRED", "Tiêu đề trang không được để trống!", HttpStatus.BAD_REQUEST),
+    BLOCK_NOT_FOUND("BLOCK_NOT_FOUND", "Không tìm thấy block!", HttpStatus.NOT_FOUND),
+    BLOCK_INVALID_TYPE("BLOCK_INVALID_TYPE", "Loại block không hợp lệ!", HttpStatus.BAD_REQUEST)
     ;
 
     private final String code;
