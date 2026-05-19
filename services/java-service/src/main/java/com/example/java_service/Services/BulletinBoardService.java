@@ -244,6 +244,18 @@ public class BulletinBoardService {
         return bulletins.map(this::buildResponse);
     }
 
+    // Lấy tất cả bản tin đã duyệt (Admin)
+    public Page<BulletinBoardResponse> getApprovedBulletins(Pageable pageable) {
+        Page<BulletinBoard> bulletins = bulletinBoardRepository.findAllApproved(pageable);
+        return bulletins.map(this::buildResponse);
+    }
+
+    // Lấy tất cả bản tin bị từ chối (Admin)
+    public Page<BulletinBoardResponse> getRejectedBulletins(Pageable pageable) {
+        Page<BulletinBoard> bulletins = bulletinBoardRepository.findAllRejected(pageable);
+        return bulletins.map(this::buildResponse);
+    }
+
     // Lấy danh sách bản tin theo user (admin hoặc business xem bản tin đã tạo)
     public List<BulletinBoardResponse> getMyBulletins(UUID userId, String status) {
         List<BulletinBoard> bulletins;

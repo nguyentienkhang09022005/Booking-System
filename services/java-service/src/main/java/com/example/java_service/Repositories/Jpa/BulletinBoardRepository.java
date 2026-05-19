@@ -37,6 +37,14 @@ public interface BulletinBoardRepository extends JpaRepository<BulletinBoard, UU
     @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.users.idUser = :userId AND b.status = :status ORDER BY b.createdAt DESC")
     List<BulletinBoard> findByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") String status);
 
+    // ===== Admin: Lấy tất cả tin đã duyệt =====
+    @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'APPROVED' ORDER BY b.createdAt DESC")
+    Page<BulletinBoard> findAllApproved(Pageable pageable);
+
+    // ===== Admin: Lấy tất cả tin bị từ chối =====
+    @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'REJECTED' ORDER BY b.createdAt DESC")
+    Page<BulletinBoard> findAllRejected(Pageable pageable);
+
     // ===== 5 loại tin cho Customer =====
 
     // 1. Tin nổi bật (leaderboard) - isFeatured = true, lấy top 3, mới nhất lên đầu

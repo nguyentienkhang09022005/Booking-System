@@ -59,9 +59,11 @@ Hệ thống bảng tin cho phép Admin và Business tạo nội dung thông bá
 | PATCH | `/bulletin/{id}/approve` | Admin duyệt bản tin |
 | PATCH | `/bulletin/{id}/reject` | Admin từ chối |
 | GET | `/bulletin/pending` | Danh sách chờ duyệt (Admin) |
+| GET | `/bulletin/approved` | Danh sách đã duyệt (Admin) |
+| GET | `/bulletin/rejected` | Danh sách bị từ chối (Admin) |
 | GET | `/bulletin/my-bulletins` | Danh sách bản tin đã tạo (filter theo status) |
 
-### 5 loại tin hiển tbhị cho Customer
+### 5 loại tin hiển
 
 Khi Customer gọi `GET /bulletin/list?audience=CUSTOMER`, response trả về 5 danh sách:
 
@@ -451,6 +453,8 @@ CREATE INDEX idx_bulletin_user_status ON bulletin_board(id_user, status);
 | PATCH | `/bulletin/{id}` | Cập nhật bản tin (Admin chỉnh isFeatured) |
 | DELETE | `/bulletin/{id}` | Xóa bản tin |
 | GET | `/bulletin/pending` | Danh sách chờ duyệt (Admin) |
+| GET | `/bulletin/approved` | Danh sách đã duyệt (Admin) |
+| GET | `/bulletin/rejected` | Danh sách bị từ chối (Admin) |
 | GET | `/bulletin/my-bulletins` | Danh sách bản tin đã tạo (filter theo status) |
 | PATCH | `/bulletin/{id}/approve` | Admin duyệt bản tin |
 | PATCH | `/bulletin/{id}/reject` | Admin từ chối bản tin |

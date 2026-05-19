@@ -90,6 +90,30 @@ public class BulletinBoardController {
                 .build();
     }
 
+    // Lấy tất cả bản tin đã duyệt (Admin)
+    @GetMapping("/approved")
+    public ApiResponse<Page<BulletinBoardResponse>> getApprovedBulletins(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ApiResponse.<Page<BulletinBoardResponse>>builder()
+                .message("Lấy danh sách bản tin đã duyệt thành công!")
+                .data(bulletinBoardService.getApprovedBulletins(pageRequest))
+                .build();
+    }
+
+    // Lấy tất cả bản tin bị từ chối (Admin)
+    @GetMapping("/rejected")
+    public ApiResponse<Page<BulletinBoardResponse>> getRejectedBulletins(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ApiResponse.<Page<BulletinBoardResponse>>builder()
+                .message("Lấy danh sách bản tin bị từ chối thành công!")
+                .data(bulletinBoardService.getRejectedBulletins(pageRequest))
+                .build();
+    }
+
     // Lấy danh sách bản tin đã tạo (của user hiện tại, có filter theo status)
     @GetMapping("/my-bulletins")
     public ApiResponse<List<BulletinBoardResponse>> getMyBulletins(
