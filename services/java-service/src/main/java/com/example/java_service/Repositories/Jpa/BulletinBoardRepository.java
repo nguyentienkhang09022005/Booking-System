@@ -55,6 +55,14 @@ public interface BulletinBoardRepository extends JpaRepository<BulletinBoard, UU
            nativeQuery = true)
     List<BulletinBoard> findFeaturedLeaders(@Param("audience") String audience, @Param("now") LocalDateTime now);
 
+    // 1b. Tin nổi bật (leaderboard) - đếm tổng (không fetch user, dùng cho exclude count)
+    @Query("SELECT COUNT(b) FROM BulletinBoard b WHERE b.status = 'APPROVED' " +
+           "AND (b.targetAudience = :audience OR b.targetAudience = 'ALL') " +
+           "AND b.isFeatured = true " +
+           "AND (b.startDate IS NULL OR b.startDate <= :now) " +
+           "AND (b.endDate IS NULL OR b.endDate >= :now)")
+    long countFeaturedLeaders(@Param("audience") String audience, @Param("now") LocalDateTime now);
+
     // 2. Tin nổi bật khác (grid 4 cột) - isFeatured = true, exclude leaderboard
     @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'APPROVED' " +
            "AND (b.targetAudience = :audience OR b.targetAudience = 'ALL') " +

@@ -120,44 +120,53 @@ public class BulletinBoardService {
     public BulletinBoardListResponse getBulletinListByCategories(String targetAudience) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiringThreshold = now.plusDays(5); // 5 ngày tới
+        LocalDateTime newestThreshold = now.minusDays(3);
 
         // 1. Tin nổi bật (leaderboard) - lấy top 3, mới nhất lên đầu
         List<BulletinBoard> leaders = bulletinBoardRepository.findFeaturedLeaders(targetAudience, now);
         List<BulletinBoardResponse> leaderboard = buildResponseList(leaders);
-
-        // Lấy id của leaderboard để exclude
         List<UUID> leaderIds = leaderboard.stream().map(BulletinBoardResponse::getIdBulletin).toList();
 
-        // 2. Tin nổi bật khác (grid 4 cột) - TẤT CẢ isFeatured còn lại (exclude leaderboard)
-        List<BulletinBoard> featuredList = leaderIds.isEmpty()
-                ? List.of()
-                : bulletinBoardRepository.findFeaturedOthers(targetAudience, now, leaderIds);
-        List<BulletinBoardResponse> featuredGrid = buildResponseList(featuredList);
+        // 2. Tin nổi bật khác (grid 4 cột) - CHỈ query nếu tổng featured > 3
+        List<BulletinBoardResponse> featuredGrid = List.of();
+        List<UUID> featuredIds = List.of();
+        long totalFeatured = bulletinBoardRepository.countFeaturedLeaders(targetAudience, now);
+        if (totalFeatured > 3) {
+            List<BulletinBoard> featuredList = bulletinBoardRepository.findFeaturedOthers(targetAudience, now, leaderIds);
+            featuredGrid = buildResponseList(featuredList);
+            featuredIds = featuredGrid.stream().map(BulletinBoardResponse::getIdBulletin).toList();
+        }
 
-        // Lấy id để exclude
-        List<UUID> featuredIds = featuredGrid.stream().map(BulletinBoardResponse::getIdBulletin).toList();
+        // Exclude IDs từ leaderboard và featuredGrid
         List<UUID> excludeIds = new java.util.ArrayList<>(leaderIds);
         excludeIds.addAll(featuredIds);
 
-        // 3. Tin mới (horizontal scroll) - chỉ trong 3 ngày
-        LocalDateTime newestThreshold = now.minusDays(3);
+        // 3. Tin mới (horizontal scroll) - chỉ trong 3 ngày, exclude featured
         List<BulletinBoard> newestList = bulletinBoardRepository.findNewest(targetAudience, now, newestThreshold);
-        // Exclude featured
         newestList = newestList.stream()
                 .filter(b -> !excludeIds.contains(b.getIdBulletin()))
                 .toList();
         List<BulletinBoardResponse> newestScroll = buildResponseList(newestList);
 
-        // 4. Tin sắp hết hạn
+        // Update excludeIds với newest
+        excludeIds.addAll(newestScroll.stream().map(BulletinBoardResponse::getIdBulletin).toList());
+
+        // 4. Tin sắp hết hạn (5 ngày tới)
         List<BulletinBoard> expiringList = bulletinBoardRepository.findExpiringSoon(targetAudience, now, expiringThreshold);
+        // Exclude featured đã hiển thị
+        expiringList = expiringList.stream()
+                .filter(b -> !excludeIds.contains(b.getIdBulletin()))
+                .toList();
         List<BulletinBoardResponse> expiringSoon = buildResponseList(expiringList);
 
+        // Update excludeIds với expiring
+        List<UUID> expiringIds = expiringSoon.stream().map(BulletinBoardResponse::getIdBulletin).toList();
+        excludeIds.addAll(expiringIds);
+
         // 5. Tin thường (grid 3 cột)
-        List<UUID> allExcludeIds = new java.util.ArrayList<>(excludeIds);
-        allExcludeIds.addAll(expiringSoon.stream().map(BulletinBoardResponse::getIdBulletin).toList());
-        List<BulletinBoard> regularList = allExcludeIds.isEmpty()
+        List<BulletinBoard> regularList = excludeIds.isEmpty()
                 ? List.of()
-                : bulletinBoardRepository.findRegular(targetAudience, now, allExcludeIds);
+                : bulletinBoardRepository.findRegular(targetAudience, now, excludeIds);
         List<BulletinBoardResponse> regularGrid = buildResponseList(regularList);
 
         return BulletinBoardListResponse.builder()
