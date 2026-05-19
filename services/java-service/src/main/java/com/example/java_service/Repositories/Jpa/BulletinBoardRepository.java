@@ -19,7 +19,7 @@ public interface BulletinBoardRepository extends JpaRepository<BulletinBoard, UU
     List<BulletinBoard> findByStatusWithUser(@Param("status") String status);
 
     @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'APPROVED' " +
-           "AND b.targetAudience IN (:audience, 'ALL') " +
+           "AND (b.targetAudience = :audience OR b.targetAudience = 'ALL') " +
            "AND (b.startDate IS NULL OR b.startDate <= :now) " +
            "AND (b.endDate IS NULL OR b.endDate >= :now) " +
            "ORDER BY b.priority DESC, b.createdAt DESC")
@@ -30,4 +30,10 @@ public interface BulletinBoardRepository extends JpaRepository<BulletinBoard, UU
 
     @Query("SELECT COUNT(b) FROM BulletinBoard b WHERE b.status = :status")
     long countByStatus(@Param("status") String status);
+
+    @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.users.idUser = :userId ORDER BY b.createdAt DESC")
+    List<BulletinBoard> findByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.users.idUser = :userId AND b.status = :status ORDER BY b.createdAt DESC")
+    List<BulletinBoard> findByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") String status);
 }

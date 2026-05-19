@@ -188,6 +188,17 @@ public class BulletinBoardService {
         return bulletins.map(this::buildResponse);
     }
 
+    // Lấy danh sách bản tin theo user (admin hoặc business xem bản tin đã tạo)
+    public List<BulletinBoardResponse> getMyBulletins(UUID userId, String status) {
+        List<BulletinBoard> bulletins;
+        if (status != null && !status.trim().isEmpty()) {
+            bulletins = bulletinBoardRepository.findByUserIdAndStatus(userId, status);
+        } else {
+            bulletins = bulletinBoardRepository.findByUserId(userId);
+        }
+        return buildResponseList(bulletins);
+    }
+
     // Admin duyệt bản tin
     @Transactional
     public BulletinBoardResponse approveBulletin(UUID bulletinId) {

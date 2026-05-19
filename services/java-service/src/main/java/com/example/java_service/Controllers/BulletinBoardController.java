@@ -89,6 +89,17 @@ public class BulletinBoardController {
                 .build();
     }
 
+    // Lấy danh sách bản tin đã tạo (của user hiện tại, có filter theo status)
+    @GetMapping("/my-bulletins")
+    public ApiResponse<List<BulletinBoardResponse>> getMyBulletins(
+            @RequestParam UUID idUser,
+            @RequestParam(required = false) String status) {
+        return ApiResponse.<List<BulletinBoardResponse>>builder()
+                .message("Lấy danh sách bản tin đã tạo thành công!")
+                .data(bulletinBoardService.getMyBulletins(idUser, status))
+                .build();
+    }
+
     // Admin duyệt bản tin
     @PatchMapping("/{id}/approve")
     public ApiResponse<BulletinBoardResponse> approveBulletin(@PathVariable UUID id) {
