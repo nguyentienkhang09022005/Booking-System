@@ -4,6 +4,7 @@ import com.example.java_service.Dto.Request.BulletinBoardApprovalRequest;
 import com.example.java_service.Dto.Request.BulletinBoardCreationRequest;
 import com.example.java_service.Dto.Request.BulletinBoardUpdateRequest;
 import com.example.java_service.Dto.Response.ApiResponse;
+import com.example.java_service.Dto.Response.BulletinBoardListResponse;
 import com.example.java_service.Dto.Response.BulletinBoardResponse;
 import com.example.java_service.Services.BulletinBoardService;
 import lombok.AccessLevel;
@@ -36,13 +37,13 @@ public class BulletinBoardController {
                 .build();
     }
 
-    // Lấy danh sách bản tin active
+    // Lấy danh sách bản tin active (theo 5 loại cho Customer)
     @GetMapping("/list")
-    public ApiResponse<List<BulletinBoardResponse>> getBulletins(
+    public ApiResponse<BulletinBoardListResponse> getBulletins(
             @RequestParam(defaultValue = "CUSTOMER") String audience) {
-        return ApiResponse.<List<BulletinBoardResponse>>builder()
+        return ApiResponse.<BulletinBoardListResponse>builder()
                 .message("Lấy danh sách bản tin thành công!")
-                .data(bulletinBoardService.getActiveBulletins(audience))
+                .data(bulletinBoardService.getBulletinListByCategories(audience))
                 .build();
     }
 

@@ -15,7 +15,7 @@ public class BulletinBoardUpdateRequest {
     UUID idUser;
     String title;
     String content;
-    Integer priority;
+    Boolean isFeatured;
     LocalDateTime startDate;
     LocalDateTime endDate;
     String imageUrl;

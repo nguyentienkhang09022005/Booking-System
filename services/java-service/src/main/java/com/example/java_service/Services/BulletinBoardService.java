@@ -5,6 +5,7 @@ import com.example.java_service.Constant.PredefinedStatusBulletin;
 import com.example.java_service.Dto.Request.BulletinBoardApprovalRequest;
 import com.example.java_service.Dto.Request.BulletinBoardCreationRequest;
 import com.example.java_service.Dto.Request.BulletinBoardUpdateRequest;
+import com.example.java_service.Dto.Response.BulletinBoardListResponse;
 import com.example.java_service.Dto.Response.BulletinBoardResponse;
 import com.example.java_service.Dto.Response.NotificationCreatedEvent;
 import com.example.java_service.Exception.ApiException;
@@ -77,7 +78,7 @@ public class BulletinBoardService {
             }
         }
 
-        // Business tạo bản tin -> mặc định CUSTOMER và PENDING
+        // Business tạo bản tin -> mặc định CUSTOMER, PENDING, isFeatured = false
         boolean isAdmin = PredefinedRole.ADMIN_ROLE.equals(user.getRole().getRoleName());
         String targetAudience = isAdmin ? request.getTargetAudience() : PredefinedStatusBulletin.TARGET_AUDIENCE_CUSTOMER;
 
@@ -85,6 +86,8 @@ public class BulletinBoardService {
         bulletin.setUsers(user);
         bulletin.setTargetAudience(targetAudience);
         bulletin.setIsApproved(isAdmin);
+        // Chỉ admin mới được set isFeatured, business tạo luôn = false
+        bulletin.setIsFeatured(isAdmin && Boolean.TRUE.equals(request.getIsFeatured()));
 
         if (isAdmin) {
             bulletin.setStatus(PredefinedStatusBulletin.STATUS_BULLETIN_APPROVED);
@@ -101,7 +104,7 @@ public class BulletinBoardService {
         return buildResponse(saved);
     }
 
-    // Lấy danh sách bản tin active theo audience
+    // Lấy danh sách bản tin active theo audience (cũ - giữ lại để tương thích)
     public List<BulletinBoardResponse> getActiveBulletins(String targetAudience) {
         List<BulletinBoard> bulletins = bulletinBoardRepository.findActiveByAudience(
                 targetAudience, LocalDateTime.now());
@@ -111,6 +114,58 @@ public class BulletinBoardService {
         }
 
         return buildResponseList(bulletins);
+    }
+
+    // Lấy danh sách bản tin theo 5 loại cho Customer
+    public BulletinBoardListResponse getBulletinListByCategories(String targetAudience) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiringThreshold = now.plusDays(7); // 7 ngày tới
+
+        // 1. Tin nổi bật (leaderboard) - lấy top 1
+        List<BulletinBoard> leaders = bulletinBoardRepository.findFeaturedLeaders(targetAudience, now);
+        List<BulletinBoardResponse> leaderboard = buildResponseList(leaders);
+
+        // Lấy id của leaderboard để exclude
+        List<UUID> leaderIds = leaderboard.stream().map(BulletinBoardResponse::getIdBulletin).toList();
+
+        // 2. Tin nổi bật khác (grid 4 cột) - exclude leaderboard
+        List<BulletinBoard> featuredList = leaderIds.isEmpty()
+                ? List.of()
+                : bulletinBoardRepository.findFeaturedOthers(targetAudience, now, leaderIds);
+        List<BulletinBoardResponse> featuredGrid = buildResponseList(featuredList);
+
+        // Lấy id để exclude
+        List<UUID> featuredIds = featuredGrid.stream().map(BulletinBoardResponse::getIdBulletin).toList();
+        List<UUID> excludeIds = new java.util.ArrayList<>(leaderIds);
+        excludeIds.addAll(featuredIds);
+
+        // 3. Tin mới (horizontal scroll)
+        List<BulletinBoard> newestList = bulletinBoardRepository.findNewest(targetAudience, now);
+        // Exclude featured
+        newestList = newestList.stream()
+                .filter(b -> !excludeIds.contains(b.getIdBulletin()))
+                .toList();
+        List<BulletinBoardResponse> newestScroll = buildResponseList(newestList);
+
+        // 4. Tin sắp hết hạn
+        List<BulletinBoard> expiringList = bulletinBoardRepository.findExpiringSoon(targetAudience, now, expiringThreshold);
+        List<BulletinBoardResponse> expiringSoon = buildResponseList(expiringList);
+
+        // 5. Tin thường (grid 3 cột)
+        List<UUID> allExcludeIds = new java.util.ArrayList<>(excludeIds);
+        allExcludeIds.addAll(expiringSoon.stream().map(BulletinBoardResponse::getIdBulletin).toList());
+        List<BulletinBoard> regularList = allExcludeIds.isEmpty()
+                ? List.of()
+                : bulletinBoardRepository.findRegular(targetAudience, now, allExcludeIds);
+        List<BulletinBoardResponse> regularGrid = buildResponseList(regularList);
+
+        return BulletinBoardListResponse.builder()
+                .leaderboard(leaderboard)
+                .featuredGrid(featuredGrid)
+                .newestScroll(newestScroll)
+                .expiringSoon(expiringSoon)
+                .regularGrid(regularGrid)
+                .build();
     }
 
     // Lấy chi tiết bản tin

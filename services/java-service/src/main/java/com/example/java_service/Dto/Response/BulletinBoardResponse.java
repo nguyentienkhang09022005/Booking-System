@@ -18,7 +18,7 @@ public class BulletinBoardResponse {
     String content;
     String targetAudience;
     String status;
-    Integer priority;
+    Boolean isFeatured;
     Boolean isApproved;
     LocalDateTime startDate;
     LocalDateTime endDate;

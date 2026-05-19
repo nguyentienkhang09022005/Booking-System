@@ -38,8 +38,8 @@ public class BulletinBoard {
     @Column(name = "status", length = 20)
     private String status;
 
-    @Column(name = "priority")
-    private Integer priority;
+    @Column(name = "is_featured", nullable = false)
+    private Boolean isFeatured = false;
 
     @Column(name = "is_approved", nullable = false)
     private Boolean isApproved = false;

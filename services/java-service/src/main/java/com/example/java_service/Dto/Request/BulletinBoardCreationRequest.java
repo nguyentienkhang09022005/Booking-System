@@ -16,7 +16,7 @@ public class BulletinBoardCreationRequest {
     String title;
     String content;
     String targetAudience;
-    Integer priority;
+    Boolean isFeatured;
     LocalDateTime startDate;
     LocalDateTime endDate;
     String imageUrl;

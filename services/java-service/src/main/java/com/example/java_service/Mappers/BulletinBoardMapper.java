@@ -17,6 +17,7 @@ public interface BulletinBoardMapper {
     @Mapping(target = "createdAt", ignore = true)
     BulletinBoard toEntity(BulletinBoardCreationRequest request);
 
+    @Mapping(target = "isFeatured", ignore = true)
     @Mapping(target = "author", source = "users")
     BulletinBoardResponse toResponse(BulletinBoard entity);
 
@@ -27,5 +28,6 @@ public interface BulletinBoardMapper {
     @Mapping(target = "isApproved", ignore = true)
     @Mapping(target = "approvedAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "isFeatured", ignore = true)
     void updateEntityFromRequest(BulletinBoardUpdateRequest request, @MappingTarget BulletinBoard entity);
 }
