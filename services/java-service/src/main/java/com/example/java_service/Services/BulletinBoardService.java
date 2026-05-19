@@ -121,14 +121,14 @@ public class BulletinBoardService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiringThreshold = now.plusDays(7); // 7 ngày tới
 
-        // 1. Tin nổi bật (leaderboard) - lấy top 1
+        // 1. Tin nổi bật (leaderboard) - lấy top 3, mới nhất lên đầu
         List<BulletinBoard> leaders = bulletinBoardRepository.findFeaturedLeaders(targetAudience, now);
         List<BulletinBoardResponse> leaderboard = buildResponseList(leaders);
 
         // Lấy id của leaderboard để exclude
         List<UUID> leaderIds = leaderboard.stream().map(BulletinBoardResponse::getIdBulletin).toList();
 
-        // 2. Tin nổi bật khác (grid 4 cột) - exclude leaderboard
+        // 2. Tin nổi bật khác (grid 4 cột) - TẤT CẢ isFeatured còn lại (exclude leaderboard)
         List<BulletinBoard> featuredList = leaderIds.isEmpty()
                 ? List.of()
                 : bulletinBoardRepository.findFeaturedOthers(targetAudience, now, leaderIds);

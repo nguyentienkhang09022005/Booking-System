@@ -39,13 +39,12 @@ public interface BulletinBoardRepository extends JpaRepository<BulletinBoard, UU
 
     // ===== 5 loại tin cho Customer =====
 
-    // 1. Tin nổi bật (leaderboard) - isFeatured = true, lấy top N
-    @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'APPROVED' " +
-           "AND (b.targetAudience = :audience OR b.targetAudience = 'ALL') " +
-           "AND b.isFeatured = true " +
-           "AND (b.startDate IS NULL OR b.startDate <= :now) " +
-           "AND (b.endDate IS NULL OR b.endDate >= :now) " +
-           "ORDER BY b.createdAt DESC")
+    // 1. Tin nổi bật (leaderboard) - isFeatured = true, lấy top 3, mới nhất lên đầu
+    @Query(value = "SELECT b.* FROM bulletin_board b JOIN users u ON b.id_user = u.id_user " +
+           "WHERE b.status = 'APPROVED' AND (b.target_audience = :audience OR b.target_audience = 'ALL') " +
+           "AND b.is_featured = true AND (b.start_date IS NULL OR b.start_date <= :now) " +
+           "AND (b.end_date IS NULL OR b.end_date >= :now) ORDER BY b.created_at DESC LIMIT 3",
+           nativeQuery = true)
     List<BulletinBoard> findFeaturedLeaders(@Param("audience") String audience, @Param("now") LocalDateTime now);
 
     // 2. Tin nổi bật khác (grid 4 cột) - isFeatured = true, exclude leaderboard

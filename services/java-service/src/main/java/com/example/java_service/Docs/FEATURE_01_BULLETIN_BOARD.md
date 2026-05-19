@@ -67,11 +67,11 @@ Khi Customer gọi `GET /bulletin/list?audience=CUSTOMER`, response trả về 5
 
 | Key | Mô tả | Logic lấy dữ liệu |
 |-----|-------|-------------------|
-| `leaderboard` | Tin nổi bật (1 item) | `isFeatured = true`, ưu tiên mới nhất |
-| `featuredGrid` | Tin nổi bật khác (grid 4 cột) | `isFeatured = true`, exclude leaderboard |
-| `newestScroll` | Tin mới (horizontal scroll) | Mới nhất, exclude featured |
-| `expiringSoon` | Tin sắp hết hạn (grid + icon cảnh báo) | `endDate` trong 7 ngày tới |
-| `regularGrid` | Tin thường (grid 3 cột) | Còn lại, exclude tất cả trên |
+| `leaderboard` | Tin nổi bật (3 items) | `isFeatured = true`, mới nhất lên đầu, LIMIT 3 |
+| `featuredGrid` | Tin nổi bật khác (grid 4 cột) | `isFeatured = true`, exclude leaderboard, mới nhất lên đầu |
+| `newestScroll` | Tin mới (horizontal scroll) | Mới nhất (createdAt DESC), exclude featured |
+| `expiringSoon` | Tin sắp hết hạn (grid + icon cảnh báo) | `endDate` trong 7 ngày tới, gần hết nhất lên đầu (endDate ASC) |
+| `regularGrid` | Tin thường (grid 3 cột) | Còn lại, mới nhất lên đầu, exclude tất cả trên |
 
 ### Request/Response Examples
 
@@ -167,20 +167,21 @@ Khi Customer gọi `GET /bulletin/list?audience=CUSTOMER`, response trả về 5
   "message": "Lấy danh sách bản tin thành công!",
   "data": {
     "leaderboard": [
-      { "idBulletin": "uuid-1", "title": "Tin nổi bật nhất", "isFeatured": true, "..." }
+      { "idBulletin": "uuid-1", "title": "Tin nổi bật 1", "isFeatured": true, "createdAt": "2026-05-19T...", "..." },
+      { "idBulletin": "uuid-2", "title": "Tin nổi bật 2", "isFeatured": true, "createdAt": "2026-05-18T...", "..." },
+      { "idBulletin": "uuid-3", "title": "Tin nổi bật 3", "isFeatured": true, "createdAt": "2026-05-17T...", "..." }
     ],
     "featuredGrid": [
-      { "idBulletin": "uuid-2", "title": "Tin nổi bật khác", "isFeatured": true, "..." },
-      { "idBulletin": "uuid-3", "title": "Tin nổi bật khác 2", "isFeatured": true, "..." }
+      { "idBulletin": "uuid-4", "title": "Tin nổi bật khác", "isFeatured": true, "createdAt": "2026-05-16T...", "..." }
     ],
     "newestScroll": [
-      { "idBulletin": "uuid-4", "title": "Tin mới nhất", "createdAt": "2026-05-19T...", "..." }
+      { "idBulletin": "uuid-5", "title": "Tin mới nhất", "createdAt": "2026-05-19T...", "..." }
     ],
     "expiringSoon": [
-      { "idBulletin": "uuid-5", "title": "Tin sắp hết hạn", "endDate": "2026-05-25T...", "..." }
+      { "idBulletin": "uuid-6", "title": "Tin sắp hết hạn", "endDate": "2026-05-22T...", "..." }
     ],
     "regularGrid": [
-      { "idBulletin": "uuid-6", "title": "Tin thường", "..." }
+      { "idBulletin": "uuid-7", "title": "Tin thường", "createdAt": "2026-05-15T...", "..." }
     ]
   }
 }
@@ -438,7 +439,7 @@ CREATE INDEX idx_bulletin_user_status ON bulletin_board(id_user, status);
 | `Dto/Response/BulletinBoardResponse.java` | `Integer priority` → `Boolean isFeatured` |
 | `Mappers/BulletinBoardMapper.java` | Thêm ignore mapping cho isFeatured |
 | `Services/BulletinBoardService.java` | Admin mới được set isFeatured=true |
-| `Repositories/Jpa/BulletinBoardRepository.java` | Thêm 5 query methods cho phân loại tin + sửa order by isFeatured |
+| `Repositories/Jpa/BulletinBoardRepository.java` | Thêm 5 query methods cho phân loại tin + findFeaturedLeaders dùng native query LIMIT 3 |
 | `Controllers/BulletinBoardController.java` | `/list` trả về BulletinBoardListResponse |
 
 **API Endpoints đã implement:**
@@ -466,7 +467,10 @@ CREATE INDEX idx_bulletin_user_status ON bulletin_board(id_user, status);
 - Thay `priority` bằng `isFeatured` (Boolean)
 - Chỉ Admin mới có quyền đánh dấu `isFeatured = true`
 - Business tạo bản tin luôn có `isFeatured = false`
-- API `/bulletin/list` trả về 5 danh sách: leaderboard, featuredGrid, newestScroll, expiringSoon, regularGrid
+- API `/bulletin/list` trả về 5 danh sách: leaderboard (3 items), featuredGrid, newestScroll, expiringSoon, regularGrid
+- `leaderboard` LIMIT 3, sắp xếp mới nhất lên đầu
+- `featuredGrid` lấy tất cả isFeatured còn lại (exclude leaderboard)
+- `expiringSoon` sắp xếp theo endDate ASC (gần hết hạn nhất lên đầu)
 - Phân loại tin tự động exclude để tránh trùng lặp
 - 10 sample data với URL ảnh từ Lorem Picsum
 
