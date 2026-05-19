@@ -119,7 +119,7 @@ public class BulletinBoardService {
     // Lấy danh sách bản tin theo 5 loại cho Customer
     public BulletinBoardListResponse getBulletinListByCategories(String targetAudience) {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiringThreshold = now.plusDays(7); // 7 ngày tới
+        LocalDateTime expiringThreshold = now.plusDays(5); // 5 ngày tới
 
         // 1. Tin nổi bật (leaderboard) - lấy top 3, mới nhất lên đầu
         List<BulletinBoard> leaders = bulletinBoardRepository.findFeaturedLeaders(targetAudience, now);
@@ -139,8 +139,9 @@ public class BulletinBoardService {
         List<UUID> excludeIds = new java.util.ArrayList<>(leaderIds);
         excludeIds.addAll(featuredIds);
 
-        // 3. Tin mới (horizontal scroll)
-        List<BulletinBoard> newestList = bulletinBoardRepository.findNewest(targetAudience, now);
+        // 3. Tin mới (horizontal scroll) - chỉ trong 3 ngày
+        LocalDateTime newestThreshold = now.minusDays(3);
+        List<BulletinBoard> newestList = bulletinBoardRepository.findNewest(targetAudience, now, newestThreshold);
         // Exclude featured
         newestList = newestList.stream()
                 .filter(b -> !excludeIds.contains(b.getIdBulletin()))

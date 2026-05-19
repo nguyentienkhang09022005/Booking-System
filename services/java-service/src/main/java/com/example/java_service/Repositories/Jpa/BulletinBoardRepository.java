@@ -58,13 +58,15 @@ public interface BulletinBoardRepository extends JpaRepository<BulletinBoard, UU
     List<BulletinBoard> findFeaturedOthers(@Param("audience") String audience, @Param("now") LocalDateTime now,
                                           @Param("excludeIds") List<UUID> excludeIds);
 
-    // 3. Tin mới (horizontal scroll) - sorted by createdAt DESC
+    // 3. Tin mới (horizontal scroll) - chỉ trong 3 ngày, sorted by createdAt DESC
     @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'APPROVED' " +
            "AND (b.targetAudience = :audience OR b.targetAudience = 'ALL') " +
+           "AND b.createdAt >= :threshold " +
            "AND (b.startDate IS NULL OR b.startDate <= :now) " +
            "AND (b.endDate IS NULL OR b.endDate >= :now) " +
            "ORDER BY b.createdAt DESC")
-    List<BulletinBoard> findNewest(@Param("audience") String audience, @Param("now") LocalDateTime now);
+    List<BulletinBoard> findNewest(@Param("audience") String audience, @Param("now") LocalDateTime now,
+                                   @Param("threshold") LocalDateTime threshold);
 
     // 4. Tin sắp hết hạn (grid + icon cảnh báo) - endDate trong N ngày tới
     @Query("SELECT b FROM BulletinBoard b JOIN FETCH b.users WHERE b.status = 'APPROVED' " +

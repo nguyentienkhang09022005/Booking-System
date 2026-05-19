@@ -61,7 +61,7 @@ Hệ thống bảng tin cho phép Admin và Business tạo nội dung thông bá
 | GET | `/bulletin/pending` | Danh sách chờ duyệt (Admin) |
 | GET | `/bulletin/my-bulletins` | Danh sách bản tin đã tạo (filter theo status) |
 
-### 5 loại tin hiển thị cho Customer
+### 5 loại tin hiển tbhị cho Customer
 
 Khi Customer gọi `GET /bulletin/list?audience=CUSTOMER`, response trả về 5 danh sách:
 
@@ -69,8 +69,8 @@ Khi Customer gọi `GET /bulletin/list?audience=CUSTOMER`, response trả về 5
 |-----|-------|-------------------|
 | `leaderboard` | Tin nổi bật (3 items) | `isFeatured = true`, mới nhất lên đầu, LIMIT 3 |
 | `featuredGrid` | Tin nổi bật khác (grid 4 cột) | `isFeatured = true`, exclude leaderboard, mới nhất lên đầu |
-| `newestScroll` | Tin mới (horizontal scroll) | Mới nhất (createdAt DESC), exclude featured |
-| `expiringSoon` | Tin sắp hết hạn (grid + icon cảnh báo) | `endDate` trong 7 ngày tới, gần hết nhất lên đầu (endDate ASC) |
+| `newestScroll` | Tin mới (horizontal scroll) | Mới nhất (createdAt DESC), chỉ trong 3 ngày, exclude featured |
+| `expiringSoon` | Tin sắp hết hạn (grid + icon cảnh báo) | `endDate` trong 5 ngày tới, gần hết nhất lên đầu (endDate ASC) |
 | `regularGrid` | Tin thường (grid 3 cột) | Còn lại, mới nhất lên đầu, exclude tất cả trên |
 
 ### Request/Response Examples
