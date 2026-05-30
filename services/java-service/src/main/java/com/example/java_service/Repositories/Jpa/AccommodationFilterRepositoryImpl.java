@@ -2,13 +2,16 @@ package com.example.java_service.Repositories.Jpa;
 
 import com.example.java_service.Dto.Request.AccommodationFilterRequest;
 import com.example.java_service.Models.Accommodation;
+import com.example.java_service.Models.Room;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +37,7 @@ public class AccommodationFilterRepositoryImpl implements AccommodationFilterRep
 
         root.fetch("users", JoinType.LEFT);
 
-        List<Predicate> predicates = buildPredicates(request, cb, root);
+        List<Predicate> predicates = buildPredicates(request, cb, root, query);
         query.where(predicates.toArray(new Predicate[0])).distinct(true);
 
         List<Accommodation> result = em.createQuery(query)
@@ -44,7 +47,7 @@ public class AccommodationFilterRepositoryImpl implements AccommodationFilterRep
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Accommodation> countRoot = countQuery.from(Accommodation.class);
-        countQuery.select(cb.count(countRoot)).where(buildPredicates(request, cb, countRoot).toArray(new Predicate[0]));
+        countQuery.select(cb.count(countRoot)).where(buildPredicates(request, cb, countRoot, countQuery).toArray(new Predicate[0]));
 
         long total = em.createQuery(countQuery).getSingleResult();
 
@@ -61,7 +64,7 @@ public class AccommodationFilterRepositoryImpl implements AccommodationFilterRep
         return em.createQuery(query).getResultList();
     }
 
-    private List<Predicate> buildPredicates(AccommodationFilterRequest request, CriteriaBuilder cb, Root<Accommodation> root) {
+    private List<Predicate> buildPredicates(AccommodationFilterRequest request, CriteriaBuilder cb, Root<Accommodation> root, AbstractQuery<?> query) {
         List<Predicate> predicates = new ArrayList<>();
 
         predicates.add(cb.equal(root.get("approved"), true));
@@ -91,12 +94,19 @@ public class AccommodationFilterRepositoryImpl implements AccommodationFilterRep
             predicates.add(cb.like(cb.lower(root.get("ward")), "%" + request.getWard().toLowerCase() + "%"));
         }
 
-        if (request.getMinPrice() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("price"), request.getMinPrice()));
-        }
-
-        if (request.getMaxPrice() != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("price"), request.getMaxPrice()));
+        if (request.getMinPrice() != null || request.getMaxPrice() != null) {
+            Subquery<java.util.UUID> priceSub = query.subquery(java.util.UUID.class);
+            Root<Room> roomRoot = priceSub.from(Room.class);
+            List<Predicate> roomPredicates = new ArrayList<>();
+            roomPredicates.add(cb.equal(roomRoot.get("accommodation"), root));
+            if (request.getMinPrice() != null) {
+                roomPredicates.add(cb.greaterThanOrEqualTo(roomRoot.get("roomPrice"), request.getMinPrice()));
+            }
+            if (request.getMaxPrice() != null) {
+                roomPredicates.add(cb.lessThanOrEqualTo(roomRoot.get("roomPrice"), request.getMaxPrice()));
+            }
+            priceSub.select(roomRoot.get("idRoom")).where(roomPredicates.toArray(new Predicate[0]));
+            predicates.add(cb.exists(priceSub));
         }
 
         return predicates;

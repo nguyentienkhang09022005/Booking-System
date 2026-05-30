@@ -1,7 +1,7 @@
 flowchart TB
     subgraph Chat_Flow["Chat Flow"]
         direction TB
-        U["User"] -->|POST /api/v1/chatbot/ask| C["ChatbotController"]
+        U["User"] -->|POST /chatbot/ask| C["ChatbotController"]
         C -->|1. getHistoryChat| CH[(Redis ChatHistory)]
         C -->|2. chat| A["IBookingAssistantAgent"]
         

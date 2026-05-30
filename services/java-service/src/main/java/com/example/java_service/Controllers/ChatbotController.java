@@ -7,6 +7,7 @@ import com.example.java_service.Dto.Response.ApiResponse;
 import com.example.java_service.Services.ChatHistoryService;
 import com.example.java_service.Services.Interfaces.IBookingAssistantAgent;
 import com.example.java_service.Services.KnowledgeBaseSyncService;
+import com.example.java_service.Helpers.CurrentUserContext;
 import dev.ai4j.openai4j.OpenAiHttpException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,38 +31,47 @@ public class ChatbotController
     static final Long DURATION_HISTORY_CHAT_WITH_AI = 604800L;
 
     @PostMapping("/ask")
-    public ApiResponse<String> askChatbot(@RequestBody ChatbotRequest request)
+    public ApiResponse<String> askChatbot(
+            @RequestHeader(value = "idUser", required = false) String headerUserId,
+            @RequestBody ChatbotRequest request)
     {
-        if (request.getIdUser() == null || request.getIdUser().isBlank()) {
+        String idUser = (headerUserId != null && !headerUserId.isBlank())
+                ? headerUserId
+                : request.getIdUser();
+
+        if (idUser == null || idUser.isBlank()) {
             throw new IllegalArgumentException("idUser không được để trống");
         }
         if (request.getUserMessage() == null || request.getUserMessage().isBlank()) {
             throw new IllegalArgumentException("userMessage không được để trống");
         }
 
-        log.info("Chat request - idUser: {}, message: {}", request.getIdUser(), request.getUserMessage());
+        log.info("Chat request - idUser: {}, message: {}", idUser, request.getUserMessage());
 
-        List<MessageHistoryItem> history = chatHistoryService.getHistoryChat(request.getIdUser());
+        List<MessageHistoryItem> history = chatHistoryService.getHistoryChat(idUser);
         if (history.size() > 5) {
             history = history.subList(history.size() - 5, history.size());
         }
 
         String answer;
+        CurrentUserContext.set(idUser);
         try {
-            answer = assistantAgent.chat(request.getIdUser(), request.getUserMessage(), history);
+            answer = assistantAgent.chat(idUser, request.getUserMessage(), history);
         } catch (OpenAiHttpException e) {
             if (e.getMessage() != null && e.getMessage().contains("rate_limit")) {
-                log.warn("Rate limit hit for user: {}, message: {}", request.getIdUser(), e.getMessage());
+                log.warn("Rate limit hit for user: {}, message: {}", idUser, e.getMessage());
                 return ApiResponse.<String>builder()
                         .message("Hệ thống đang bận, vui lòng thử lại sau 1 phút.")
                         .data(null)
                         .build();
             }
             throw e;
+        } finally {
+            CurrentUserContext.clear();
         }
 
         chatHistoryService.saveChat(
-                request.getIdUser(),
+                idUser,
                 MessageHistoryItem.builder()
                         .role(PredefinedRoleChattingAI.USER_ROLE)
                         .message(request.getUserMessage())
@@ -69,7 +79,7 @@ public class ChatbotController
                 DURATION_HISTORY_CHAT_WITH_AI
         );
         chatHistoryService.saveChat(
-                request.getIdUser(),
+                idUser,
                 MessageHistoryItem.builder()
                         .role(PredefinedRoleChattingAI.MODEL_ROLE)
                         .message(answer)
@@ -77,7 +87,7 @@ public class ChatbotController
                 DURATION_HISTORY_CHAT_WITH_AI
         );
 
-        log.info("Chat response - idUser: {}", request.getIdUser());
+        log.info("Chat response - idUser: {}", idUser);
         return ApiResponse.<String>builder()
                 .message("Trả lời chatbot thành công!")
                 .data(answer)

@@ -143,6 +143,25 @@ public class BookingChatTools
         return String.format("Từ khóa '%s' trả về %d %s. Vui lòng cung cấp tên cụ thể hơn hoặc sử dụng UUID.", input, count, entityType);
     }
 
+    private String currentUserId() {
+        String idUser = CurrentUserContext.get();
+        return (idUser != null && !idUser.isBlank()) ? idUser : null;
+    }
+
+    private static final int SEARCH_LIMIT = 5;
+    private static final int LIST_LIMIT = 10;
+
+    // Giới hạn số phần tử serialize để tránh tràn context của LLM
+    private String toListJson(List<?> list, int limit, boolean withMore)
+            throws com.fasterxml.jackson.core.JsonProcessingException {
+        int total = list.size();
+        String json = objectMapper.writeValueAsString(list.stream().limit(limit).toList());
+        if (withMore && total > limit) {
+            return "Tổng " + total + " kết quả, hiển thị " + limit + " đầu. Gợi ý user cung cấp từ khóa cụ thể hơn.\n" + json;
+        }
+        return json;
+    }
+
     // ==================== TOUR TOOLS ====================
 
     @Tool("Tìm tour: tên, địa điểm. Trả về danh sách.")
@@ -153,14 +172,14 @@ public class BookingChatTools
             if (tours.isEmpty()) {
                 return "Không tìm thấy tour: " + keyword;
             }
-            return objectMapper.writeValueAsString(tours);
+            return toListJson(tours, SEARCH_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - searchTours: {}", e.getMessage());
             return "Lỗi tìm tour.";
         }
     }
 
-    @Tool("Thông tin cơ bản tour: idTour.")
+    @Tool("Dùng khi chỉ cần tên/giá/thời lượng/điểm đón của tour. Nhẹ — ưu tiên dùng trước. Tham số: tên hoặc UUID tour.")
     public String getTourBasicInfo(String idTour)
     {
         try {
@@ -192,7 +211,7 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Chi tiết đầy đủ tour.")
+    @Tool("Dùng khi user hỏi sâu về tour (lịch trình, bao gồm/không bao gồm, chính sách hủy). Nặng, chỉ gọi khi cần. Tham số: tên hoặc UUID tour.")
     public String getTourDetails(String idTour)
     {
         try {
@@ -211,52 +230,6 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Lịch trình tour: idTour.")
-    public String getTourSchedule(String idTour)
-    {
-        try {
-            List<UUID> ids = searchTourIds(idTour);
-            if (ids.isEmpty()) {
-                return "Không tìm thấy tour: " + idTour;
-            }
-            if (ids.size() > 1) {
-                return buildAmbiguousError(idTour, ids.size(), "tour");
-            }
-            TourResponse tour = tourService.getTourDetail(ids.get(0));
-            if (tour.getTourScheduleResponses() == null || tour.getTourScheduleResponses().isEmpty()) {
-                return "Tour chưa có lịch trình.";
-            }
-            return objectMapper.writeValueAsString(tour.getTourScheduleResponses());
-        } catch (Exception e) {
-            log.error("Tool Error - getTourSchedule: {}", e.getMessage());
-            return "Lỗi lấy lịch trình tour.";
-        }
-    }
-
-    @Tool("Inclusions/exclusions tour: idTour.")
-    public String getTourInclusionsExclusions(String idTour)
-    {
-        try {
-            List<UUID> ids = searchTourIds(idTour);
-            if (ids.isEmpty()) {
-                return "Không tìm thấy tour: " + idTour;
-            }
-            if (ids.size() > 1) {
-                return buildAmbiguousError(idTour, ids.size(), "tour");
-            }
-            TourResponse tour = tourService.getTourDetail(ids.get(0));
-            TourInclusionsExclusionsResponse ie = TourInclusionsExclusionsResponse.builder()
-                    .inclusions(tour.getInclusions())
-                    .exclusions(tour.getExclusions())
-                    .additionalInfo(tour.getAdditionalInfo())
-                    .build();
-            return objectMapper.writeValueAsString(ie);
-        } catch (Exception e) {
-            log.error("Tool Error - getTourInclusionsExclusions: {}", e.getMessage());
-            return "Lỗi lấy inclusions/exclusions.";
-        }
-    }
-
     @Tool("Tất cả tour đã duyệt.")
     public String getAllTours()
     {
@@ -265,7 +238,7 @@ public class BookingChatTools
             if (tours.isEmpty()) {
                 return "Không có tour nào.";
             }
-            return objectMapper.writeValueAsString(tours);
+            return toListJson(tours, LIST_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - getAllTours: {}", e.getMessage());
             return "Lỗi lấy danh sách tour.";
@@ -282,14 +255,14 @@ public class BookingChatTools
             if (accommodations.isEmpty()) {
                 return "Không tìm thấy nơi cư trú: " + keyword;
             }
-            return objectMapper.writeValueAsString(accommodations);
+            return toListJson(accommodations, SEARCH_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - searchAccommodations: {}", e.getMessage());
             return "Lỗi tìm nơi cư trú.";
         }
     }
 
-    @Tool("Thông tin cơ bản accommodation.")
+    @Tool("Dùng khi chỉ cần tên/địa chỉ/mô tả nơi cư trú. Nhẹ — ưu tiên dùng trước. Tham số: tên hoặc UUID.")
     public String getAccommodationBasicInfo(String idAccommodation)
     {
         try {
@@ -308,51 +281,7 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Danh sách phòng và giá.")
-    public String getAccommodationRoomList(String idAccommodation)
-    {
-        try {
-            List<UUID> ids = searchAccommodationIds(idAccommodation);
-            if (ids.isEmpty()) {
-                return "Không tìm thấy nơi cư trú: " + idAccommodation;
-            }
-            if (ids.size() > 1) {
-                return buildAmbiguousError(idAccommodation, ids.size(), "nơi cư trú");
-            }
-            List<RoomBasicResponse> rooms = accommodationService.getAccommodationRoomList(ids.get(0));
-            if (rooms.isEmpty()) {
-                return "Không có phòng.";
-            }
-            return objectMapper.writeValueAsString(rooms);
-        } catch (Exception e) {
-            log.error("Tool Error - getAccommodationRoomList: {}", e.getMessage());
-            return "Lỗi lấy danh sách phòng.";
-        }
-    }
-
-    @Tool("Hình ảnh accommodation: id (UUID hoặc tên).")
-    public String getAccommodationImages(String idAccommodation)
-    {
-        try {
-            List<UUID> ids = searchAccommodationIds(idAccommodation);
-            if (ids.isEmpty()) {
-                return "Không tìm thấy nơi cư trú: " + idAccommodation;
-            }
-            if (ids.size() > 1) {
-                return buildAmbiguousError(idAccommodation, ids.size(), "nơi cư trú");
-            }
-            GetDetailAccommodationResponse detail = accommodationService.getAccommodationDetail(ids.get(0), null);
-            if (detail.getImageAccommodation() == null || detail.getImageAccommodation().isEmpty()) {
-                return "Không có hình ảnh.";
-            }
-            return objectMapper.writeValueAsString(detail.getImageAccommodation());
-        } catch (Exception e) {
-            log.error("Tool Error - getAccommodationImages: {}", e.getMessage());
-            return "Lỗi lấy hình ảnh.";
-        }
-    }
-
-    @Tool("Chi tiết đầy đủ accommodation.")
+    @Tool("Dùng khi user hỏi sâu về nơi cư trú (phòng, hình ảnh, tiện ích, quy định, đánh giá). Nặng, chỉ gọi khi cần. Tham số: tên hoặc UUID.")
     public String getAccommodationDetails(String idAccommodation)
     {
         try {
@@ -379,7 +308,7 @@ public class BookingChatTools
             if (accommodations.isEmpty()) {
                 return "Không có nơi cư trú nào.";
             }
-            return objectMapper.writeValueAsString(accommodations);
+            return toListJson(accommodations, LIST_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - getAllAccommodations: {}", e.getMessage());
             return "Lỗi lấy danh sách nơi cư trú.";
@@ -388,8 +317,8 @@ public class BookingChatTools
 
     // ==================== ROOM TOOLS ====================
 
-    @Tool("Danh sách phòng đầy đủ: idAccommodation (UUID hoặc tên khách sạn).")
-    public String checkRoomAvailability(String idAccommodation)
+    @Tool("Danh sách phòng (giá, loại, trạng thái) của một nơi cư trú. Tham số: tên hoặc UUID nơi cư trú.")
+    public String getRoomsByAccommodation(String idAccommodation)
     {
         try {
             List<UUID> ids = searchAccommodationIds(idAccommodation);
@@ -405,8 +334,8 @@ public class BookingChatTools
             }
             return objectMapper.writeValueAsString(rooms);
         } catch (Exception e) {
-            log.error("Tool Error - checkRoomAvailability: {}", e.getMessage());
-            return "Lỗi kiểm tra phòng.";
+            log.error("Tool Error - getRoomsByAccommodation: {}", e.getMessage());
+            return "Lỗi lấy danh sách phòng.";
         }
     }
 
@@ -431,33 +360,21 @@ public class BookingChatTools
 
     // ==================== SERVICE TOOLS ====================
 
-    @Tool("Tìm dịch vụ: tên, mô tả.")
+    @Tool("Tìm dịch vụ theo tên, mô tả hoặc loại (VD: spa, gym, buffet). Tham số: keyword.")
     public String searchServices(String keyword)
     {
         try {
             List<ServiceResponse> services = serviceService.searchServices(keyword);
             if (services.isEmpty()) {
+                services = serviceService.searchServicesByType(keyword);
+            }
+            if (services.isEmpty()) {
                 return "Không tìm thấy dịch vụ: " + keyword;
             }
-            return objectMapper.writeValueAsString(services);
+            return toListJson(services, SEARCH_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - searchServices: {}", e.getMessage());
             return "Lỗi tìm dịch vụ.";
-        }
-    }
-
-    @Tool("Tìm dịch vụ theo loại: type (VD: spa, gym, buffet).")
-    public String searchServicesByType(String type)
-    {
-        try {
-            List<ServiceResponse> services = serviceService.searchServicesByType(type);
-            if (services.isEmpty()) {
-                return "Không tìm thấy dịch vụ loại: " + type;
-            }
-            return objectMapper.writeValueAsString(services);
-        } catch (Exception e) {
-            log.error("Tool Error - searchServicesByType: {}", e.getMessage());
-            return "Lỗi tìm dịch vụ theo loại.";
         }
     }
 
@@ -512,7 +429,7 @@ public class BookingChatTools
             if (vouchers.isEmpty()) {
                 return "Không tìm thấy voucher: " + keyword;
             }
-            return objectMapper.writeValueAsString(vouchers);
+            return toListJson(vouchers, SEARCH_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - searchVouchers: {}", e.getMessage());
             return "Lỗi tìm voucher.";
@@ -549,7 +466,7 @@ public class BookingChatTools
             if (vouchers.isEmpty()) {
                 return "Không có voucher nào.";
             }
-            return objectMapper.writeValueAsString(vouchers);
+            return toListJson(vouchers, LIST_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - getAllActiveVouchers: {}", e.getMessage());
             return "Lỗi lấy voucher.";
@@ -566,14 +483,14 @@ public class BookingChatTools
             if (tickets.isEmpty()) {
                 return "Không tìm thấy vé: " + keyword;
             }
-            return objectMapper.writeValueAsString(tickets);
+            return toListJson(tickets, SEARCH_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - searchTransportTickets: {}", e.getMessage());
             return "Lỗi tìm vé.";
         }
     }
 
-    @Tool("Thông tin cơ bản vé.")
+    @Tool("Dùng khi chỉ cần loại/hãng/giờ/giá vé. Nhẹ — ưu tiên dùng trước. Tham số: tên hãng hoặc UUID vé.")
     public String getTransportTicketBasicInfo(String idTicket)
     {
         try {
@@ -604,7 +521,7 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Chi tiết đầy đủ vé.")
+    @Tool("Dùng khi user hỏi sâu về vé (hạng vé, chính sách, mô tả đầy đủ). Nặng, chỉ gọi khi cần. Tham số: tên hãng hoặc UUID.")
     public String getTransportTicketDetails(String idTicket)
     {
         try {
@@ -631,7 +548,7 @@ public class BookingChatTools
             if (tickets.isEmpty()) {
                 return "Không có vé nào.";
             }
-            return objectMapper.writeValueAsString(tickets);
+            return toListJson(tickets, LIST_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - getAllTransportTickets: {}", e.getMessage());
             return "Lỗi lấy danh sách vé.";
@@ -640,9 +557,13 @@ public class BookingChatTools
 
     // ==================== USER & BOOKING TOOLS ====================
 
-    @Tool("Thông tin user: idUser (UUID).")
-    public String getUserProfile(String idUser)
+    @Tool("Thông tin tài khoản của user hiện tại đang đăng nhập. Không cần tham số.")
+    public String getUserProfile()
     {
+        String idUser = currentUserId();
+        if (idUser == null) {
+            return "Bạn cần đăng nhập để xem thông tin này.";
+        }
         try {
             UserResponse user = userService.getInfUser(UUID.fromString(idUser));
             return objectMapper.writeValueAsString(user);
@@ -652,9 +573,13 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Lịch sử loyalty: idUser.")
-    public String getLoyaltyHistory(String idUser)
+    @Tool("Lịch sử điểm thưởng (loyalty) của user hiện tại. Không cần tham số.")
+    public String getLoyaltyHistory()
     {
+        String idUser = currentUserId();
+        if (idUser == null) {
+            return "Bạn cần đăng nhập để xem thông tin này.";
+        }
         try {
             List<LoyaltyTransactionResponse> history = loyaltyTransactionService.getHistoryByUser(UUID.fromString(idUser));
             if (history.isEmpty()) {
@@ -667,9 +592,13 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Tour đã đặt: idUser.")
-    public String getUserTourBookings(String idUser)
+    @Tool("Danh sách tour user hiện tại đã đặt. Không cần tham số.")
+    public String getUserTourBookings()
     {
+        String idUser = currentUserId();
+        if (idUser == null) {
+            return "Bạn cần đăng nhập để xem thông tin này.";
+        }
         try {
             List<BookingTourResponse> bookings = bookingTourService.getListBookingTourByUser(UUID.fromString(idUser));
             if (bookings.isEmpty()) {
@@ -682,9 +611,13 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Vé đã đặt: idUser.")
-    public String getUserTransportBookings(String idUser)
+    @Tool("Danh sách vé user hiện tại đã đặt. Không cần tham số.")
+    public String getUserTransportBookings()
     {
+        String idUser = currentUserId();
+        if (idUser == null) {
+            return "Bạn cần đăng nhập để xem thông tin này.";
+        }
         try {
             List<BookingTransportResponse> bookings = bookingTransportTicketService.getListBookingByUser(UUID.fromString(idUser));
             if (bookings.isEmpty()) {
@@ -723,9 +656,13 @@ public class BookingChatTools
 
     // ==================== FAVORITE & EVALUATE TOOLS ====================
 
-    @Tool("Nơi cư trú yêu thích: idUser.")
-    public String getUserFavoriteAccommodations(String idUser)
+    @Tool("Nơi cư trú yêu thích của user hiện tại. Không cần tham số.")
+    public String getUserFavoriteAccommodations()
     {
+        String idUser = currentUserId();
+        if (idUser == null) {
+            return "Bạn cần đăng nhập để xem thông tin này.";
+        }
         try {
             List<GetListAccommodationResponse> favorites = favoriteService.getListFavoriteAccommodation(idUser);
             if (favorites.isEmpty()) {
@@ -738,9 +675,13 @@ public class BookingChatTools
         }
     }
 
-    @Tool("Tour yêu thích: idUser.")
-    public String getUserFavoriteTours(String idUser)
+    @Tool("Tour yêu thích của user hiện tại. Không cần tham số.")
+    public String getUserFavoriteTours()
     {
+        String idUser = currentUserId();
+        if (idUser == null) {
+            return "Bạn cần đăng nhập để xem thông tin này.";
+        }
         try {
             List<TourOverviewResponse> favorites = favoriteService.getListFavoriteTour(idUser);
             if (favorites.isEmpty()) {
@@ -761,58 +702,10 @@ public class BookingChatTools
             if (evaluates.isEmpty()) {
                 return "Chưa có đánh giá.";
             }
-            return objectMapper.writeValueAsString(evaluates);
+            return toListJson(evaluates, LIST_LIMIT, true);
         } catch (Exception e) {
             log.error("Tool Error - getEvaluates: {}", e.getMessage());
             return "Lỗi lấy đánh giá.";
-        }
-    }
-
-    // ==================== REGULATION & FACILITY TOOLS ====================
-
-    @Tool("Quy định nơi cư trú: idAccommodation (UUID hoặc tên).")
-    public String getAccommodationRegulations(String idAccommodation)
-    {
-        try {
-            List<UUID> ids = searchAccommodationIds(idAccommodation);
-            if (ids.isEmpty()) {
-                return "Không tìm thấy nơi cư trú: " + idAccommodation;
-            }
-            if (ids.size() > 1) {
-                return buildAmbiguousError(idAccommodation, ids.size(), "nơi cư trú");
-            }
-            GetDetailAccommodationResponse accommodation = accommodationService.getAccommodationDetail(ids.get(0), null);
-            if (accommodation.getGeneralRegulationResponses() == null ||
-                accommodation.getGeneralRegulationResponses().isEmpty()) {
-                return "Nơi cư trú chưa có quy định.";
-            }
-            return objectMapper.writeValueAsString(accommodation.getGeneralRegulationResponses());
-        } catch (Exception e) {
-            log.error("Tool Error - getAccommodationRegulations: {}", e.getMessage());
-            return "Lỗi lấy quy định.";
-        }
-    }
-
-    @Tool("Tiện ích nơi cư trú: idAccommodation (UUID hoặc tên).")
-    public String getAccommodationFacilities(String idAccommodation)
-    {
-        try {
-            List<UUID> ids = searchAccommodationIds(idAccommodation);
-            if (ids.isEmpty()) {
-                return "Không tìm thấy nơi cư trú: " + idAccommodation;
-            }
-            if (ids.size() > 1) {
-                return buildAmbiguousError(idAccommodation, ids.size(), "nơi cư trú");
-            }
-            GetDetailAccommodationResponse accommodation = accommodationService.getAccommodationDetail(ids.get(0), null);
-            if (accommodation.getFacilityCategoryResponses() == null ||
-                accommodation.getFacilityCategoryResponses().isEmpty()) {
-                return "Nơi cư trú chưa có thông tin tiện ích.";
-            }
-            return objectMapper.writeValueAsString(accommodation.getFacilityCategoryResponses());
-        } catch (Exception e) {
-            log.error("Tool Error - getAccommodationFacilities: {}", e.getMessage());
-            return "Lỗi lấy tiện ích.";
         }
     }
 

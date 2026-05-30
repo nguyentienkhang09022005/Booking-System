@@ -88,10 +88,6 @@ public class TourFilterRepositoryImpl implements TourFilterRepository {
             predicates.add(cb.lessThanOrEqualTo(root.get("durationMinutes"), request.getMaxDuration()));
         }
 
-        if (request.getDurationType() != null && !request.getDurationType().isBlank()) {
-            predicates.add(cb.equal(cb.upper(root.get("durationType")), request.getDurationType().toUpperCase()));
-        }
-
         if (request.getLanguages() != null && !request.getLanguages().isBlank()) {
             predicates.add(cb.like(cb.lower(root.get("languages")), "%" + request.getLanguages().toLowerCase() + "%"));
         }
@@ -102,14 +98,6 @@ public class TourFilterRepositoryImpl implements TourFilterRepository {
 
         if (request.getDestination() != null && !request.getDestination().isBlank()) {
             predicates.add(cb.like(cb.lower(root.get("dropOffPoint")), "%" + request.getDestination().toLowerCase() + "%"));
-        }
-
-        if (request.getTourType() != null && !request.getTourType().isBlank()) {
-            predicates.add(cb.equal(cb.upper(root.get("tourType")), request.getTourType().toUpperCase()));
-        }
-
-        if (request.getDifficulty() != null && !request.getDifficulty().isBlank()) {
-            predicates.add(cb.equal(cb.upper(root.get("difficulty")), request.getDifficulty().toUpperCase()));
         }
 
         return predicates;

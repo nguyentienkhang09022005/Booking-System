@@ -109,10 +109,6 @@ public class TransportTicketFilterRepositoryImpl implements TransportTicketFilte
             predicates.add(cb.lessThanOrEqualTo(root.get("price"), request.getMaxPrice()));
         }
 
-        if (request.getMinAvailableSlots() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("availableSlots"), request.getMinAvailableSlots()));
-        }
-
         return predicates;
     }
 }

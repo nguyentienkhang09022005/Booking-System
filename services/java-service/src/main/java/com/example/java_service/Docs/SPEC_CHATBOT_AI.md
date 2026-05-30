@@ -2,7 +2,17 @@
 
 ## 1. Overview
 
-Chatbot AI là trợ lý ảo sử dụng RAG (Retrieval Augmented Generation) để trả lời câu hỏi về dịch vụ du lịch trong hệ thống BookingNext. Chatbot sử dụng LangChain4j với Gemini 2.0 Flash làm LLM.
+Chatbot AI là trợ lý ảo trả lời câu hỏi về dịch vụ du lịch trong hệ thống BookingNext, xây dựng trên
+**LangChain4j** với mô hình **function-calling (Tools)**.
+
+- **LLM (chat):** Groq `meta-llama/llama-4-scout-17b-16e-instruct` (temperature 0.3, timeout 120s)
+- **Embedding:** Google `gemini-embedding-001` (768 dimensions) — chỉ dùng cho sync knowledge base
+- **Vector Store:** PgVector (`booking_knowledge_base`)
+
+> **LƯU Ý:** Bean `ContentRetriever` (RAG vector search) **đang bị DISABLE** trong `RagConfig.java`
+> (gây tràn context với model nhỏ). Chatbot trả lời **dựa hoàn toàn vào Tools query trực tiếp
+> PostgreSQL**, không dùng vector similarity search khi chat. Vector DB vẫn được sync nhưng chưa
+> được truy vấn trong luồng chat.
 
 ## 2. Architecture
 
@@ -11,40 +21,39 @@ Chatbot AI là trợ lý ảo sử dụng RAG (Retrieval Augmented Generation) �
 │                            Frontend (Node.js)                                │
 │                         WebSocket / REST Client                              │
 └─────────────────────────────────┬───────────────────────────────────────────┘
-                                  │ HTTP POST /api/v1/chatbot/ask
+                                  │ HTTP POST /chatbot/ask
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         ChatbotController                                    │
 │  - Nhận request từ Node.js                                                  │
-│  - Gọi IBookingAssistantAgent.chat()                                         │
-│  - Trả response về cho Node.js                                              │
+│  - Lấy 5 message gần nhất từ ChatHistoryService (Redis)                      │
+│  - Gọi IBookingAssistantAgent.chat(idUser, message, history)                 │
+│  - Lưu USER + MODEL message, bắt rate_limit (OpenAiHttpException)            │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                      IBookingAssistantAgent (@AiService)                     │
-│  - Interface được LangChain4j implement tự động                              │
-│  - Sử dụng SystemMessage để định nghĩa behavior AI                         │
-│  - Tự động inject Tools & ChatMemory                                        │
-│  - RAG Retriever được cấu hình để tìm kiếm Vector DB                       │
+│                  IBookingAssistantAgent (@AiService)                         │
+│  - LangChain4j implement tự động                                            │
+│  - @SystemMessage định nghĩa behavior + hướng dẫn chọn tool                  │
+│  - LLM Groq llama-4-scout-17b tự gọi Tools                                   │
+│  - History truyền qua @V("history"), key = @MemoryId idUser                  │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
-          ┌───────────────────────┼───────────────────────┐
-          │                       │                       │
-          ▼                       ▼                       ▼
-┌──────────────────┐  ┌────────────────────┐  ┌─────────────────────┐
-│ BookingChatTools │  │  Vector DB (RAG)   │  │   ChatMemory        │
-│                  │  │                    │  │                     │
-│ 8 Tools:         │  │ - PgVector store   │  │ - Per-session       │
-│ - searchTours   │  │ - Embedding search │  │   20 messages       │
-│ - getTourDetails │  │ - 768 dim vectors  │  │ - MemoryWindow      │
-│ - searchAccom... │  └────────────────────┘  └─────────────────────┘
-│ - getAccom...    │
-│ - checkRoom...   │
-│ - searchVoucher  │
-│ - searchTrans... │
-│ - searchService  │
-└──────────────────┘
+          ┌───────────────────────┴───────────────────────┐
+          │                                               │
+          ▼                                               ▼
+┌──────────────────────────────┐          ┌─────────────────────────────────┐
+│ BookingChatTools (32 @Tool)  │          │  ChatHistory (Redis, thủ công)  │
+│ - Query PostgreSQL qua Service│         │  - max 15 msg/user, TTL 7 ngày  │
+│ - Cache qua RagCacheService   │         └─────────────────────────────────┘
+└──────────────┬───────────────┘
+               ▼
+        ┌──────────────┐
+        │ PostgreSQL   │
+        └──────────────┘
+
+  (PgVector chỉ dùng cho sync — retriever đang tắt, KHÔNG truy vấn khi chat)
 ```
 
 ## 3. API Endpoints
@@ -55,6 +64,7 @@ Base Path: `/chatbot`
 |--------|----------|-------|
 | POST | `/ask` | Giao tiếp với chatbot |
 | POST | `/admin/sync-knowledge` | Admin đồng bộ knowledge base |
+| GET | `/history?idUser={uuid}` | Lấy lịch sử chat |
 | DELETE | `/memory?idUser={uuid}` | Xóa chat memory |
 
 ### POST /chatbot/ask
@@ -81,7 +91,10 @@ Base Path: `/chatbot`
 ```java
 @AiService
 public interface IBookingAssistantAgent {
-    String chat(String userId, String userMessage, List<MessageHistoryItem> history);
+    @SystemMessage({ "Bạn là trợ lý AI cho hệ thống Booking.", /* ... */ })
+    String chat(@MemoryId String idUser,
+                @UserMessage String userMessage,
+                @V("history") List<MessageHistoryItem> history);
 }
 ```
 
@@ -89,67 +102,83 @@ public interface IBookingAssistantAgent {
 ```java
 @Configuration
 public class RagConfig {
-    // ChatLanguageModel - Gemini 2.0 Flash
-    // EmbeddingModel - text-embedding-004 (768 dimensions)
-    // EmbeddingStore - PgVector
-    // ContentRetriever - Vector similarity search
-    // ChatMemoryProvider - 20 messages per session
+    // chatModel()        - Groq OpenAiChatModel (llama-4-scout-17b), @Primary
+    // embeddingModel()   - GoogleAiEmbeddingModel gemini-embedding-001, 768 dim
+    // embeddingStore()   - PgVectorEmbeddingStore (booking_knowledge_base)
+    // contentRetriever() - ĐANG COMMENT (disabled)
+    // isValidUuid()      - helper validate UUID
 }
 ```
 
-### BookingChatTools.java
+### BookingChatTools.java — 32 @Tool
 
-| Tool | Mô tả | Khi nào AI gọi |
-|------|-------|----------------|
-| `searchTours` | Tìm tour theo tên/địa điểm | Hỏi về tour du lịch |
-| `getTourDetails` | Lấy chi tiết tour (giá, lịch trình) | Cần thông tin chi tiết tour |
-| `searchAccommodations` | Tìm nơi cư trú theo tên/thành phố | Hỏi về khách sạn |
-| `getAccommodationDetails` | Lấy chi tiết nơi cư trú | Cần thông tin chi tiết khách sạn |
-| `checkRoomAvailability` | Kiểm tra phòng trống, giá | Hỏi về phòng cụ thể |
-| `searchVouchers` | Tìm voucher theo tên/mã | Hỏi về khuyến mãi |
-| `searchTransportTickets` | Tìm vé di chuyển | Hỏi về vé phương tiện |
-| `searchServices` | Tìm dịch vụ | Hỏi về dịch vụ |
+| Nhóm | Tools |
+|------|-------|
+| Tour (4) | `searchTours`, `getTourBasicInfo`, `getTourDetails` (gồm lịch trình + inclusions/exclusions), `getAllTours` |
+| Accommodation (4) | `searchAccommodations`, `getAccommodationBasicInfo`, `getAccommodationDetails` (gồm hình ảnh, tiện ích, quy định, đánh giá), `getAllAccommodations` |
+| Room (2) | `getRoomsByAccommodation`, `getRoomDetails` |
+| Service (3) | `searchServices` (tên/mô tả/loại), `getServiceDetails`, `getServicesByAccommodation` |
+| Voucher (3) | `searchVouchers`, `getVouchersByAccommodation`, `getAllActiveVouchers` |
+| Transport Ticket (4) | `searchTransportTickets`, `getTransportTicketBasicInfo`, `getTransportTicketDetails`, `getAllTransportTickets` |
+| User & Booking (6) | `getUserProfile`, `getLoyaltyHistory`, `getUserTourBookings`, `getUserTransportBookings`, `getBookingTourDetail`, `getBookingTransportDetail` |
+| Favorite & Evaluate (3) | `getUserFavoriteAccommodations`, `getUserFavoriteTours`, `getEvaluates` |
+| Price Compare (3) | `compareRoomPrices`, `findTopRatedAccommodations`, `findBestValueTours` |
+
+> Tool nhận tên hoặc UUID. Helper `searchXxxIds()` resolve tên → UUID; nếu nhiều kết quả sẽ báo
+> "ambiguous" và yêu cầu user cung cấp tên cụ thể hơn. Tool cá nhân (profile, booking, loyalty,
+> favorite) lấy user từ `CurrentUserContext` (header `idUser` do gateway inject), không nhận UUID từ LLM.
 
 ## 5. Knowledge Base Sync
 
-Admin gọi `POST /api/v1/chatbot/admin/sync-knowledge` để đồng bộ:
+Admin gọi `POST /chatbot/admin/sync-knowledge` để đồng bộ **9 nguồn dữ liệu**:
 
-| Data | Description |
-|------|-------------|
-| General Regulations | Quy định, chính sách |
-| Tours | Thông tin tour du lịch |
-| Accommodations | Thông tin nơi cư trú |
-| Services | Dịch vụ khách sạn |
-| Vouchers | Mã giảm giá |
+| # | Data | Description |
+|---|------|-------------|
+| 1 | General Regulations | Quy định, chính sách |
+| 2 | Tours | Thông tin tour du lịch |
+| 3 | Accommodations | Nơi cư trú (đã duyệt) |
+| 4 | Rooms | Loại phòng và giá |
+| 5 | Services | Dịch vụ khách sạn |
+| 6 | Vouchers | Mã giảm giá (đã duyệt) |
+| 7 | Transport Tickets | Vé phương tiện (đã duyệt) |
+| 8 | Room Types | Danh sách loại phòng |
+| 9 | Service Types | Danh sách loại dịch vụ |
 
 **Sync Process:**
-1. Fetch data từ PostgreSQL
-2. Combine into corpus
-3. Split into chunks (500 chars, 50 overlap)
-4. Generate embeddings (768 dimensions)
-5. Store in PgVector
+1. Fetch data từ PostgreSQL, build corpus (StringBuilder)
+2. Split chunks: `DocumentSplitters.recursive(500, 50)` — 500 ký tự, overlap 50
+3. Generate embeddings (768 dim) theo batch 20 segment, retry tối đa 3 lần, delay 50s khi rate-limit
+4. Store vào PgVector
+5. `ragCacheService.evictAllRagCache()` — xóa cache sau sync
 
 ## 6. Chat Memory
 
-```java
-// Memory configuration
-ChatMemoryProvider:
-  - 20 messages per session
-  - MemoryWindow.chatMemory(20)
-  - Keyed by sessionId (userId)
+History được quản lý **thủ công qua Redis** (không dùng `ChatMemoryProvider` của LangChain4j):
+
+```
+ChatHistoryService:
+  - Tối đa 15 message/user
+  - TTL 7 ngày (604800s)
+  - Key: chat_history:{idUser}
+
+ChatbotController:
+  - Lấy 5 message gần nhất truyền vào agent qua @V("history")
+  - @MemoryId idUser làm key memory cho LangChain4j
 ```
 
 ## 7. Supporting Services
 
 ### ChatHistoryService.java
-- `getHistoryChat(String idUser)` - Lấy lịch sử chat
-- `saveChat(String idUser, MessageHistoryItem message, Long durationSeconds)` - Lưu chat
+- `getHistoryChat(String idUser)` — Lấy lịch sử chat
+- `saveChat(String idUser, MessageHistoryItem message, long ttlSeconds)` — Lưu chat
+- `deleteHistoryChat(String idUser)` — Xóa lịch sử
 
 ### KnowledgeBaseSyncService.java
-- `syncDataToVectorDb()` - Đồng bộ knowledge base
+- `syncDataToVectorDb()` — Đồng bộ 9 nguồn dữ liệu vào Vector DB
 
 ### RagCacheService.java
-- Cache cho RAG queries
+- Cache Redis cho tool results (prefix `rag_cache:`, TTL mặc định 300s)
+- `evictAllRagCache()`, `evictAccommodationCache()`, `evictTourCache()`, `evictVoucherCache()`
 
 ## 8. Database Schema
 
@@ -184,39 +213,39 @@ USING hnsw (embedding vector_cosine_ops);
 
 ## 10. Environment Variables
 
-```properties
-GEMINI_APIKEY=your-gemini-api-key
-SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/database
-SPRING_DATASOURCE_USERNAME=postgres
-SPRING_DATASOURCE_PASSWORD=password
-```
+| Property (application.properties) | Env var |
+|-----------------------------------|---------|
+| `gemini.api.key` | `GEMINI_APIKEY` |
+| `groq.api.key` | `GROQ_API_KEY` |
+| `groq.base.url` | `GROQ_BASE_URL` |
+| `spring.datasource.url` | `SPRING_DATASOURCE_URL` |
+| `spring.datasource.username` | `SPRING_DATASOURCE_USERNAME` |
+| `spring.datasource.password` | `SPRING_DATASOURCE_PASSWORD` |
 
 ## 11. Error Handling
 
 | Error | Handling |
 |-------|----------|
-| Rate limit exceeded | Return message: "Hệ thống đang bận, vui lòng thử lại sau 1 phút" |
+| Rate limit (Groq, chat) | Controller bắt `OpenAiHttpException` chứa "rate_limit" → trả "Hệ thống đang bận, vui lòng thử lại sau 1 phút." |
+| Rate limit (embedding sync) | RESOURCE_EXHAUSTED/429 → tự retry 3 lần, delay 50s/lần |
 | API key invalid | Log error, throw exception |
-| Vector DB not found | Return error, suggest running sync-knowledge |
+| Tool execution error | Catch trong từng @Tool, trả message lỗi thân thiện tiếng Việt |
 
 ## 12. Adding New Tools
 
 ### Step 1: Add method to BookingChatTools
-
 ```java
 @Tool("Mô tả tool")
 public String newTool(String param) {
-    // Implementation
+    // Implementation - query qua Service, trả JSON string
 }
 ```
 
-### Step 2: Update SystemMessage in IBookingAssistantAgent
+### Step 2: (Tùy chọn) Cập nhật @SystemMessage trong IBookingAssistantAgent
+Thêm hướng dẫn chọn tool nếu cần định hướng cho LLM.
 
-Add tool usage instructions in the system prompt.
-
-### Step 3: Sync knowledge base
-
-Call `POST /chatbot/admin/sync-knowledge` to reload.
+### Step 3: Sync knowledge base (nếu tool đọc data cần index)
+Gọi `POST /chatbot/admin/sync-knowledge`.
 
 ## 13. Example Conversation Flow
 
@@ -229,21 +258,21 @@ Call `POST /chatbot/admin/sync-knowledge` to reload.
          ↓
 3. IBookingAssistantAgent.chat() được gọi
          ↓
-4. AI phân tích: "Câu hỏi về tour"
+4. LLM phân tích: "Câu hỏi về tour"
          ↓
-5. AI gọi searchTours("Đà Lạt") → Tool trả về danh sách tour
+5. LLM gọi searchTours("Đà Lạt") → danh sách tour
          ↓
-6. AI gọi getTourDetails("uuid-tour") → Chi tiết tour
+6. LLM gọi getTourDetails("...") → chi tiết tour
          ↓
-7. AI tổng hợp → Trả lời user bằng tiếng Việt
+7. LLM tổng hợp → Trả lời user bằng tiếng Việt
 ```
 
 ### User: "Có voucher giảm giá nào không?"
 
 ```
-1. AI phân tích: "Câu hỏi về voucher"
+1. LLM phân tích: "Câu hỏi về voucher"
          ↓
-2. AI gọi searchVouchers("") → Danh sách voucher đang active
+2. LLM gọi getAllActiveVouchers() → danh sách voucher đang hoạt động
          ↓
-3. AI format kết quả → Trả lời user
+3. LLM format kết quả → Trả lời user
 ```
