@@ -340,6 +340,21 @@ public class ItineraryService {
         itineraryItemRepository.deleteByItinerary_IdItinerary(itineraryId);
     }
 
+    @Transactional
+    public void replaceItineraryItems(String idItinerary, List<ItineraryItem> items, BigDecimal totalCost, String status) {
+        UUID uuid = UUID.fromString(idItinerary);
+        Itinerary itinerary = itineraryRepository.findById(uuid)
+                .orElseThrow(() -> new ApiException(ErrorCode.ITINERARY_NOT_FOUND));
+        itineraryItemRepository.deleteByItinerary_IdItinerary(uuid);
+        if (items != null && !items.isEmpty()) {
+            items.forEach(it -> it.setItinerary(itinerary));
+            itineraryItemRepository.saveAll(items);
+        }
+        itinerary.setTotalEstimatedCost(totalCost);
+        itinerary.setStatus(status);
+        itineraryRepository.save(itinerary);
+    }
+
     public String normalizeItemType(String type) {
         if (type == null || type.isEmpty()) {
             return PredefinedItemType.ACTIVITY;

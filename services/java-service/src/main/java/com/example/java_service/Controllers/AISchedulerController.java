@@ -20,10 +20,12 @@ public class AISchedulerController {
     AISchedulerService aiSchedulerService;
 
     @PostMapping("/generate")
-    public ApiResponse<ItineraryResponse> generateSchedule(@RequestBody GenerateScheduleRequest request) {
+    public ApiResponse<ItineraryResponse> generateSchedule(
+            @RequestHeader(value = "idUser", required = false) String idUser,
+            @RequestBody GenerateScheduleRequest request) {
         return ApiResponse.<ItineraryResponse>builder()
                 .message("Tạo lịch trình AI thành công!")
-                .data(aiSchedulerService.generateSchedule(request.getIdItinerary()))
+                .data(aiSchedulerService.generateSchedule(request.getIdItinerary(), idUser))
                 .build();
     }
 }

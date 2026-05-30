@@ -61,5 +61,7 @@ public interface ServiceRepository extends JpaRepository<Service, UUID>
 
     List<Service> findByTypeService_TypeService(String typeService);
 
+    List<Service> findByTypeService_TypeServiceIgnoreCase(String typeService);
+
     List<Service> findByAccommodation_IdAccommodationAndStatus(UUID idAccommodation, String status);
 }

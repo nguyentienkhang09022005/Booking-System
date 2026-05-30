@@ -43,6 +43,9 @@ public class AISchedulerService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+    private static final java.util.regex.Pattern UUID_PATTERN = java.util.regex.Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+
     private static final Set<String> VALID_ITEM_TYPES = new HashSet<>(Arrays.asList(
             PredefinedItemType.FLIGHT,
             PredefinedItemType.ACCOMMODATION,
@@ -99,8 +102,13 @@ public class AISchedulerService {
         this.objectMapper = objectMapper;
     }
 
-    public synchronized ItineraryResponse generateSchedule(String idItinerary) {
+    public ItineraryResponse generateSchedule(String idItinerary, String idUser) {
         Itinerary itinerary = itineraryService.getItineraryEntity(idItinerary);
+
+        if (idUser == null || itinerary.getUsers() == null
+                || !itinerary.getUsers().getIdUser().toString().equals(idUser)) {
+            throw new ApiException(ErrorCode.UNAUTHORIZED);
+        }
 
         validateItineraryForGeneration(itinerary);
 
@@ -116,6 +124,7 @@ public class AISchedulerService {
         // ========== STEP 2: Parse Needs and Fetch Data from DB ==========
         Map<String, Object> parsedNeeds = parseNeeds(generatedScheduleJson);
         Map<String, String> dbData = fetchDataFromDB(parsedNeeds, itinerary);
+        Set<String> allowedRefIds = extractUuids(dbData);
 
         // ========== STEP 3: LLM Call #2 - Enrichment ==========
         String enrichedScheduleJson = enrichScheduleWithDBData(generatedScheduleJson, dbData, requirements);
@@ -123,17 +132,14 @@ public class AISchedulerService {
 
         // ========== STEP 4: Parse and Save Items ==========
         try {
-            itineraryService.deleteItineraryItemsByItineraryId(itinerary.getIdItinerary());
-
-            List<ItineraryItem> items = parseAndSaveItems(enrichedScheduleJson, itinerary, preferences);
+            List<ItineraryItem> items = parseItems(enrichedScheduleJson, itinerary, allowedRefIds);
 
             BigDecimal totalCost = items.stream()
                     .map(ItineraryItem::getSuggestedPrice)
                     .filter(price -> price != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            itinerary.setTotalEstimatedCost(totalCost);
-            itineraryService.updateItineraryStatus(idItinerary, PredefinedStatusItinerary.AI_GENERATED);
+            itineraryService.replaceItineraryItems(idItinerary, items, totalCost, PredefinedStatusItinerary.AI_GENERATED);
 
         } catch (ApiException e) {
             throw e;
@@ -267,7 +273,7 @@ public class AISchedulerService {
         try {
             // Fetch Accommodations
             if (Boolean.TRUE.equals(needs.get("accommodations"))) {
-                String accResult = schedulingTools.findAccommodationFullInfo(destination, destination);
+                String accResult = schedulingTools.findAccommodationFullInfo(null, destination);
                 if (accResult != null && !accResult.isEmpty()) {
                     data.put("accommodations", accResult);
                     log.info("Fetched accommodations for: {}", destination);
@@ -427,7 +433,7 @@ public class AISchedulerService {
     }
 
     // ========== Parse and Save Items ==========
-    private List<ItineraryItem> parseAndSaveItems(String jsonResponse, Itinerary itinerary, UserPreferences preferences) throws Exception {
+    private List<ItineraryItem> parseItems(String jsonResponse, Itinerary itinerary, Set<String> allowedRefIds) throws Exception {
         List<ItineraryItem> allItems = new ArrayList<>();
 
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
@@ -455,7 +461,7 @@ public class AISchedulerService {
                 for (JsonNode slotNode : slotsNode) {
                     String itemTypeRaw = getTextOrNull(slotNode, "type");
                     String validatedItemType = validateItemType(itemTypeRaw);
-                    UUID refId = parseRefId(slotNode, "ref_id");
+                    UUID refId = parseRefId(slotNode, "ref_id", allowedRefIds);
 
                     BigDecimal price = parseBigDecimal(slotNode, "estimated_price");
                     Integer duration = parseInteger(slotNode, "duration_minutes");
@@ -481,7 +487,6 @@ public class AISchedulerService {
                             .build();
 
                     allItems.add(item);
-                    itineraryService.saveItineraryItem(item);
                 }
             }
         }
@@ -554,7 +559,9 @@ public class AISchedulerService {
         }
 
         // Nếu duration thay đổi và có refId, điều chỉnh price theo tỷ lệ
-        if (refId != null && originalDuration != null && originalDuration > 0 
+        // (ACCOMMODATION loại trừ: giá là giá/đêm, không nhân theo duration)
+        if (refId != null && !PredefinedItemType.ACCOMMODATION.equals(itemType)
+                && originalDuration != null && originalDuration > 0
                 && adjustedDuration != null && !adjustedDuration.equals(originalDuration)) {
             BigDecimal ratio = BigDecimal.valueOf(adjustedDuration)
                     .divide(BigDecimal.valueOf(originalDuration), 2, java.math.RoundingMode.HALF_UP);
@@ -612,11 +619,16 @@ public class AISchedulerService {
                 String response = chatModel.chat(request).aiMessage().text();
 
                 if (response != null && !response.isEmpty()) {
-                    log.info("LLM call attempt {} successful", attempt + 1);
-                    return response;
+                    try {
+                        objectMapper.readTree(extractJson(response));
+                        log.info("LLM call attempt {} successful", attempt + 1);
+                        return response;
+                    } catch (Exception parseEx) {
+                        log.warn("LLM call attempt {} returned unparseable JSON", attempt + 1);
+                    }
+                } else {
+                    log.warn("LLM call attempt {} returned empty response", attempt + 1);
                 }
-
-                log.warn("LLM call attempt {} returned empty response", attempt + 1);
             } catch (Exception e) {
                 log.error("LLM call attempt {} error: {}", attempt + 1, e.getMessage());
                 if (attempt == 2) {
@@ -715,7 +727,7 @@ public class AISchedulerService {
         return "{}";
     }
 
-    private UUID parseRefId(JsonNode node, String field) {
+    private UUID parseRefId(JsonNode node, String field, Set<String> allowedRefIds) {
         JsonNode fieldNode = node.get(field);
         if (fieldNode == null || fieldNode.isNull()) {
             return null;
@@ -729,11 +741,27 @@ public class AISchedulerService {
                 log.warn("Invalid UUID format: {}", refIdStr);
                 return null;
             }
+            if (allowedRefIds != null && !allowedRefIds.contains(refIdStr.toLowerCase())) {
+                log.warn("ref_id không thuộc dữ liệu DB đã fetch, bỏ qua: {}", refIdStr);
+                return null;
+            }
             return UUID.fromString(refIdStr);
         } catch (IllegalArgumentException e) {
             log.warn("Cannot parse ref_id as UUID: {}", fieldNode.asText());
             return null;
         }
+    }
+
+    private Set<String> extractUuids(Map<String, String> dbData) {
+        Set<String> ids = new HashSet<>();
+        for (String value : dbData.values()) {
+            if (value == null) continue;
+            java.util.regex.Matcher m = UUID_PATTERN.matcher(value);
+            while (m.find()) {
+                ids.add(m.group().toLowerCase());
+            }
+        }
+        return ids;
     }
 
     private boolean isValidUuid(String str) {
